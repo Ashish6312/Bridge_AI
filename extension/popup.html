@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --secondary: #06b6d4;
+            --bg-main: #020617;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --gradient-1: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+            --font-main: 'Plus Jakarta Sans', system-ui, sans-serif;
+            --font-heading: 'Outfit', sans-serif;
+            --success: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            width: 360px;
+            background: var(--bg-main);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            font-size: 14px;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(12px);
+        }
+        .logo-glyph {
+          width: 28px; height: 28px;
+          background: var(--gradient-1);
+          border-radius: 8px;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+          font-family: var(--font-heading);
+          font-weight: 800; color: white; font-size: 14px;
+        }
+        .header h1 { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; }
+        .header h1 span { background: var(--gradient-1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .badge {
+            margin-left: auto;
+            font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;
+            background: rgba(139,92,246,0.1); color: var(--primary);
+            border: 1px solid rgba(139,92,246,0.25);
+            padding: 4px 10px; border-radius: 100px;
+        }
+
+        .body { padding: 20px; }
+
+        /* ── Global Elements ── */
+        .platform-chip {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: 12px; padding: 12px 14px; margin-bottom: 20px;
+            font-size: 0.85rem; color: var(--text-muted);
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--success); box-shadow: 0 0 8px var(--success);
+        }
+        .platform-chip strong { color: var(--text-main); font-weight: 600; }
+
+        .btn {
+            width: 100%; padding: 14px;
+            background: var(--gradient-1);
+            color: #fff; border: none; border-radius: 100px;
+            font-weight: 700; font-size: 0.9rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 14px rgba(139, 92, 246, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: var(--font-main);
+        }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5); }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { opacity: 0.5; cursor: wait; filter: grayscale(0.5); }
+
+        .status {
+            margin-top: 16px; font-size: 0.75rem;
+            color: var(--text-muted); text-align: center; font-weight: 500;
+        }
+
+        /* ── Intelligence Mode Grid ── */
+        .mode-label {
+            font-size: 0.7rem; font-weight: 800; letter-spacing: 1px;
+            color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px;
+        }
+        .modes {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+            margin-bottom: 24px;
+        }
+        .mode-opt input { display: none; }
+        .mode-opt label {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            padding: 12px 8px; border-radius: 12px; cursor: pointer;
+            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.01);
+        }
+        .mode-opt input:checked + label {
+            border-color: var(--primary);
+            background: rgba(139,92,246,0.1);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.15), inset 0 0 10px rgba(139, 92, 246, 0.1);
+        }
+        .mode-opt label:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+        .mode-icon { width: 18px; height: 18px; color: var(--primary); }
+        .mode-name { font-size: 0.75rem; font-weight: 600; color: var(--text-main); }
+        .mode-desc { font-size: 0.6rem; color: var(--text-muted); }
+
+        /* ── Pulse Animation ── */
+        .pulse { animation: pulseAnim 1.5s infinite; }
+        @keyframes pulseAnim {
+          0% { opacity: 0.5; }
+          50% { opacity: 1; }
+          100% { opacity: 0.5; }
+        }
+
+        /* ── Interface Animations ── */
+        @keyframes fadeInSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeInSlide 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        
+        .error-text {
+            color: #ef4444; font-weight: 600; text-align: center;
+            background: rgba(239, 68, 68, 0.1); padding: 10px;
+            border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);
+            animation: fadeInSlide 0.3s ease-out;
+        }
+
+        #result { display: none; }
+
+        .success-badge {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 10px 14px; border-radius: 12px; color: var(--success);
+            font-size: 0.85rem; font-weight: 700; margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-glyph">B</div>
+        <h1>Bridge<span>AI</span></h1>
+        <span class="badge">PLATFORM</span>
+    </div>
+
+    <!-- Main Section -->
+    <div class="body animate-in" id="main">
+        <div class="platform-chip">
+            <div class="dot"></div>
+            <span>Active: <strong id="platform-name">Detecting...</strong></span>
+        </div>
+        
+        <button id="extract-btn" class="btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Extract Context
+        </button>
+        
+        <p class="status" id="status-text">Ready to bridge current session.</p>
+    </div>
+
+    <!-- Result Section -->
+    <div class="body" id="result">
+        <div class="success-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            <span><strong id="msg-count">0</strong> Messages Distilled</span>
+        </div>
+
+        <p class="mode-label">Intelligence Mode</p>
+        <div class="modes">
+            <div class="mode-opt">
+                <input type="radio" name="summary-mode" id="m-quick" value="quick" checked>
+                <label for="m-quick">
+                    <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <span class="mode-name">Quick</span>
+                </label>
+            </div>
+            <div class="mode-opt">
+                <input type="radio" name="summary-mode" id="m-dev" value="developer">
+                <label for="m-dev">
+                    <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+                    <span class="mode-name">Dev</span>
+                </label>
+            </div>
+            <div class="mode-opt">
+                <input type="radio" name="summary-mode" id="m-research" value="research">
+                <label for="m-research">
+                    <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <span class="mode-name">Research</span>
+                </label>
+            </div>
+            <div class="mode-opt">
+                <input type="radio" name="summary-mode" id="m-study" value="study">
+                <label for="m-study">
+                    <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+                    <span class="mode-name">Study</span>
+                </label>
+            </div>
+            <div class="mode-opt">
+                <input type="radio" name="summary-mode" id="m-project" value="project">
+                <label for="m-project">
+                  <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  <span class="mode-name">Project</span>
+                </label>
+            </div>
+        </div>
+
+        <button id="bridge-btn" class="btn">
+            Apply Sync & Save
+        </button>
+        <p class="status" id="status-text-result">Proprietary Distillation Engine active.</p>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

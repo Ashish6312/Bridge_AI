@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "BridgeAI - Cross-LLM Context Bridge",
+  "version": "1.0.0",
+  "description": "Extract, summarize, and bridge conversations across LLMs.",
+  "permissions": ["activeTab", "scripting", "storage", "tabs", "sidePanel"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "icons": {
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "host_permissions": [
+    "https://bridge-ai-brown.vercel.app/*",
+    "https://*.vercel.app/*",
+    "http://localhost:5001/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://bridge-ai-brown.vercel.app/*",
+      "https://*.vercel.app/*"
+    ]
+  }
+}

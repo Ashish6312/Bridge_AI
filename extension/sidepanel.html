@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.5);
+            --secondary: #06b6d4;
+            --secondary-glow: rgba(6, 182, 212, 0.5);
+            --bg: #030712;
+            --glass: rgba(17, 24, 39, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.15) 0%, transparent 50%);
+        }
+
+        /* ── Header ── */
+        .header {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            background: var(--glass);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .brand h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #fff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 100px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--success);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* ── Main Content ── */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover { border-color: rgba(255, 255, 255, 0.15); transform: translateY(-2px); }
+
+        .context-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .site-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .site-info h2 { font-size: 1rem; font-weight: 600; }
+        .site-info p { font-size: 0.75rem; color: var(--text-muted); }
+
+        .action-button {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 10px 20px -5px var(--primary-glow);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 25px -5px var(--primary-glow);
+        }
+
+        .action-button:active { transform: scale(0.98); }
+        .action-button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* ── Mode Selection ── */
+        .mode-title { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .modes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .mode-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .mode-item:hover { background: rgba(255, 255, 255, 0.06); }
+        .mode-item.active {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .mode-item h4 { font-size: 0.8rem; font-weight: 700; }
+
+        /* ── Analysis View ── */
+        #analysis-view { display: none; }
+        .data-point {
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--primary);
+        }
+        .data-point label { font-size: 0.65rem; color: var(--text-muted); display: block; margin-bottom: 4px; }
+        .data-point span { font-size: 0.85rem; color: white; display: block; }
+
+        /* ── Floating Footer ── */
+        .footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--glass-border);
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.8rem;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .user-details { overflow: hidden; }
+        .user-details strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-details span { color: var(--text-muted); font-size: 0.7rem; }
+
+        /* ── Animations ── */
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="brand">
+            <div class="logo">B</div>
+            <h1>BridgeAI</h1>
+        </div>
+        <div class="status-pill">
+            <div class="pulse-dot"></div>
+            <span>Vault Active</span>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="fade-in">
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="context-indicator">
+                    <div class="site-icon" id="site-emoji">🌐</div>
+                    <div class="site-info">
+                        <h2 id="platform-name">Current Site</h2>
+                        <p id="platform-status">Scanning for intelligence...</p>
+                    </div>
+                </div>
+                
+                <button id="extract-btn" class="action-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Capture Intelligence
+                </button>
+            </div>
+
+            <div class="mode-title">Bridge Mode</div>
+            <div class="modes-grid">
+                <div class="mode-item active" data-mode="quick">
+                    <h4>Quick Sync</h4>
+                </div>
+                <div class="mode-item" data-mode="developer">
+                    <h4>Dev Sync</h4>
+                </div>
+                <div class="mode-item" data-mode="research">
+                    <h4>Deep Dive</h4>
+                </div>
+                <div class="mode-item" data-mode="project">
+                    <h4>Forge Sync</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis View -->
+        <div id="analysis-view" class="fade-in">
+            <div class="card">
+                <h3 style="margin-bottom: 16px; font-size: 0.9rem; color: var(--primary);">Extracted Context</h3>
+                <div id="data-container">
+                    <!-- Data points injected here -->
+                </div>
+                
+                <button id="bridge-btn" class="action-button" style="margin-top: 20px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+                    Vault to Hub
+                </button>
+                <button id="cancel-btn" style="width: 100%; margin-top: 10px; background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); padding: 10px; border-radius: 10px; cursor: pointer; font-size: 0.8rem;">
+                    Rescan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="user-info">
+            <div class="user-avatar" id="user-initial">?</div>
+            <div class="user-details">
+                <strong id="user-email">Guest User</strong>
+                <span id="sync-status">Syncing with Hub...</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="sidepanel.js"></script>
+</body>
+</html>
