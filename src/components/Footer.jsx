@@ -13,8 +13,9 @@ const Footer = () => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('idle');
   const location = useLocation();
+  const isLoggedIn = !!localStorage.getItem('bridge_user');
 
-  const hideNewsletter = ['/dashboard', '/login', '/signup', '/profile'].includes(location.pathname);
+  const showCTA = location.pathname === '/';
 
   const handleSubscribe = async () => {
     if (!email) return;
@@ -51,39 +52,56 @@ const Footer = () => {
     >
       <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '60px' }}>
         
-        {/* Top Newsletter CTA */}
-        {!hideNewsletter && (
+        {/* Top CTA Section */}
+        {showCTA && (
           <div style={{ 
             background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', 
             borderRadius: '24px', padding: '40px', display: 'flex', justifyContent: 'space-between', 
             alignItems: 'center', flexWrap: 'wrap', gap: '24px'
           }}>
-            <div>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '8px', color: 'white' }}>Join the Sovereign Network</h3>
-              <p style={{ color: 'var(--text-muted)', margin: 0 }}>Get weekly insights on cross-LLM context protocols and bridging strategies.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', flex: '1', maxWidth: '400px' }}>
-              <input 
-                type="email" 
-                placeholder="analyst@bridgeai.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={status === 'loading' || status === 'success'}
-                onKeyDown={(e) => { if(e.key === 'Enter') handleSubscribe(); }}
-                style={{ 
-                  flex: 1, padding: '14px 20px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', 
-                  border: '1px solid var(--glass-border)', color: 'white', outline: 'none' 
-                }}
-              />
-              <button 
-                className="btn-primary" 
-                onClick={handleSubscribe}
-                disabled={status === 'loading' || status === 'success'}
-                style={{ padding: '0 24px' }}
-              >
-                {status === 'loading' ? 'Subscribing...' : status === 'success' ? <><CheckCircle2 size={16} style={{marginRight: '8px'}} /> Subscribed</> : <>Subscribe <ArrowRight size={16} style={{marginLeft: '8px'}} /></>}
-              </button>
-            </div>
+            {!isLoggedIn ? (
+              <>
+                <div>
+                  <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '8px', color: 'white' }}>Join the Sovereign Network</h3>
+                  <p style={{ color: 'var(--text-muted)', margin: 0 }}>Get weekly insights on cross-LLM context protocols and bridging strategies.</p>
+                </div>
+                <div style={{ display: 'flex', gap: '12px', flex: '1', maxWidth: '400px' }}>
+                  <input 
+                    type="email" 
+                    placeholder="analyst@bridgeai.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={status === 'loading' || status === 'success'}
+                    onKeyDown={(e) => { if(e.key === 'Enter') handleSubscribe(); }}
+                    style={{ 
+                      flex: 1, padding: '14px 20px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', 
+                      border: '1px solid var(--glass-border)', color: 'white', outline: 'none' 
+                    }}
+                  />
+                  <button 
+                    className="btn-primary" 
+                    onClick={handleSubscribe}
+                    disabled={status === 'loading' || status === 'success'}
+                    style={{ padding: '0 24px' }}
+                  >
+                    {status === 'loading' ? 'Subscribing...' : status === 'success' ? <><CheckCircle2 size={16} style={{marginRight: '8px'}} /> Subscribed</> : <>Subscribe <ArrowRight size={16} style={{marginLeft: '8px'}} /></>}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '32px' }}>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '8px', color: 'white' }}>Protocol Status: Optimal</h3>
+                  <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem', maxWidth: '600px' }}>
+                    Your intelligence hub is synchronized across the network. Monitor your extraction rates or update your security protocols in the dashbord.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <Link to="/dashboard" className="btn-primary" style={{ padding: '12px 24px', fontSize: '0.9rem' }}>Go to Dashboard</Link>
+                  <Link to="/docs" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.9rem' }}>Read Docs</Link>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

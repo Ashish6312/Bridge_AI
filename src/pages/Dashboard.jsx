@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Plus, Search, MessageSquare, Clock, Code, Target, Layers,
-  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder
+  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
 
@@ -537,6 +537,18 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [stats, setStats] = useState({ totalBridges: 0, totalTokens: 0, plan: 'free', usageCount: 0 });
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const height = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = (window.scrollY / height) * 100;
+      setScrollProgress(progress);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const [hubStatus, setHubStatus] = useState('connecting'); // 'online' | 'offline'
   const retryCountRef = React.useRef(0);
   const retryTimerRef = React.useRef(null);
@@ -731,6 +743,11 @@ const Dashboard = () => {
           transition={{ delay: 0.1 }}
           className="dashboard-sidebar" style={{ width: '280px', flexShrink: 0, position: 'sticky', top: '90px', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}
         >
+          {activeTab === 'saved' && (
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '2px', height: '100%', background: 'rgba(255,255,255,0.05)', zIndex: 10 }}>
+              <motion.div style={{ width: '100%', height: `${scrollProgress}%`, background: 'var(--primary)', boxShadow: '0 0 10px var(--primary)' }} />
+            </div>
+          )}
           <div className="glass-card" style={{ padding: '0', marginBottom: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 10px 40px rgba(0,0,0,0.4)', position: 'relative' }}>
             <div style={{ padding: '24px', position: 'relative', zIndex: 2 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>

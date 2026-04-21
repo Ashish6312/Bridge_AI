@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Zap, Layers, Shield, LifeBuoy, ChevronRight, 
@@ -13,8 +13,9 @@ const SECTIONS = [
     group: 'ORIENTATION', 
     items: [
       { id: 'intro',     icon: <Zap size={18} />,       label: 'Operational Start' },
+      { id: 'workflow',  icon: <Activity size={18} />,  label: 'Bridge Workflow' },
       { id: 'concepts',  icon: <Globe size={18} />,     label: 'Core Concepts' },
-      { id: 'market',    icon: <Activity size={18} />,  label: 'Market Intelligence' },
+      { id: 'market',    icon: <Database size={18} />,  label: 'Market Intelligence' },
     ]
   },
   { 
@@ -36,6 +37,31 @@ const SECTIONS = [
 
 const DocsPage = () => {
   const [active, setActive] = useState('intro');
+  const scrollLock = useRef(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (scrollLock.current) return;
+      
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setActive(entry.target.id);
+        }
+      });
+    }, {
+      rootMargin: '-20% 0px -70% 0px',
+      threshold: 0
+    });
+
+    SECTIONS.forEach(group => {
+      group.items.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (el) observer.observe(el);
+      });
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div style={{ 
@@ -90,7 +116,9 @@ const DocsPage = () => {
                       key={item.id}
                       onClick={() => {
                         setActive(item.id);
+                        scrollLock.current = true;
                         document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        setTimeout(() => { scrollLock.current = false; }, 800);
                       }}
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '12px',
@@ -156,6 +184,31 @@ const DocsPage = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          </motion.section>
+          
+          {/* Section: Bridge Workflow */}
+          <motion.section 
+            id="workflow"
+            style={{ marginTop: '160px' }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '24px', letterSpacing: '-0.03em' }}>System <span className="premium-gradient-text">Workflow</span></h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginTop: '40px' }}>
+              {[
+                { n: '01', title: 'Context Capture', desc: 'Use the extension while chatting with an LLM. It captures raw state, thread reasoning, and logic variables without metadata pollution.' },
+                { n: '02', title: 'Sovereign Summarization', desc: 'Our engine cleans the capture, isolating technical goals and bug states into a condensed "Prompt Core" suitable for any model.' },
+                { n: '03', title: 'Vault Synchronization', desc: 'Securely store your bridge in the Hub. These are private, encrypted, and accessible only via your authenticated sovereign identity.' },
+                { n: '04', title: 'Relay & Resume', desc: 'Select a target AI (Claude, Gemini, etc.) and "Forge" the bridge. The system dispatches the context so the new AI is immediately operational.' }
+              ].map((w, i) => (
+                <div key={i} className="glass-card" style={{ padding: '32px', position: 'relative' }}>
+                  <div style={{ fontSize: '3rem', fontWeight: '900', opacity: 0.1, position: 'absolute', top: '10px', right: '20px' }}>{w.n}</div>
+                  <h4 style={{ fontWeight: '800', marginBottom: '12px', fontSize: '1.2rem' }}>{w.title}</h4>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0, lineHeight: '1.6' }}>{w.desc}</p>
+                </div>
+              ))}
             </div>
           </motion.section>
 
