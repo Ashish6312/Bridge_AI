@@ -46,8 +46,20 @@ function App() {
 
   const location = useLocation();
   const hideChrome = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/dashboard';
-  const hideNavbar = location.pathname === '/dashboard'; // Let's keep navbar hidden on dashboard if preferred
+  const hideNavbar = location.pathname === '/dashboard'; 
 
+  // Real-Time Extension Sync (Global)
+  React.useEffect(() => {
+    const user = localStorage.getItem('bridge_user');
+    if (user) {
+      try {
+        const event = new CustomEvent('BRIDGE_AUTH_UPDATE', { 
+          detail: { user: JSON.parse(user) } 
+        });
+        window.dispatchEvent(event);
+      } catch (e) {}
+    }
+  }, [location.pathname]); // Sync on every page navigation 
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>

@@ -175,6 +175,11 @@ function handleDashboardEvents() {
       chrome.runtime.sendMessage({ action: 'AUTH_RELAY', user });
     }
   });
+
+  // Relay Reload Signal
+  window.addEventListener('RELOAD_EXTENSION', () => {
+    chrome.runtime.sendMessage({ action: 'RELOAD_EXTENSION' });
+  });
 }
 
 // ─── Initializers ────────────────────────────────────────────────

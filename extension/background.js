@@ -28,6 +28,10 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
     });
     return true; // Keep channel open for async response
   }
+  if (request.action === 'RELOAD_EXTENSION') {
+    console.log('BridgeAI: Receiving Sovereign Pulse — Reloading Protocol...');
+    chrome.runtime.reload();
+  }
 });
 
 chrome.sidePanel

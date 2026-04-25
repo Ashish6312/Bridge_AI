@@ -739,7 +739,10 @@ const Dashboard = () => {
 
   const refreshVault = () => {
     loadData();
-    triggerToast(`Vault Synced & Refreshed.`);
+    try {
+      window.dispatchEvent(new CustomEvent('RELOAD_EXTENSION'));
+    } catch (e) {}
+    triggerToast(`Sovereign Hub & Extension Refreshed.`);
   };
 
   useEffect(() => {
