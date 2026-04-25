@@ -87,44 +87,40 @@ function updateUIWithSession(session) {
 document.addEventListener('DOMContentLoaded', async () => {
     await syncUserSession();
 
+    async function updatePlatformUI() {
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (activeTab?.url) {
+            try {
+                const urlObj = new URL(activeTab.url);
+                let site = urlObj.hostname.replace('www.', '').split('.')[0];
+                platformName.textContent = site.charAt(0).toUpperCase() + site.slice(1);
+                
+                // Emoji logic
+                if (activeTab.url.includes('chatgpt')) siteEmoji.textContent = '🤖';
+                else if (activeTab.url.includes('gemini')) siteEmoji.textContent = '✨';
+                else if (activeTab.url.includes('claude')) siteEmoji.textContent = '🧠';
+                else if (activeTab.url.includes('internship')) siteEmoji.textContent = '🎓';
+                else siteEmoji.textContent = '🌐';
+            } catch {
+                platformName.textContent = 'Universal Session';
+            }
+        }
+    }
+
+    await updatePlatformUI();
+
     // Auto-sync on tab changes
     chrome.tabs.onActivated.addListener(async () => {
         await syncUserSession();
+        await updatePlatformUI();
     });
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
         if (changeInfo.status === 'complete') {
             await syncUserSession();
+            await updatePlatformUI();
         }
     });
-
-    const extractBtn = document.getElementById('extract-btn');
-    const bridgeBtn = document.getElementById('bridge-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-    const platformName = document.getElementById('platform-name');
-    const dashboardView = document.getElementById('dashboard-view');
-    const analysisView = document.getElementById('analysis-view');
-    const dataContainer = document.getElementById('data-container');
-    const siteEmoji = document.getElementById('site-emoji');
-
-    // Detect platform
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab?.url) {
-        try {
-            const urlObj = new URL(tab.url);
-            let site = urlObj.hostname.replace('www.', '').split('.')[0];
-            platformName.textContent = site.charAt(0).toUpperCase() + site.slice(1);
-            
-            // Emoji logic
-            if (tab.url.includes('chatgpt')) siteEmoji.textContent = '🤖';
-            else if (tab.url.includes('gemini')) siteEmoji.textContent = '✨';
-            else if (tab.url.includes('claude')) siteEmoji.textContent = '🧠';
-            else if (tab.url.includes('internship')) siteEmoji.textContent = '🎓';
-            else siteEmoji.textContent = '🌐';
-        } catch {
-            platformName.textContent = 'Universal Session';
-        }
-    }
 
     // Mode Selection
     document.querySelectorAll('.mode-item').forEach(item => {
@@ -150,15 +146,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!activeTab) return;
+
         extractBtn.disabled = true;
         extractBtn.textContent = 'Scanning...';
         
-        chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_CHAT' }, (response) => {
+        chrome.tabs.sendMessage(activeTab.id, { action: 'EXTRACT_CHAT' }, (response) => {
             extractBtn.disabled = false;
             extractBtn.innerHTML = `Capture Chat`;
 
             if (chrome.runtime.lastError || !response?.data) {
-                alert('Connection lost. Please refresh the page and try again.');
+                alert('Connection lost. Please refresh the chat page and try again.');
                 return;
             }
 
