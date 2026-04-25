@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Layers, ArrowRight, Mail, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Layers, ArrowRight, Mail, CheckCircle2, X, Shield, Lock, Cookie } from 'lucide-react';
 import { apiFetch } from '../apiConfig';
 
 
@@ -12,6 +12,7 @@ const LinkedinIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill=
 const Footer = () => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('idle');
+  const [activeModal, setActiveModal] = useState(null);
   const location = useLocation();
   const isLoggedIn = !!localStorage.getItem('bridge_user');
 
@@ -36,6 +37,122 @@ const Footer = () => {
     } catch {
       setStatus('idle');
     }
+  };
+
+  const modalContent = {
+    privacy: {
+      title: "Privacy Rights & Data Sovereignity",
+      icon: <Shield size={32} className="premium-gradient-text" style={{ stroke: 'var(--primary)' }} />,
+      content: [
+        "Your intelligence tokens are encrypted using AES-256 before being vaulted in the Sovereign Hub.",
+        "We implement a zero-retention policy for raw chat logs once the Bridge Intelligence Bundle is generated.",
+        "Local telemetry is only used to optimize extraction speed and is never shared with third-party networks.",
+        "You maintain full ownership of all synthesized prompts and optimized context bridges."
+      ]
+    },
+    terms: {
+      title: "Terms of Sovereign Operation",
+      icon: <Lock size={32} style={{ color: 'var(--secondary)' }} />,
+      content: [
+        "The BridgeAI protocol is designed for technical workflow acceleration and logical context relay.",
+        "Users agree not to use the platform for the generation of malicious code or restricted intelligence vectors.",
+        "Subscription tiers dictate extraction quotas; exceeding these will trigger automated rate-limiting.",
+        "BridgeAI is not liable for hallucinations produced by the destination LLMs after context relay."
+      ]
+    },
+    cookies: {
+      title: "Cookie & Protocol Telemetry",
+      icon: <Cookie size={32} style={{ color: 'var(--accent)' }} />,
+      content: [
+        "We utilize functional session cookies to maintain your Sovereign Hub authentication state.",
+        "Protocol cookies are used to track extraction success rates across different AI platforms.",
+        "No marketing or third-party tracking pixels are permitted within the BridgeAI architecture.",
+        "Analytics are strictly limited to system performance and API latency monitoring."
+      ]
+    }
+  };
+
+  const PolicyModal = ({ type, onClose }) => {
+    const data = modalContent[type];
+    if (!data) return null;
+
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{ 
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', 
+          background: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(12px)', 
+          zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px'
+        }}
+      >
+        <motion.div 
+          initial={{ scale: 0.9, y: 20, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.9, y: 20, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+          className="glass-card"
+          style={{ 
+            maxWidth: '550px', width: '100%', padding: '40px', position: 'relative',
+            border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden'
+          }}
+        >
+          {/* Decorative background glow */}
+          <div style={{ 
+            position: 'absolute', top: '-10%', right: '-10%', width: '200px', height: '200px',
+            background: type === 'privacy' ? 'var(--primary)' : type === 'terms' ? 'var(--secondary)' : 'var(--accent)',
+            filter: 'blur(80px)', opacity: 0.15, borderRadius: '50%', zIndex: -1
+          }} />
+
+          <button 
+            onClick={onClose}
+            style={{ 
+              position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', padding: '8px',
+              color: 'white', cursor: 'pointer', display: 'flex', transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          >
+            <X size={20} />
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
+            <div style={{ 
+              padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px',
+              border: '1px solid rgba(255,255,255,0.08)', display: 'flex'
+            }}>
+              {data.icon}
+            </div>
+            <h2 style={{ fontSize: '1.6rem', margin: 0, color: 'white', letterSpacing: '-0.5px' }}>{data.title}</h2>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {data.content.map((text, i) => (
+              <div key={i} style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ 
+                  width: '6px', height: '6px', borderRadius: '50%', 
+                  background: type === 'privacy' ? 'var(--primary)' : type === 'terms' ? 'var(--secondary)' : 'var(--accent)',
+                  marginTop: '10px', flexShrink: 0, boxShadow: `0 0 10px ${type === 'privacy' ? 'var(--primary)' : type === 'terms' ? 'var(--secondary)' : 'var(--accent)'}`
+                }} />
+                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6 }}>{text}</p>
+              </div>
+            ))}
+          </div>
+
+          <button 
+            className="btn-primary" 
+            onClick={onClose}
+            style={{ width: '100%', marginTop: '40px', padding: '16px' }}
+          >
+            Acknowledge Protocol
+          </button>
+        </motion.div>
+      </motion.div>
+    );
   };
 
   return (
@@ -179,11 +296,38 @@ const Footer = () => {
             © {new Date().getFullYear()} BridgeAI Workflow Systems. All rights reserved.
           </p>
           <div style={{ display: 'flex', gap: '24px', fontSize: '0.85rem' }}>
-            <Link to="#" style={{ color: 'var(--text-muted)', textDecoration: 'none' }} onMouseEnter={e => e.currentTarget.style.color='white'} onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}>Privacy Policy</Link>
-            <Link to="#" style={{ color: 'var(--text-muted)', textDecoration: 'none' }} onMouseEnter={e => e.currentTarget.style.color='white'} onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}>Terms of Service</Link>
-            <Link to="#" style={{ color: 'var(--text-muted)', textDecoration: 'none' }} onMouseEnter={e => e.currentTarget.style.color='white'} onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}>Cookie Protocols</Link>
+            <button 
+              onClick={() => setActiveModal('privacy')}
+              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} 
+              onMouseEnter={e => e.currentTarget.style.color='white'} 
+              onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}
+            >
+              Privacy Policy
+            </button>
+            <button 
+              onClick={() => setActiveModal('terms')}
+              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} 
+              onMouseEnter={e => e.currentTarget.style.color='white'} 
+              onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}
+            >
+              Terms of Service
+            </button>
+            <button 
+              onClick={() => setActiveModal('cookies')}
+              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} 
+              onMouseEnter={e => e.currentTarget.style.color='white'} 
+              onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}
+            >
+              Cookie Protocols
+            </button>
           </div>
         </div>
+
+        <AnimatePresence>
+          {activeModal && (
+            <PolicyModal type={activeModal} onClose={() => setActiveModal(null)} />
+          )}
+        </AnimatePresence>
       </div>
     </footer>
   );

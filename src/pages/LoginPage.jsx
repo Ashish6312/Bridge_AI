@@ -194,8 +194,8 @@ const LoginPage = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-               <div style={{ width: '100%', background: 'rgba(0,0,0,0.15)', padding: '1px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                  <GoogleLogin onSuccess={handleAuthSuccess} onError={() => setError('Google sign in failed.')} theme="filled_black" shape="pill" width="100%" text={mode === 'login' ? 'signin_with' : 'signup_with'} />
+               <div style={{ width: '100%', background: 'rgba(0,0,0,0.15)', padding: '1px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
+                  <GoogleLogin onSuccess={handleAuthSuccess} onError={() => setError('Google sign in failed.')} theme="filled_black" shape="pill" width={320} text={mode === 'login' ? 'signin_with' : 'signup_with'} />
                </div>
             </div>
           </div>

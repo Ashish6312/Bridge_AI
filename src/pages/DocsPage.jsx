@@ -29,8 +29,8 @@ const SECTIONS = [
   { 
     group: 'GOVERNANCE', 
     items: [
-      { id: 'rights',     icon: <Shield size={18} />,    label: 'Data Rights' },
-      { id: 'support',    icon: <LifeBuoy size={18} />,  label: 'Technical Response' },
+      { id: 'rights',     icon: <Shield size={18} />,    label: 'Data Rights', style: { scrollMarginTop: '120px' } },
+      { id: 'support',    icon: <LifeBuoy size={18} />,  label: 'Technical Response', style: { scrollMarginTop: '120px' } },
     ]
   }
 ];
@@ -49,7 +49,7 @@ const DocsPage = () => {
         }
       });
     }, {
-      rootMargin: '-20% 0px -70% 0px',
+      rootMargin: '-10% 0px -80% 0px',
       threshold: 0
     });
 
@@ -155,6 +155,7 @@ const DocsPage = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            style={{ scrollMarginTop: '120px' }}
           >
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', background: 'rgba(139, 92, 246, 0.08)', borderRadius: '100px', border: '1px solid rgba(139, 92, 246, 0.15)', marginBottom: '24px' }}>
               <Activity size={12} className="premium-gradient-text" />
@@ -190,7 +191,7 @@ const DocsPage = () => {
           {/* Section: Bridge Workflow */}
           <motion.section 
             id="workflow"
-            style={{ marginTop: '160px' }}
+            style={{ marginTop: '160px', scrollMarginTop: '120px' }}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -203,10 +204,45 @@ const DocsPage = () => {
                 { n: '03', title: 'Vault Synchronization', desc: 'Securely store your bridge in the Hub. These are private, encrypted, and accessible only via your authenticated sovereign identity.' },
                 { n: '04', title: 'Relay & Resume', desc: 'Select a target AI (Claude, Gemini, etc.) and "Forge" the bridge. The system dispatches the context so the new AI is immediately operational.' }
               ].map((w, i) => (
-                <div key={i} className="glass-card" style={{ padding: '32px', position: 'relative' }}>
-                  <div style={{ fontSize: '3rem', fontWeight: '900', opacity: 0.1, position: 'absolute', top: '10px', right: '20px' }}>{w.n}</div>
-                  <h4 style={{ fontWeight: '800', marginBottom: '12px', fontSize: '1.2rem' }}>{w.title}</h4>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0, lineHeight: '1.6' }}>{w.desc}</p>
+                <div key={i} className="glass-card" style={{ 
+                  padding: '40px 32px', 
+                  position: 'relative', 
+                  overflow: 'hidden',
+                  background: 'rgba(15, 23, 42, 0.3)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-end',
+                  minHeight: '220px'
+                }}>
+                  <div style={{ 
+                    fontSize: '8rem', 
+                    fontWeight: '900', 
+                    opacity: 0.03, 
+                    position: 'absolute', 
+                    top: '-10px', 
+                    right: '-10px',
+                    lineHeight: 1,
+                    userSelect: 'none',
+                    pointerEvents: 'none',
+                    fontFamily: 'var(--font-heading)'
+                  }}>{w.n}</div>
+                  <h4 style={{ 
+                    fontWeight: '800', 
+                    marginBottom: '16px', 
+                    fontSize: '1.4rem', 
+                    position: 'relative', 
+                    zIndex: 2,
+                    letterSpacing: '-0.02em',
+                    color: 'white'
+                  }}>{w.title}</h4>
+                  <p style={{ 
+                    color: 'var(--text-muted)', 
+                    fontSize: '0.95rem', 
+                    margin: 0, 
+                    lineHeight: '1.7', 
+                    position: 'relative', 
+                    zIndex: 2 
+                  }}>{w.desc}</p>
                 </div>
               ))}
             </div>
@@ -215,7 +251,7 @@ const DocsPage = () => {
           {/* Section: Core Concepts */}
           <motion.section 
             id="concepts" 
-            style={{ marginTop: '160px' }}
+            style={{ marginTop: '160px', scrollMarginTop: '120px' }}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -246,7 +282,7 @@ const DocsPage = () => {
           {/* Section: Market Intelligence */}
           <motion.section 
             id="market" 
-            style={{ marginTop: '160px' }}
+            style={{ marginTop: '160px', scrollMarginTop: '120px' }}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -290,7 +326,7 @@ const DocsPage = () => {
           </motion.section>
 
           {/* Section: Intelligence Modes */}
-          <section id="modes" style={{ marginTop: '160px' }}>
+          <section id="modes" style={{ marginTop: '160px', scrollMarginTop: '120px' }}>
             <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '24px' }}>Intelligence Modes</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.15rem', lineHeight: '1.7', marginBottom: '48px' }}>
               Different tasks require different types of context. Choose the mode that fits your current project:
@@ -316,7 +352,7 @@ const DocsPage = () => {
           </section>
 
           {/* Section: Security */}
-          <section id="vault" style={{ marginTop: '160px' }}>
+          <section id="vault" style={{ marginTop: '160px', scrollMarginTop: '120px' }}>
             <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '24px' }}>Security Architecture</h2>
             <div className="glass-card" style={{ padding: '48px', background: 'rgba(244, 63, 94, 0.04)', border: '1px solid rgba(244, 63, 94, 0.15)', borderRadius: '32px' }}>
               <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
@@ -334,7 +370,7 @@ const DocsPage = () => {
           </section>
 
           {/* Section: API */}
-          <section id="api" style={{ marginTop: '160px' }}>
+          <section id="api" style={{ marginTop: '160px', scrollMarginTop: '120px' }}>
             <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '24px' }}>Developer API</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.15rem', lineHeight: '1.7', marginBottom: '32px' }}>
               Integrate BridgeAI into your own custom tools or CI/CD pipelines using our straightforward REST API.
@@ -350,7 +386,14 @@ const DocsPage = () => {
           </section>
 
           {/* Section: Support */}
-          <section id="support" style={{ marginTop: '160px', paddingBottom: '100px' }}>
+          <section id="rights" style={{ marginTop: '160px', scrollMarginTop: '120px' }}>
+             <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '24px' }}>Data Rights</h2>
+             <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: '1.7', maxWidth: '800px', marginBottom: '48px' }}>
+               You maintain absolute sovereignty over your context data. BridgeAI acts only as a relay; we do not claim ownership or rights to the logic strings captured during your sessions.
+             </p>
+          </section>
+
+          <section id="support" style={{ marginTop: '160px', scrollMarginTop: '120px', paddingBottom: '100px' }}>
              <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '24px' }}>Technical Response</h2>
              <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: '1.7', maxWidth: '800px' }}>
                Need professional assistance? Our response team is available 24/7 for Institutional Tier users. Connect via the Secure Gateway in your dashboard.

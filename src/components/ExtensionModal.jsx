@@ -36,8 +36,8 @@ const ExtensionModal = ({ onClose }) => {
   const [downloaded, setDownloaded] = useState(false);
 
   const handleDownload = () => {
-    // Link to the GitHub repo zip of the extension folder
-    window.open('https://github.com/Ashish6312/Bridge_AI/archive/refs/heads/main.zip', '_blank');
+    // Point to the clean, packaged extension zip in the public folder
+    window.open('/bridgeai-extension.zip', '_blank');
     setDownloaded(true);
   };
 

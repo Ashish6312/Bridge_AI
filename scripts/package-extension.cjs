@@ -9,8 +9,8 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const EXT_DIR = path.join(__dirname, '..', 'extension');
-const OUT_DIR = path.join(__dirname, '..', 'dist-extension');
-const ZIP_NAME = 'BridgeAI-Extension.zip';
+const OUT_DIR = path.join(__dirname, '..', 'public');
+const ZIP_NAME = 'bridgeai-extension.zip';
 
 // Files/folders allowed in the zip — everything else is excluded
 const ALLOWED = [

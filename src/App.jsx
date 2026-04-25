@@ -14,6 +14,7 @@ import DocsPage from './pages/DocsPage';
 import ServicesPage from './pages/ServicesPage';
 import AboutPage from './pages/AboutPage';
 import ProfilePage from './pages/ProfilePage';
+import ExtensionPage from './pages/ExtensionPage';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -30,6 +31,7 @@ const BridgeRoutes = () => {
         <Route path="/docs"      element={<DocsPage />} />
         <Route path="/services"  element={<ServicesPage />} />
         <Route path="/about"     element={<AboutPage />} />
+        <Route path="/extension" element={<ExtensionPage />} />
       </Routes>
     </AnimatePresence>
   );

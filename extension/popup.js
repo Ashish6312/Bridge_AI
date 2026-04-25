@@ -1,5 +1,8 @@
 const PRODUCTION_URL = 'https://bridge-ai-brown.vercel.app';
-let API_BASE = PRODUCTION_URL; // ✅ Always default to production
+const LOCAL_URL      = 'http://localhost:5173';
+const LOCAL_API      = 'http://localhost:5001';
+let API_BASE = PRODUCTION_URL; 
+let WEB_BASE = PRODUCTION_URL;
 let userSession = null;
 
 const MODE_PROMPTS = {
@@ -41,7 +44,13 @@ async function syncUserSession() {
                 userSession = JSON.parse(results[0].result);
                 
                 // Authoritative API Base Detection
-                API_BASE = PRODUCTION_URL;
+                if (t.url.includes('localhost')) {
+                    API_BASE = LOCAL_API;
+                    WEB_BASE = LOCAL_URL;
+                } else {
+                    API_BASE = PRODUCTION_URL;
+                    WEB_BASE = PRODUCTION_URL;
+                }
 
                 console.log('✅ Identity Materialized:', userSession.email, 'linking via', API_BASE);
                 
@@ -143,7 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusResult.textContent = 'Synchronizing with Secure Vault…';
 
             setTimeout(() => {
-                const redirectUrl = `${PRODUCTION_URL}/dashboard?status=success&bridgeId=${data.bridgeData.id}`;
+                const redirectUrl = `${WEB_BASE}/dashboard?status=success&bridgeId=${data.bridgeData.id}`;
                 chrome.tabs.create({ url: redirectUrl });
             }, 800);
 

@@ -185,7 +185,7 @@ const ServicesPage = () => {
             <motion.div whileHover={{ y: -8 }} className="glass-card" style={{ padding: '48px 32px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
               <h4 style={{ color: 'var(--text-muted)', fontSize: '0.9rem', letterSpacing: '2px', fontWeight: '800', marginBottom: '24px' }}>SOVEREIGN FREE</h4>
               <div style={{ marginBottom: '32px' }}>
-                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'white' }}>$0</span>
+                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'white' }}>₹0</span>
                 <span style={{ color: 'var(--text-muted)' }}>/forever</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -212,7 +212,7 @@ const ServicesPage = () => {
               {(!user?.plan || user.plan === 'free') && <div style={{ position: 'absolute', top: '16px', right: '16px', background: 'var(--gradient-1)', color: 'white', padding: '4px 12px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800' }}>MOST ANALYZED</div>}
               <h4 style={{ color: 'var(--primary)', fontSize: '0.9rem', letterSpacing: '2px', fontWeight: '800', marginBottom: '24px' }}>ANALYST PRO</h4>
               <div style={{ marginBottom: '32px' }}>
-                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'white' }}>$19</span>
+                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'white' }}>₹499</span>
                 <span style={{ color: 'var(--text-muted)' }}>/month</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -222,7 +222,7 @@ const ServicesPage = () => {
                 <li style={{ display: 'flex', gap: '10px', fontSize: '0.95rem' }}><CheckIcon color="#8b5cf6" /> Project Memory Folders</li>
               </ul>
               <button 
-                onClick={() => handlePurchaseClick('pro', 19.00)}
+                onClick={() => handlePurchaseClick('pro', 499)}
                 disabled={upgrading === 'pro' || user?.plan === 'pro' || user?.plan === 'infinite'}
                 className="btn-primary" style={{ width: '100%', padding: '16px', justifyContent: 'center' }}
               >
@@ -238,7 +238,7 @@ const ServicesPage = () => {
               {(user?.plan === 'infinite') && <div style={{ position: 'absolute', top: '16px', right: '16px', background: '#10b981', color: 'white', padding: '4px 12px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800' }}>ACTIVE</div>}
               <h4 style={{ color: 'var(--secondary)', fontSize: '0.9rem', letterSpacing: '2px', fontWeight: '800', marginBottom: '24px' }}>INFINITE HUB</h4>
               <div style={{ marginBottom: '32px' }}>
-                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'white' }}>$49</span>
+                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'white' }}>₹1,999</span>
                 <span style={{ color: 'var(--text-muted)' }}>/month</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -248,7 +248,7 @@ const ServicesPage = () => {
                 <li style={{ display: 'flex', gap: '10px', fontSize: '0.95rem' }}><CheckIcon color="#06b6d4" /> 24/7 Sovereign Support</li>
               </ul>
               <button 
-                onClick={() => handlePurchaseClick('infinite', 49.00)}
+                onClick={() => handlePurchaseClick('infinite', 1999)}
                 disabled={upgrading === 'infinite' || user?.plan === 'infinite'}
                 className="btn-secondary" style={{ width: '100%', padding: '16px', justifyContent: 'center' }}
               >
@@ -314,7 +314,7 @@ const ServicesPage = () => {
             </div>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '16px', color: 'white' }}>Mock Payment Gateway</h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
-              You are about to purchase the <strong>{confirmModal.planKey.toUpperCase()}</strong> plan for <strong style={{ color: 'white' }}>${confirmModal.amount}</strong>.
+              You are about to purchase the <strong>{confirmModal.planKey.toUpperCase()}</strong> plan for <strong style={{ color: 'white' }}>₹{confirmModal.amount.toLocaleString('en-IN')}</strong>.
               <br/><br/>
               This is a sandbox environment. Your plan will be automatically applied and database will be updated.
             </p>
@@ -331,7 +331,7 @@ const ServicesPage = () => {
                 onClick={handlePurchaseConfirm}
                 style={{ flex: 1, padding: '14px', justifyContent: 'center' }}
               >
-                Pay ${confirmModal.amount}
+                Pay ₹{confirmModal.amount.toLocaleString('en-IN')}
               </button>
             </div>
           </motion.div>

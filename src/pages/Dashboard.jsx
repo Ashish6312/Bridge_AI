@@ -24,6 +24,71 @@ const formatTime = (dateString) => {
   }).format(new Date(dateString));
 };
 
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
+  if (!isOpen) return null;
+  return (
+    <div style={{ 
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+      background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000
+    }}>
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        style={{ 
+          background: 'rgba(15, 23, 42, 0.95)', padding: '32px', borderRadius: '32px',
+          border: '1px solid rgba(255,255,255,0.08)', width: '90%', maxWidth: '440px',
+          boxShadow: '0 40px 100px -20px rgba(0,0,0,0.8)'
+        }}
+      >
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', marginBottom: '12px' }}>{title}</h2>
+        <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: '1.6', marginBottom: '32px' }}>{message}</p>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <button onClick={onClose} className="btn-secondary" style={{ flex: 1, padding: '14px', borderRadius: '16px' }}>Cancel</button>
+          <button onClick={() => { onConfirm(); onClose(); }} className="btn-primary" style={{ flex: 1, padding: '14px', borderRadius: '16px', background: '#f43f5e' }}>Confirm Delete</button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const PromptModal = ({ isOpen, onClose, onSubmit, title, label, placeholder }) => {
+  const [value, setValue] = useState('');
+  if (!isOpen) return null;
+  return (
+    <div style={{ 
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+      background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000
+    }}>
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        style={{ 
+          background: 'rgba(15, 23, 42, 0.95)', padding: '32px', borderRadius: '32px',
+          border: '1px solid rgba(255,255,255,0.08)', width: '90%', maxWidth: '440px',
+          boxShadow: '0 40px 100px -20px rgba(0,0,0,0.8)'
+        }}
+      >
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', marginBottom: '12px' }}>{title}</h2>
+        <div style={{ marginBottom: '32px' }}>
+          <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '900', color: 'var(--primary)', letterSpacing: '1px', marginBottom: '10px' }}>{label.toUpperCase()}</label>
+          <input 
+            autoFocus
+            type="text" 
+            value={value} 
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if(e.key === 'Enter') { onSubmit(value); onClose(); } }}
+            placeholder={placeholder}
+            className="input-premium"
+            style={{ width: '100%', padding: '16px', fontSize: '1.1rem' }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <button onClick={onClose} className="btn-secondary" style={{ flex: 1, padding: '14px', borderRadius: '16px' }}>Cancel</button>
+          <button onClick={() => { onSubmit(value); onClose(); }} className="btn-primary" style={{ flex: 1, padding: '14px', borderRadius: '16px' }}>Initialize</button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const ForgeModal = ({ isOpen, onClose, context, onDispatch }) => {
   const [url, setUrl] = useState('https://');
   const [error, setError] = useState('');
@@ -205,7 +270,7 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData }) => {
             </button>
           </div>
         </div>
-        <button onClick={() => onDelete(ctx.id)} style={{ background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', opacity: 0.6 }}>Delete</button>
+        <button onClick={() => onDelete(ctx.id)} style={{ background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', opacity: 0.6, fontSize: '0.85rem', fontWeight: '700' }}>Delete</button>
       </div>
 
       <div style={{ 
@@ -539,6 +604,9 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ totalBridges: 0, totalTokens: 0, plan: 'free', usageCount: 0 });
   const [scrollProgress, setScrollProgress] = useState(0);
 
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
+  const [promptModal, setPromptModal] = useState({ isOpen: false });
+
   useEffect(() => {
     const handleScroll = () => {
       const height = document.documentElement.scrollHeight - window.innerHeight;
@@ -591,9 +659,14 @@ const Dashboard = () => {
     
     // Attempt sync immediately and on visibility (covers tab switching)
     syncWithExtension();
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') syncWithExtension();
-    });
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncWithExtension();
+        loadData(); // Real-time update when switching back to dashboard
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [navigate]);
 
   const triggerToast = (msg) => {
@@ -681,24 +754,30 @@ const Dashboard = () => {
     window.addEventListener('storage', handleStorage);
     window.addEventListener('bridge-vault-update', loadData);
     
-    // Safety check on mount only
+    // Safety check on mount
     loadData();
+
+    // ─── Real-Time Pulse ──────────────────────────────────
+    // Keep the Hub synchronized with the backend every 15s
+    const pulseInterval = setInterval(() => {
+      loadData();
+    }, 15000);
 
     return () => {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('bridge-vault-update', loadData);
+      clearInterval(pulseInterval);
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     };
   }, []);
 
-  const handleCreateProject = () => {
-    const name = prompt('Project Name:');
+  const handleCreateProject = (name) => {
     if (!name) return;
     const newProject = { id: 'proj_' + Date.now(), name, created_at: new Date().toISOString() };
     const updated = [...projects, newProject];
     setProjects(updated);
     localStorage.setItem('bridge_projects', JSON.stringify(updated));
-    triggerToast(`Project "${name}" created!`);
+    triggerToast(`Vault "${name}" successfully initialized.`);
   };
 
   const filteredBridges = bridges.filter(b => {
@@ -716,19 +795,20 @@ const Dashboard = () => {
   const olderBridges   = filteredBridges.filter(b => !isRecent(b.created_at));
   const historyBridges = olderBridges;
 
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
+    const id = confirmModal.id;
+    if (!id) return;
     try {
-      if (!confirm('Are you sure you want to delete this bridge from the vault?')) return;
       const res = await fetch(`${API_BASE}/api/bridge/${id}`, {
         method: 'DELETE'
       });
       const data = await res.json();
       if (data.success) {
-        triggerToast('Bridge deleted from hub.');
+        triggerToast('Bridge successfully expunged from Vault.');
         loadData();
       }
     } catch (err) {
-      triggerToast('Failed to delete bridge.');
+      triggerToast('Protocol failure: Could not delete bridge.');
     }
   };
 
@@ -837,18 +917,18 @@ const Dashboard = () => {
             </button>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
                 <button 
-                  onClick={handleCreateProject}
+                  onClick={() => setPromptModal({ isOpen: true })}
                   className="btn-secondary" 
-                  style={{ flex: 1, justifyContent: 'center', padding: '12px', fontSize: '0.85rem' }}
+                  style={{ flex: 1, justifyContent: 'center', padding: '14px', fontSize: '0.85rem', fontWeight: '800', borderRadius: '16px' }}
                 >
-                  <Layers size={16} /> New Project
+                  <Layers size={18} /> New Project
                 </button>
                 <button 
                   onClick={refreshVault}
                   className="btn-secondary"
-                  style={{ flex: 1, justifyContent: 'center', padding: '12px', fontSize: '0.85rem' }}
+                  style={{ flex: 1, justifyContent: 'center', padding: '14px', fontSize: '0.85rem', fontWeight: '800', borderRadius: '16px' }}
                 >
-                  <RefreshCw size={16} /> Refresh
+                  <RefreshCw size={18} /> Refresh
                 </button>
             </div>
 
@@ -1016,13 +1096,29 @@ const Dashboard = () => {
                       TODAY
                     </div>
                   )}
-                  {recentBridges.map(ctx => <BridgeCard key={ctx.id} ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} onDelete={handleDelete} onForge={handleForge} loadData={loadData} />)}
+                  {recentBridges.map(ctx => (
+                    <BridgeCard 
+                      key={ctx.id} 
+                      ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} 
+                      onDelete={(id) => setConfirmModal({ isOpen: true, id })} 
+                      onForge={handleForge} 
+                      loadData={loadData} 
+                    />
+                  ))}
                   {olderBridges.length > 0 && (
                     <div style={{ fontSize: '0.72rem', fontWeight: '700', letterSpacing: '1.5px', color: 'var(--text-muted)', paddingLeft: '4px', marginTop: '8px' }}>
                       EARLIER
                     </div>
                   )}
-                  {olderBridges.map(ctx => <BridgeCard key={ctx.id} ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} onDelete={handleDelete} onForge={handleForge} loadData={loadData} />)}
+                  {olderBridges.map(ctx => (
+                    <BridgeCard 
+                      key={ctx.id} 
+                      ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} 
+                      onDelete={(id) => setConfirmModal({ isOpen: true, id })} 
+                      onForge={handleForge} 
+                      loadData={loadData} 
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="glass-card" style={{ padding: '64px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -1280,16 +1376,16 @@ const Dashboard = () => {
             position: 'fixed',
             bottom: '40px',
             right: '40px',
-            background: 'var(--glass)',
+            background: 'rgba(15, 23, 42, 0.8)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(139, 92, 246, 0.4)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
             padding: '16px 24px',
-            borderRadius: '16px',
+            borderRadius: '20px',
             color: 'white',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            boxShadow: '0 10px 40px rgba(139, 92, 246, 0.2)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
             zIndex: 9999
           }}
         >
@@ -1297,11 +1393,30 @@ const Dashboard = () => {
             <CheckCircle2 size={24} />
           </div>
           <div>
-            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Success</h4>
+            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Success</h4>
             <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>{toast}</p>
           </div>
         </motion.div>
       )}
+
+      {/* Modern Confirmation Modal */}
+      <ConfirmationModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, id: null })}
+        onConfirm={handleDelete}
+        title="Expunge Intelligence?"
+        message="Are you sure you want to permanently remove this context bridge from your Sovereign Vault? This action cannot be reversed."
+      />
+
+      {/* Modern Prompt Modal */}
+      <PromptModal 
+        isOpen={promptModal.isOpen}
+        onClose={() => setPromptModal({ isOpen: false })}
+        onSubmit={handleCreateProject}
+        title="Initialize New Project"
+        label="Project Identity"
+        placeholder="e.g. Project 'Sovereign-X'..."
+      />
 
       {/* Universal Forge Modal */}
       <ForgeModal 

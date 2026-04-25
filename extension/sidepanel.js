@@ -1,5 +1,8 @@
 const PRODUCTION_URL = 'https://bridge-ai-brown.vercel.app';
+const LOCAL_URL      = 'http://localhost:5173';
+const LOCAL_API      = 'http://localhost:5001';
 let API_BASE = PRODUCTION_URL; 
+let WEB_BASE = PRODUCTION_URL;
 let userSession = null;
 let capturedData = null;
 let currentMode = 'quick';
@@ -31,8 +34,17 @@ async function syncUserSession() {
             
             if (results?.[0]?.result) {
                 userSession = JSON.parse(results[0].result);
+                // Intelligent Environment Detection
+                if (t.url.includes('localhost')) {
+                    API_BASE = LOCAL_API;
+                    WEB_BASE = LOCAL_URL;
+                } else {
+                    API_BASE = PRODUCTION_URL;
+                    WEB_BASE = PRODUCTION_URL;
+                }
+                
                 // Persist it for standalone use
-                chrome.storage.local.set({ bridge_user: userSession });
+                chrome.storage.local.set({ bridge_user: userSession, api_base: API_BASE, web_base: WEB_BASE });
                 updateUIWithSession(userSession);
                 return true;
             }
