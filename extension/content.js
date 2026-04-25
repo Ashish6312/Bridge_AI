@@ -195,6 +195,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ data: null, error: e.message || 'Unknown extraction error' });
     }
   }
+  if (request.action === 'VAULT_UPDATED') {
+    window.dispatchEvent(new CustomEvent('bridge-vault-update'));
+    return;
+  }
   return true;
 });
 

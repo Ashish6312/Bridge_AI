@@ -13,6 +13,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     chrome.sidePanel.open({ tabId: sender.tab.id });
   }
+
+  if (request.action === 'VAULT_UPDATED') {
+    // Broadcast to all BridgeAI tabs to refresh their dashboard
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach(tab => {
+        if (tab.url && tab.url.includes('bridge-ai-brown.vercel.app')) {
+          chrome.tabs.sendMessage(tab.id, { action: 'VAULT_UPDATED' });
+        }
+      });
+    });
+  }
 });
 
 // Real-Time External Sync (Direct Link from Website)

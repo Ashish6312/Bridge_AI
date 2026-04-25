@@ -324,6 +324,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await res.json();
             if (result.success) {
                 bridgeBtn.textContent = '✅ SAVED';
+                
+                // Notify Dashboard to refresh real-time
+                chrome.runtime.sendMessage({ action: 'VAULT_UPDATED' });
+
                 setTimeout(() => {
                     bridgeBtn.disabled = false;
                     bridgeBtn.innerHTML = 'Save to My Account';
