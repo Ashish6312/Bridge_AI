@@ -73,26 +73,37 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
 });
 
 function updateUIWithSession(session) {
-    document.getElementById('user-email').textContent = session.email;
-    document.getElementById('user-initial').textContent = session.email[0].toUpperCase();
-    document.getElementById('sync-status').textContent = 'Relay Secure';
-    document.getElementById('sync-status').style.color = '#4ade80';
+    const infoContainer = document.getElementById('user-info-container');
+    const loginContainer = document.getElementById('login-container');
 
-    // Enforce Plan Limits
-    const isFree = (session.plan || 'free') === 'free';
-    document.querySelectorAll('.mode-item').forEach(item => {
-        if (item.dataset.mode !== 'quick') {
-            if (isFree) {
-                item.style.opacity = '0.3';
-                item.style.cursor = 'not-allowed';
-                item.title = 'Upgrade to Pro to unlock';
-            } else {
-                item.style.opacity = '1';
-                item.style.cursor = 'pointer';
-                item.title = '';
+    if (session && session.email) {
+        infoContainer.style.display = 'flex';
+        loginContainer.style.display = 'none';
+        
+        document.getElementById('user-email').textContent = session.email;
+        document.getElementById('user-initial').textContent = session.email[0].toUpperCase();
+        document.getElementById('sync-status').textContent = 'Relay Secure';
+        document.getElementById('sync-status').style.color = '#4ade80';
+
+        // Enforce Plan Limits
+        const isFree = (session.plan || 'free') === 'free';
+        document.querySelectorAll('.mode-item').forEach(item => {
+            if (item.dataset.mode !== 'quick') {
+                if (isFree) {
+                    item.style.opacity = '0.3';
+                    item.style.cursor = 'not-allowed';
+                    item.title = 'Upgrade to Pro to unlock';
+                } else {
+                    item.style.opacity = '1';
+                    item.style.cursor = 'pointer';
+                    item.title = '';
+                }
             }
-        }
-    });
+        });
+    } else {
+        infoContainer.style.display = 'none';
+        loginContainer.style.display = 'block';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -136,9 +147,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Persistent Sync: Poll for session/platform changes every 3 seconds
     // This handles login/logout on the website without refresh
     setInterval(async () => {
-        await syncUserSession();
+        const synced = await syncUserSession();
+        if (!synced && !userSession) {
+            updateUIWithSession(null);
+        }
         await updatePlatformUI();
     }, 3000);
+
+    // Login Action
+    document.getElementById('sidepanel-login-btn').addEventListener('click', () => {
+        chrome.tabs.create({ url: `${PRODUCTION_URL}/login?redirect=dashboard` });
+    });
 
     // Mode Selection
     document.querySelectorAll('.mode-item').forEach(item => {
