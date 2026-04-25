@@ -246,7 +246,7 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="glass-card" style={{ padding: '24px', borderLeft: '4px solid var(--primary)' }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
@@ -872,7 +872,7 @@ const Dashboard = () => {
                     <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '700' }}>BRIDGES</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'white' }}>{(stats.totalTokens || 0).toLocaleString()}</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'white' }}>{Math.round(stats.totalTokens || 0).toLocaleString()}</div>
                     <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '700' }}>TOKENS</div>
                   </div>
                 </div>
@@ -1027,7 +1027,7 @@ const Dashboard = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {showSuccess && (
                 <motion.div 
-                  initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   style={{
                     background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)',
                     padding: '16px 24px', borderRadius: '16px', marginBottom: '32px',
@@ -1081,13 +1081,13 @@ const Dashboard = () => {
                 {[
                   { label: 'Total Bridges', val: stats.totalBridges || 0, icon: <Layers size={18} /> },
                   { label: 'Intelligence Ratio', val: '99.4%', icon: <Zap size={18} /> },
-                  { label: 'Context Tokens', val: (stats.totalTokens || 0).toLocaleString(), icon: <Database size={18} /> },
+                  { label: 'Context Tokens', val: Math.round(stats.totalTokens || 0).toLocaleString(), icon: <Database size={18} /> },
                   { label: 'Active Vaults', val: projects.length, icon: <Folder size={18} /> }
                 ].map((s, i) => (
                   <motion.div 
                     key={i} 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 + (i * 0.1) }}
                     className="glass-card" 
                     style={{ padding: '24px', textAlign: 'center' }}
@@ -1164,8 +1164,8 @@ const Dashboard = () => {
           {activeTab === 'extension' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 style={{ marginBottom: '32px' }}
               >
                 <h1 style={{ fontSize: '2rem', fontWeight: '800', color: 'white', marginBottom: '8px' }}>Operational Hub</h1>
@@ -1412,7 +1412,7 @@ const Dashboard = () => {
       {/* Modern SaaS Toast Notification */}
       {toast && (
         <motion.div 
-          initial={{ opacity: 0, y: 50, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20 }}
           style={{
