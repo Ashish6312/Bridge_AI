@@ -369,22 +369,30 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
             {showExport && stats.plan === 'infinite' && (
               <div style={{
                 position: 'absolute', bottom: '110%', left: 0,
-                background: '#1e293b', border: '1px solid var(--glass-border)',
-                borderRadius: '10px', padding: '6px', zIndex: 50, minWidth: '160px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+                background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '16px', padding: '8px', zIndex: 100, minWidth: '200px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
               }}>
                 {[
                   { fmt: 'markdown', label: '📄 Markdown (.md)' },
                   { fmt: 'json',     label: '🗂 JSON (.json)' },
                   { fmt: 'prompt',   label: '⚡ Prompt Pack (.txt)' },
                 ].map(({ fmt, label }) => (
-                  <button key={fmt} onClick={() => { exportBridge(ctx, fmt); setShowExport(false); }}
-                    style={{ display: 'block', width: '100%', background: 'transparent', border: 'none',
-                      color: 'var(--text-muted)', padding: '8px 12px', textAlign: 'left', cursor: 'pointer',
-                      borderRadius: '6px', fontSize: '0.85rem' }}
-                    onMouseEnter={e => e.target.style.background='rgba(255,255,255,0.05)'}
+                  <button 
+                    key={fmt} 
+                    onClick={() => { exportBridge(ctx, fmt); setShowExport(false); }}
+                    style={{ 
+                      display: 'block', width: '100%', background: 'transparent', border: 'none',
+                      color: 'white', padding: '12px 16px', textAlign: 'left', cursor: 'pointer',
+                      borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600',
+                      transition: 'background 0.2s' 
+                    }}
+                    onMouseEnter={e => e.target.style.background='rgba(255,255,255,0.08)'}
                     onMouseLeave={e => e.target.style.background='transparent'}
-                  >{label}</button>
+                  >
+                    {label}
+                  </button>
                 ))}
               </div>
             )}

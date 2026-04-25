@@ -200,10 +200,36 @@ app.post('/api/summarize', async (req, res) => {
     });
 
     const formattedChat = messages.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n\n');
-    const id = 'brid_' + Date.now().toString(36);
+    
+    // ── AI Distillation Protocol ──────────────────────────────
+    console.log(`[PROTOCOL] Initiating AI distillation for mode: ${finalMode}`);
+    
+    const PROMPTS = {
+      quick:     'Provide a brief, high-level TL;DR summary (3-5 bullet points) of this conversation.',
+      developer: 'Extract technical context: 1. Goal 2. Tech Stack 3. Implementation Details 4. Blockers.',
+      research:  'Distill into research notes: 1. Core Thesis 2. Evidence/Data 3. Key Findings 4. References.',
+      study:     'Convert to study guide: 1. Main Topic 2. Key Concepts 3. Definition of Terms 4. Summary.',
+      project:   'Summarize as project update: 1. Current Status 2. Milestone Progress 3. Risks 4. Next Actions.'
+    };
 
+    const distillationResponse = await fetch('https://text.pollinations.ai/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: `You are an expert intelligence analyst. ${PROMPTS[finalMode] || PROMPTS.quick} Output ONLY the summary in professional markdown.` },
+          { role: 'user', content: formattedChat.substring(0, 8000) }
+        ],
+        model: 'openai',
+        seed: Date.now()
+      })
+    });
+
+    const aiSummary = await distillationResponse.text();
     const summaryHeader = `### ${finalMode.toUpperCase()} INTELLIGENCE LOG [${platform.toUpperCase()}]\n\n`;
-    const summary = `${summaryHeader}${formattedChat}`;
+    const summary = `${summaryHeader}${aiSummary.trim()}`;
+    
+    const id = 'brid_' + Date.now().toString(36);
     
     const query = `
       INSERT INTO bridges (id, user_email, title, source, summary, chat_log, tokens, snippets, mode) 
@@ -215,7 +241,6 @@ app.post('/api/summarize', async (req, res) => {
       await pool.query(query, values);
     } catch (dbErr) {
       if (dbErr.message.includes('column "mode"') || dbErr.code === '42703') {
-        // Fallback Schema Migration on-the-fly
         await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS mode VARCHAR(20) DEFAULT \'quick\'');
         await pool.query(query, values);
       } else {
@@ -223,7 +248,7 @@ app.post('/api/summarize', async (req, res) => {
       }
     }
 
-    res.json({ success: true, bridgeData: { id, title, summary, mode } });
+    res.json({ success: true, bridgeData: { id, title, summary, mode: finalMode } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
