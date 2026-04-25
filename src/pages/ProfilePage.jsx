@@ -36,12 +36,29 @@ const ProfilePage = () => {
     if (stored) {
       const userData = JSON.parse(stored);
       setUser(userData);
+      syncUserStatus(userData.email);
       fetchInvoices(userData.email);
       fetchStats(userData.email);
       fetchSettings(userData.email);
     }
     setLoading(false);
   }, []);
+
+  const syncUserStatus = async (email) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/user/status?email=${email}`);
+      const data = await res.json();
+      if (data.success) {
+        const stored = localStorage.getItem('bridge_user');
+        const userData = JSON.parse(stored);
+        if (userData.plan !== data.plan) {
+          const updatedUser = { ...userData, plan: data.plan };
+          localStorage.setItem('bridge_user', JSON.stringify(updatedUser));
+          setUser(updatedUser);
+        }
+      }
+    } catch (err) { console.error("Status sync error:", err); }
+  };
 
   const fetchSettings = async (email) => {
     try {
@@ -139,6 +156,14 @@ const ProfilePage = () => {
                 <span style={{ padding: '4px 12px', borderRadius: '100px', background: 'rgba(139, 92, 246, 0.1)', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: '800', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
                   {user.plan?.toUpperCase() || 'FREE'} ANALYST
                 </span>
+                <div style={{ 
+                  display: 'flex', alignItems: 'center', gap: '6px', 
+                  padding: '4px 10px', background: 'rgba(16, 185, 129, 0.1)', 
+                  border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px',
+                  color: '#10b981', fontSize: '0.65rem', fontWeight: '700'
+                }}>
+                  <ShieldCheck size={12} /> VERIFIED BY HUB DB
+                </div>
               </div>
               <p style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', margin: 0 }}>
                 <Mail size={16} /> {user.email}

@@ -880,11 +880,16 @@ const Dashboard = () => {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800' }}>SOVEREIGN QUOTA</span>
-                  <span style={{ 
-                    fontSize: '0.65rem', padding: '4px 10px', borderRadius: '6px', 
-                    background: stats.plan === 'infinite' ? 'var(--gradient-1)' : 'rgba(255,255,255,0.05)',
-                    color: 'white', fontWeight: '900', border: '1px solid rgba(255,255,255,0.1)'
-                  }}>{(stats.plan || 'FREE').toUpperCase()}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <span style={{ 
+                      fontSize: '0.65rem', padding: '4px 10px', borderRadius: '6px', 
+                      background: stats.plan === 'infinite' ? 'var(--gradient-1)' : 'rgba(255,255,255,0.05)',
+                      color: 'white', fontWeight: '900', border: '1px solid rgba(255,255,255,0.1)'
+                    }}>{(stats.plan || 'FREE').toUpperCase()}</span>
+                    <div style={{ fontSize: '0.55rem', color: '#10b981', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                       <CheckCircle2 size={10} /> DB SYNCED
+                    </div>
+                  </div>
                 </div>
                 <div style={{ height: '8px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden', margin: '12px 0' }}>
                    <motion.div 

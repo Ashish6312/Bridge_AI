@@ -195,10 +195,11 @@ const ServicesPage = () => {
                 <li style={{ display: 'flex', gap: '10px', fontSize: '0.95rem', opacity: 0.4 }}><XIcon /> Multi-Chat Merge</li>
               </ul>
               <button 
-                disabled={true}
-                className="btn-secondary" style={{ width: '100%', padding: '16px', justifyContent: 'center', opacity: 0.5 }}
+                onClick={() => handlePurchaseClick('free', 0)}
+                disabled={upgrading === 'free' || user?.plan === 'free'}
+                className="btn-secondary" style={{ width: '100%', padding: '16px', justifyContent: 'center', opacity: user?.plan === 'free' ? 0.5 : 1 }}
               >
-                Default Enrollment
+                {upgrading === 'free' ? "Enrolling..." : (user?.plan === 'free' || !user?.plan) ? "Current Plan" : "Enroll in Free"}
               </button>
             </motion.div>
 
@@ -223,10 +224,10 @@ const ServicesPage = () => {
               </ul>
               <button 
                 onClick={() => handlePurchaseClick('pro', 499)}
-                disabled={upgrading === 'pro' || user?.plan === 'pro' || user?.plan === 'infinite'}
+                disabled={upgrading === 'pro' || user?.plan === 'pro'}
                 className="btn-primary" style={{ width: '100%', padding: '16px', justifyContent: 'center' }}
               >
-                {upgrading === 'pro' ? "Processing..." : (user?.plan === 'pro' || user?.plan === 'infinite') ? "Plan Active" : "Forge Pro Bridge"}
+                {upgrading === 'pro' ? "Processing..." : (user?.plan === 'pro') ? "Current Plan" : (user?.plan === 'infinite' ? "Switch to Pro" : "Forge Pro Bridge")}
               </button>
             </motion.div>
 
@@ -252,7 +253,7 @@ const ServicesPage = () => {
                 disabled={upgrading === 'infinite' || user?.plan === 'infinite'}
                 className="btn-secondary" style={{ width: '100%', padding: '16px', justifyContent: 'center' }}
               >
-                {upgrading === 'infinite' ? "Processing..." : (user?.plan === 'infinite') ? "Plan Active" : "Materialize Infinite"}
+                {upgrading === 'infinite' ? "Processing..." : (user?.plan === 'infinite') ? "Current Plan" : "Materialize Infinite"}
               </button>
             </motion.div>
 
@@ -314,7 +315,11 @@ const ServicesPage = () => {
             </div>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '16px', color: 'white' }}>Mock Payment Gateway</h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
-              You are about to purchase the <strong>{confirmModal.planKey.toUpperCase()}</strong> plan for <strong style={{ color: 'white' }}>₹{confirmModal.amount.toLocaleString('en-IN')}</strong>.
+              {confirmModal.amount === 0 ? (
+                <>You are about to enroll in the <strong>{confirmModal.planKey.toUpperCase()}</strong> plan.</>
+              ) : (
+                <>You are about to purchase the <strong>{confirmModal.planKey.toUpperCase()}</strong> plan for <strong style={{ color: 'white' }}>₹{confirmModal.amount.toLocaleString('en-IN')}</strong>.</>
+              )}
               <br/><br/>
               This is a sandbox environment. Your plan will be automatically applied and database will be updated.
             </p>
@@ -331,7 +336,7 @@ const ServicesPage = () => {
                 onClick={handlePurchaseConfirm}
                 style={{ flex: 1, padding: '14px', justifyContent: 'center' }}
               >
-                Pay ₹{confirmModal.amount.toLocaleString('en-IN')}
+                {confirmModal.amount === 0 ? "Confirm Enrollment" : `Pay ₹${confirmModal.amount.toLocaleString('en-IN')}`}
               </button>
             </div>
           </motion.div>

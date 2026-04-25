@@ -359,7 +359,7 @@ app.post('/api/user/upgrade', async (req, res) => {
 app.post('/api/user/purchase', async (req, res) => {
   try {
     const { email, plan, amount } = req.body;
-    if (!['pro', 'infinite'].includes(plan)) return res.status(400).json({ error: "Invalid plan selection." });
+    if (!['free', 'pro', 'infinite'].includes(plan)) return res.status(400).json({ error: "Invalid plan selection." });
 
     // Validate User Existence
     const userRes = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
