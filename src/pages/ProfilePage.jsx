@@ -31,17 +31,48 @@ const ProfilePage = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [settingsForm, setSettingsForm] = useState({ notifications: true, autoBridge: false, secureMode: true });
 
-  useEffect(() => {
+  const loadAllData = async (isSilent = false) => {
     const stored = localStorage.getItem('bridge_user');
-    if (stored) {
-      const userData = JSON.parse(stored);
-      setUser(userData);
-      syncUserStatus(userData.email);
-      fetchInvoices(userData.email);
-      fetchStats(userData.email);
-      fetchSettings(userData.email);
+    if (!stored) return;
+    const userData = JSON.parse(stored);
+    setUser(userData);
+    
+    if (!isSilent) setLoading(true);
+    
+    try {
+      await Promise.all([
+        syncUserStatus(userData.email),
+        fetchInvoices(userData.email),
+        fetchStats(userData.email),
+        fetchSettings(userData.email)
+      ]);
+    } catch (err) {
+      console.error("Real-time Profile Sync Failed:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadAllData(false);
+
+    // ─── Real-Time Pulse ──────────────────────────────────
+    const pulseInterval = setInterval(() => {
+      loadAllData(true);
+    }, 30000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadAllData(true);
+      }
+    };
+    
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(pulseInterval);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const syncUserStatus = async (email) => {
