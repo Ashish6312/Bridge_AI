@@ -55,20 +55,34 @@ function extractChat() {
   });
 
   // 2. Generic Data Extraction (For sites like Internship Portal)
-  if (messages.length < 2) {
-    const inputs = document.querySelectorAll('input[type="text"], input[type="email"], textarea');
+  if (messages.length < 5) {
+    // Grab Meta Description
+    const metaDesc = document.querySelector('meta[name="description"]')?.content;
+    if (metaDesc) messages.push({ role: 'system_metadata', text: `Description: ${metaDesc}` });
+
+    // Grab all inputs
+    const inputs = document.querySelectorAll('input[type="text"], input[type="email"], textarea, [role="textbox"]');
     inputs.forEach(input => {
-        if (input.value && input.value.trim().length > 0) {
-            const label = document.querySelector(`label[for="${input.id}"]`) || input.placeholder || input.name;
-            messages.push({ role: 'system_data', text: `${label}: ${input.value}` });
+        const val = input.value || input.innerText;
+        if (val && val.trim().length > 0) {
+            const label = document.querySelector(`label[for="${input.id}"]`) || input.placeholder || input.name || 'Field';
+            messages.push({ role: 'system_data', text: `${label}: ${val.trim()}` });
         }
     });
     
-    // Also grab important headings as context
-    const headings = document.querySelectorAll('h1, h2, h3');
+    // Grab all headings for semantic context
+    const headings = document.querySelectorAll('h1, h2, h3, h4, h5');
     headings.forEach(h => {
-        if (h.innerText.length > 5) {
-            messages.push({ role: 'context_heading', text: h.innerText });
+        if (h.innerText.trim().length > 3) {
+            messages.push({ role: 'context_heading', text: h.innerText.trim() });
+        }
+    });
+
+    // Grab lists/tables
+    const lists = document.querySelectorAll('li, td');
+    lists.forEach(l => {
+        if (l.innerText.trim().length > 10 && l.innerText.trim().length < 200) {
+            messages.push({ role: 'list_item', text: l.innerText.trim() });
         }
     });
   }

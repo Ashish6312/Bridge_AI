@@ -231,10 +231,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         analysisView.style.display = 'block';
         dataContainer.innerHTML = '';
 
+        const platform = data.platform.toLowerCase();
+        const isAI = ['chatgpt', 'gemini', 'claude', 'perplexity'].some(s => platform.includes(s));
+        
         const points = [
-            { label: 'SOURCE', value: data.platform },
-            { label: 'SESSION TITLE', value: data.title },
-            { label: 'DATA VOLUME', value: `${data.messages.length} messages saved` }
+            { label: 'Intelligence Source', value: data.platform },
+            { label: 'Context Title', value: data.title },
+            { 
+                label: isAI ? 'Conversation Depth' : 'Intelligence Signals', 
+                value: isAI ? `${data.messages.length} messages captured` : `${data.messages.length} data points extracted` 
+            }
         ];
 
         points.forEach(p => {
