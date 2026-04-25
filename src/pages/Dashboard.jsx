@@ -742,7 +742,7 @@ const Dashboard = () => {
     try {
       window.dispatchEvent(new CustomEvent('RELOAD_EXTENSION'));
     } catch (e) {}
-    triggerToast(`Sovereign Hub & Extension Refreshed.`);
+    // Internal sync: No toast to keep UI clean
   };
 
   useEffect(() => {

@@ -95,16 +95,20 @@ function updateUIWithSession(session) {
         document.getElementById('sync-status').style.color = '#4ade80';
 
         // Enforce Plan Limits
-        const isFree = (session.plan || 'free') === 'free';
+        const plan = (session.plan || 'free').toLowerCase();
+        const isUnlimited = plan === 'pro' || plan === 'infinite';
+        
         document.querySelectorAll('.mode-item').forEach(item => {
             if (item.dataset.mode !== 'quick') {
-                if (isFree) {
+                if (!isUnlimited) {
                     item.style.opacity = '0.3';
                     item.style.cursor = 'not-allowed';
-                    item.title = 'Upgrade to Pro to unlock';
+                    item.classList.add('locked-mode');
+                    item.title = 'Upgrade to unlock advanced modes';
                 } else {
                     item.style.opacity = '1';
                     item.style.cursor = 'pointer';
+                    item.classList.remove('locked-mode');
                     item.title = '';
                 }
             }
