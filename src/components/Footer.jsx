@@ -206,16 +206,19 @@ const Footer = () => {
                 </div>
               </>
             ) : (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '32px' }}>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '8px', color: 'white' }}>Protocol Status: Optimal</h3>
-                  <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem', maxWidth: '600px' }}>
-                    Your intelligence hub is synchronized across the network. Monitor your extraction rates or update your security protocols in the dashbord.
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '40px', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '300px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }} className="pulse" />
+                    <h3 style={{ fontSize: '1.6rem', fontWeight: '800', margin: 0, color: 'white', letterSpacing: '-0.5px' }}>Protocol Status: Optimal</h3>
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '1rem', maxWidth: '650px', lineHeight: 1.6 }}>
+                    Your intelligence hub is synchronized across the network. Monitor your extraction rates or update your security protocols in the dashboard.
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <Link to="/dashboard" className="btn-primary" style={{ padding: '12px 24px', fontSize: '0.9rem' }}>Go to Dashboard</Link>
-                  <Link to="/docs" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.9rem' }}>Read Docs</Link>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <Link to="/dashboard" className="btn-primary" style={{ padding: '14px 32px', fontSize: '0.95rem', borderRadius: '14px', fontWeight: '800' }}>Go to Dashboard</Link>
+                  <Link to="/docs" className="btn-secondary" style={{ padding: '14px 32px', fontSize: '0.95rem', borderRadius: '14px', fontWeight: '800', background: 'rgba(255,255,255,0.03)' }}>Read Docs</Link>
                 </div>
               </div>
             )}
