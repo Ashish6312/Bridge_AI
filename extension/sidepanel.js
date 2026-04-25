@@ -61,6 +61,17 @@ async function syncUserSession() {
     return false;
 }
 
+// 3. Real-Time External Push (Direct Link from Website)
+chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
+    console.log('Sovereign Hub External Relay:', request);
+    if (request.action === 'STORE_AUTH' && request.user) {
+        userSession = request.user;
+        chrome.storage.local.set({ bridge_user: userSession });
+        updateUIWithSession(userSession);
+        sendResponse({ success: true, status: 'Identity Materialized' });
+    }
+});
+
 function updateUIWithSession(session) {
     document.getElementById('user-email').textContent = session.email;
     document.getElementById('user-initial').textContent = session.email[0].toUpperCase();
@@ -177,6 +188,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             capturedData = response.data;
+            
+            // Critical: Force source detection from the ACTUAL tab we extracted from
+            const urlObj = new URL(activeTab.url);
+            let site = urlObj.hostname.replace('www.', '').split('.')[0];
+            capturedData.platform = site.charAt(0).toUpperCase() + site.slice(1);
+            
             showAnalysis(capturedData);
         });
     });
@@ -198,6 +215,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             div.innerHTML = `<label>${p.label}</label><span>${p.value}</span>`;
             dataContainer.appendChild(div);
         });
+
+        console.log('Capture Analysis Complete:', data.platform, data.url);
     };
 
     cancelBtn.addEventListener('click', () => {
