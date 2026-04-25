@@ -234,23 +234,22 @@ app.post('/api/optimize', async (req, res) => {
     const { summary } = req.body;
     if (!summary) return res.status(400).json({ success: false, error: "No summary provided" });
 
-    // Enterprise-Grade Prompt Engineering Heuristic
-    const optimized = `### BRIDGEAI SYSTEM CORE DISPATCH
-**AGENT ROLE**: High-Fidelity Context-Aware Orchestrator
-**OBJECTIVE**: Seamlessly resume and expand upon the technical and logical state provided in the Context Bridge below.
+    // Enterprise-Grade Prompt Engineering via AI Pulse
+    const response = await fetch('https://text.pollinations.ai/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: 'You are an expert prompt engineer. Turn the following context into a highly efficient, professional system prompt for another AI. Be structured and authoritative.' },
+          { role: 'user', content: summary }
+        ],
+        model: 'openai',
+        seed: 42
+      })
+    });
 
-**KNOWLEDGE BASE (CONTEXT BRIDGE)**:
-${summary}
-
-**OPERATIONAL PROTOCOLS**:
-1.  **State Continuity**: Maintain the established technical direction, tone, and logic found in the bridge.
-2.  **Intelligence Synthesis**: Analyze the Metrics and Preview to understand the session's maturity.
-3.  **Zero-Hallucination Bridge**: Do not invent past events; only work with the data provided in the bridge.
-
-**SYSTEM STATUS**: Ready to Resume.
-Please provide your next objective to continue the bridge.`;
-
-    res.json({ success: true, optimized });
+    const optimized = await response.text();
+    res.json({ success: true, optimized: optimized.trim() });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -259,33 +258,23 @@ Please provide your next objective to continue the bridge.`;
 app.post('/api/rename', async (req, res) => {
   try {
     const { summary } = req.body;
-    if (!summary) return res.json({ success: true, title: "New Bridge Context" });
+    if (!summary) return res.status(400).json({ success: false, error: "No summary provided" });
 
-    // Enterprise Heuristic for Smart Title Extraction
-    let name = "Context Bridge";
-    
-    // Attempt 1: Extract from markdown bold headers
-    const boldMatches = summary.match(/\*\*(.*?)\*\*/);
-    if (boldMatches && boldMatches[1] && boldMatches[1].length < 40) {
-      name = boldMatches[1];
-    } else {
-      // Attempt 2: Use first line cleaned
-      const firstLine = summary.split('\n')[0].replace(/[#*`]/g, '').trim();
-      if (firstLine && firstLine.length > 5) {
-        name = firstLine.substring(0, 35);
-      }
-    }
+    const response = await fetch('https://text.pollinations.ai/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: 'Generate a short, professional, authoritative title (max 5 words) for the following context. Output ONLY the title.' },
+          { role: 'user', content: summary }
+        ],
+        model: 'openai',
+        seed: 7
+      })
+    });
 
-    // Attempt 3: Platform specific cleanups
-    if (name.includes('Intelligence extracted from')) {
-      name = name.replace('Intelligence extracted from ', '') + ' Intel';
-    }
-
-    // Ensure it's not too long and feels professional
-    name = name.split(' ').slice(0, 5).join(' ');
-    if (name.length > 40) name = name.substring(0, 37) + '...';
-
-    res.json({ success: true, title: name });
+    const title = await response.text();
+    res.json({ success: true, title: title.replace(/"/g, '').trim() });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

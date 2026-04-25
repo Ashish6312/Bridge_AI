@@ -449,12 +449,13 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
 /* ─── Reusable Export Helper ─────────────────────────────────────── */
 const exportBridge = (ctx, format) => {
   let content, filename, type;
+  const log = ctx.chat_log || ctx.chatLog || '';
   if (format === 'markdown') {
-    content = `# ${ctx.title}\n**Source:** ${ctx.source}  \n**Date:** ${ctx.created_at}\n\n## Summary\n${ctx.summary}\n\n## Full Log\n${ctx.chatLog || ''}`;
+    content = `# ${ctx.title}\n**Source:** ${ctx.source}  \n**Date:** ${ctx.created_at}\n\n## Summary\n${ctx.summary}\n\n## Full Log\n${log}`;
     filename = `${ctx.title.replace(/\s+/g, '-').toLowerCase()}.md`;
     type = 'text/markdown';
   } else if (format === 'json') {
-    content = JSON.stringify({ title: ctx.title, source: ctx.source, summary: ctx.summary, chatLog: ctx.chatLog, created_at: ctx.created_at }, null, 2);
+    content = JSON.stringify({ title: ctx.title, source: ctx.source, summary: ctx.summary, chat_log: log, created_at: ctx.created_at }, null, 2);
     filename = `${ctx.title.replace(/\s+/g, '-').toLowerCase()}.json`;
     type = 'application/json';
   } else {
@@ -488,7 +489,7 @@ const ManualBridgeSubmit = ({ projects, triggerToast, setActiveTab, setBridges, 
     if (!context || context.length < 20) return;
     setIsGeneratingTitle(true);
     try {
-      const response = await fetch('http://localhost:5001/api/rename', {
+      const response = await fetch(`${API_BASE}/api/rename`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ summary: context.substring(0, 500) })
@@ -554,7 +555,7 @@ const ManualBridgeSubmit = ({ projects, triggerToast, setActiveTab, setBridges, 
       const user = userStr ? JSON.parse(userStr) : null;
       const email = user?.email || 'guest';
 
-      const res = await fetch('http://localhost:5001/api/summarize', {
+      const res = await fetch(`${API_BASE}/api/summarize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
