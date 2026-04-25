@@ -659,7 +659,8 @@ const Dashboard = () => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         syncWithExtension();
-        loadData(); // Real-time update when switching back to dashboard
+        // Silent update to avoid UI flashing
+        loadData(true);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -681,9 +682,9 @@ const Dashboard = () => {
     window.open(url, '_blank');
   };
 
-  const loadData = async () => {
+  const loadData = async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const userStr = localStorage.getItem('bridge_user');
       const user = userStr ? JSON.parse(userStr) : null;
       const email = user?.email || '';
@@ -728,13 +729,9 @@ const Dashboard = () => {
       console.error('Core Hub Fetch Failed:', err);
       setHubStatus('offline');
       setBridges([]);
-      // Auto-retry up to 5 times every 1.5s
-      if (retryCountRef.current < 5) {
-        retryCountRef.current += 1;
-        retryTimerRef.current = setTimeout(() => loadData(), 1500);
-      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const refreshVault = () => {
@@ -756,13 +753,13 @@ const Dashboard = () => {
     window.addEventListener('bridge-vault-update', loadData);
     
     // Safety check on mount
-    loadData();
+    loadData(false);
 
     // ─── Real-Time Pulse ──────────────────────────────────
-    // Keep the Hub synchronized with the backend every 15s
+    // Keep the Hub synchronized with the backend every 30s silently
     const pulseInterval = setInterval(() => {
-      loadData();
-    }, 15000);
+      loadData(true);
+    }, 30000);
 
     return () => {
       window.removeEventListener('storage', handleStorage);
