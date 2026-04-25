@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!userSession) await syncUserSession();
         
         bridgeBtn.disabled = true;
-        bridgeBtn.textContent = '⚡ DISTILLING...';
+        bridgeBtn.textContent = '⚡ SAVING...';
 
         try {
             const res = await fetch(`${API_BASE}/api/summarize`, {

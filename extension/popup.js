@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!userSession) await syncUserSession();
 
         if (!userSession) {
-            statusResult.textContent = '❌ Hub Account Required. Redirecting...';
+            statusResult.textContent = '❌ Please Log In to your account.';
             statusResult.style.color = '#fb7185';
             bridgeBtn.textContent = '❌ RECONNECT';
             setTimeout(() => {
@@ -168,8 +168,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        bridgeBtn.textContent   = '⚡ DISTILLING...';
-        statusResult.textContent = 'Engaging Sovereign Relay...';
+        bridgeBtn.textContent   = '⚡ SAVING...';
+        statusResult.textContent = 'Connecting to your account...';
 
         try {
             const res = await fetch(`${API_BASE}/api/summarize`, {
@@ -186,8 +186,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await res.json();
             if (!data.success) throw new Error(data.error || 'Distillation failed');
 
-            bridgeBtn.textContent   = '✅ VAULTED';
-            statusResult.textContent = 'Synchronizing with Secure Vault…';
+            bridgeBtn.textContent   = '✅ SAVED';
+            statusResult.textContent = 'Sync complete.';
 
             setTimeout(() => {
                 const redirectUrl = `${WEB_BASE}/dashboard?status=success&bridgeId=${data.bridgeData.id}`;
@@ -195,9 +195,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 800);
 
         } catch (err) {
-            console.error('Core Engine Failure:', err);
+            console.error('Save Failure:', err);
             if (err.message.includes('Unauthorized')) {
-                statusResult.textContent = '❌ Hub Account Required. Opening Dashboard...';
+                statusResult.textContent = '❌ Please Log In first.';
                 statusResult.className = 'status error-text';
                 bridgeBtn.textContent = '❌ RECONNECT';
                 setTimeout(() => {
