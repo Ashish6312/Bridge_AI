@@ -226,6 +226,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const result = await res.json();
             if (result.success) {
+                bridgeBtn.textContent = '✅ SAVED';
+                setTimeout(() => {
+                    bridgeBtn.disabled = false;
                     bridgeBtn.innerHTML = 'Save to My Account';
                 }, 2000);
             } else {

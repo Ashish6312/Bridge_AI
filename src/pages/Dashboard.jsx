@@ -470,7 +470,7 @@ const exportBridge = (ctx, format) => {
 };
 
 /* ─── Manual Bridge Submit Button ────────────────────────────────── */
-const ManualBridgeSubmit = ({ projects, triggerToast, setActiveTab, setBridges }) => {
+const ManualBridgeSubmit = ({ projects, triggerToast, setActiveTab, setBridges, loadData }) => {
   const [loading, setLoading] = useState(false);
 
   const PROMPTS = {
@@ -713,10 +713,11 @@ const Dashboard = () => {
           return acc + (match ? parseInt(match[0]) : 0);
         }, 0);
         
-        setStats({ 
+        setStats(prev => ({ 
+          ...prev,
           totalBridges: localBridges.length, 
           totalTokens: rawTokens * 2.5 
-        });
+        }));
       } else {
         setHubStatus('offline');
       }
@@ -1404,7 +1405,7 @@ const Dashboard = () => {
                     </button>
                   </div>
 
-                  <ManualBridgeSubmit projects={projects} triggerToast={triggerToast} setActiveTab={setActiveTab} setBridges={setBridges} />
+                  <ManualBridgeSubmit projects={projects} triggerToast={triggerToast} setActiveTab={setActiveTab} setBridges={setBridges} loadData={loadData} />
                 </div>
               </div>
             </motion.div>
