@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         item.addEventListener('click', () => {
             const isFree = (userSession?.plan || 'free') === 'free';
             if (isFree && item.dataset.mode !== 'quick') {
-                alert('Upgrade to Pro to unlock advanced Intelligence Modes.');
+                showCustomModal('Advanced Mode Locked', 'Upgrade to Pro or Infinite plans to unlock specialized Intelligence Modes.');
                 return;
             }
             document.querySelectorAll('.mode-item').forEach(i => i.classList.remove('active'));
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!userSession) await syncUserSession();
 
         if (!userSession) {
-            alert('Please log in to your account first.');
+            showCustomModal('Identity Required', 'Please sign in to your BridgeAI account to enable cross-LLM intelligence sync.');
             chrome.tabs.create({ url: `${PRODUCTION_URL}/login?redirect=dashboard` });
             return;
         }
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 chrome.tabs.sendMessage(chatTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, chatTab));
                 return;
             } else if (!activeTab || !activeTab.id) {
-                alert('Please select a chat tab first.');
+                showCustomModal('Target Not Found', 'Please select a chat tab (ChatGPT/Gemini/Claude) before initiating extraction.');
                 return;
             }
         }
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (chrome.runtime.lastError || !response?.data) {
                 console.error('BridgeAI Sync Error:', chrome.runtime.lastError);
-                alert('Connection lost. Please refresh your chat page (ChatGPT/Gemini) and try again.');
+                showCustomModal('Connection Error', 'Failed to communicate with the chat tab. Please refresh the page (ChatGPT/Gemini) and try again.', 'error');
                 return;
             }
 
@@ -237,11 +237,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             showAnalysis(capturedData);
         };
 
-        // Standard flow
+        // Standard flow: Dispatch extraction to the active tab
         extractBtn.disabled = true;
         extractBtn.textContent = 'Scanning...';
         chrome.tabs.sendMessage(activeTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, activeTab));
-        return;
+    });
+
+    // ─── Professional Modal Logic ────────────────────────────
+    const modal = document.getElementById('custom-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalMessage = document.getElementById('modal-message');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalUpgradeBtn = document.getElementById('modal-upgrade-btn');
+
+    const showCustomModal = (title, message, type = 'warning') => {
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        modal.style.display = 'flex';
+        
+        if (type === 'error') {
+            document.getElementById('modal-icon').style.background = 'rgba(244, 63, 94, 0.1)';
+            document.getElementById('modal-icon').querySelector('svg').style.stroke = '#f43f5e';
+        } else {
+            document.getElementById('modal-icon').style.background = 'rgba(139, 92, 246, 0.1)';
+            document.getElementById('modal-icon').querySelector('svg').style.stroke = '#8b5cf6';
+        }
+    };
+
+    modalCloseBtn.addEventListener('click', () => modal.style.display = 'none');
+    modalUpgradeBtn.addEventListener('click', () => {
+        chrome.tabs.create({ url: `${PRODUCTION_URL}/services` });
+        modal.style.display = 'none';
     });
 
     const showAnalysis = (data) => {
@@ -306,7 +332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(result.error);
             }
         } catch (err) {
-            alert('Save Failed: ' + err.message);
+            showCustomModal('Vault Sync Failed', err.message, 'error');
             bridgeBtn.disabled = false;
             bridgeBtn.textContent = 'Retry Save';
         }
