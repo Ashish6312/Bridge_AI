@@ -154,7 +154,7 @@ const ProfilePage = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <h1 style={{ fontSize: '2.8rem', fontWeight: '800', letterSpacing: '-0.04em', margin: 0 }}>{user.name}</h1>
                 <span style={{ padding: '4px 12px', borderRadius: '100px', background: 'rgba(139, 92, 246, 0.1)', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: '800', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-                  {user.plan?.toUpperCase() || 'FREE'} ANALYST
+                  {user.plan?.toUpperCase() || 'FREE'} MEMBER
                 </span>
                 <div style={{ 
                   display: 'flex', alignItems: 'center', gap: '6px', 
@@ -209,7 +209,7 @@ const ProfilePage = () => {
             <section>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <CreditCard size={22} color="var(--primary)" /> Financial Ledger
+                  <CreditCard size={22} color="var(--primary)" /> Billing History
                 </h3>
                 <Link to="/services" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: '700' }}>Upgrade Plan <ExternalLink size={14} /></Link>
               </div>
@@ -223,8 +223,8 @@ const ProfilePage = () => {
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
                       <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--glass-border)' }}>
-                        <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>Reference ID</th>
-                        <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>Sovereign Tier</th>
+                        <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>Invoice ID</th>
+                        <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>Plan Level</th>
                         <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>Amount</th>
                         <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', textAlign: 'right' }}>Action</th>
                       </tr>
@@ -261,9 +261,9 @@ const ProfilePage = () => {
             
             {/* Security Protocol */}
             <section>
-              <h3 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Key size={22} color="var(--primary)" /> Protocol State
-              </h3>
+                <h3 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Key size={22} color="var(--primary)" /> Account Status
+                </h3>
               <div className="glass-card" style={{ padding: '32px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -282,7 +282,7 @@ const ProfilePage = () => {
                   </div>
                   <div style={{ height: '1px', background: 'var(--glass-border)', margin: '8px 0' }} />
                   <button className="btn-secondary" style={{ width: '100%', fontSize: '0.9rem', padding: '12px', fontWeight: '700', letterSpacing: '0.5px' }}>
-                    Rotate Cipher Keys
+                    Refresh Login Keys
                   </button>
                 </div>
               </div>
@@ -290,15 +290,15 @@ const ProfilePage = () => {
 
             {/* Session Info */}
             <section>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Calendar size={18} color="var(--secondary)" /> Activity Log
-              </h3>
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Calendar size={18} color="var(--secondary)" /> Recent Activity
+                </h3>
               <div className="glass-card" style={{ padding: '24px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <div style={{ width: '2px', background: 'var(--primary)', margin: '4px 0' }} />
                     <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>Protocol Initialized</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>Account Created</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(user.created_at || Date.now()).toLocaleDateString()}</div>
                     </div>
                   </div>
@@ -316,9 +316,15 @@ const ProfilePage = () => {
             {/* Danger Zone */}
             <section style={{ marginTop: '20px' }}>
                 <motion.div whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
-                   <p style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '900', letterSpacing: '1.5px', marginBottom: '12px', textTransform: 'uppercase' }}>Critical Actions</p>
-                   <button className="btn-exit-minimal" style={{ width: '100%', textAlign: 'center', justifyContent: 'center', borderColor: 'rgba(244,63,94,0.2)', padding: '14px', fontSize: '0.9rem', fontWeight: '800' }}>
-                       Revoke Sovereign Access
+                   <p style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '900', letterSpacing: '1.5px', marginBottom: '12px', textTransform: 'uppercase' }}>Danger Zone</p>
+                   <button 
+                    onClick={() => {
+                      localStorage.removeItem('bridge_user');
+                      window.location.href = '/';
+                    }}
+                    className="btn-exit-minimal" style={{ width: '100%', textAlign: 'center', justifyContent: 'center', borderColor: 'rgba(244,63,94,0.2)', padding: '14px', fontSize: '0.9rem', fontWeight: '800' }}
+                   >
+                       Log Out of All Devices
                    </button>
                 </motion.div>
             </section>
