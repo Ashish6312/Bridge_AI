@@ -196,20 +196,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!activeTab || !activeTab.id) {
-            alert('Please select a chat tab first.');
-            return;
+        // Improved Tab Targeting: Use lastFocusedWindow to avoid capturing the sidepanel/dashboard context incorrectly
+        const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        
+        if (!activeTab || !activeTab.id || activeTab.url.includes('bridge-ai-brown.vercel.app')) {
+            // If active tab is the dashboard, try to find the actual chat tab
+            const allTabs = await chrome.tabs.query({ lastFocusedWindow: true });
+            const chatTab = allTabs.find(t => t.url && (t.url.includes('chatgpt.com') || t.url.includes('gemini.google') || t.url.includes('claude.ai')));
+            
+            if (chatTab) {
+                // Switch to that tab context for extraction
+                chrome.tabs.sendMessage(chatTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, chatTab));
+                return;
+            } else if (!activeTab || !activeTab.id) {
+                alert('Please select a chat tab first.');
+                return;
+            }
         }
 
-        // Clear stale data before new scan
-        capturedData = null;
-        extractBtn.disabled = true;
-        extractBtn.textContent = 'Scanning...';
-        
-        console.log('BridgeAI: Dispatching extraction to Tab ID:', activeTab.id, activeTab.url);
-        
-        chrome.tabs.sendMessage(activeTab.id, { action: 'EXTRACT_CHAT' }, (response) => {
+        const handleExtractionResponse = (response, targetTab) => {
             extractBtn.disabled = false;
             extractBtn.innerHTML = `Capture Chat`;
 
@@ -222,12 +227,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             capturedData = response.data;
             
             // Critical: Force source detection from the ACTUAL tab we extracted from
-            const urlObj = new URL(activeTab.url);
+            const urlObj = new URL(targetTab.url);
             let site = urlObj.hostname.replace('www.', '').split('.')[0];
-            capturedData.platform = site.charAt(0).toUpperCase() + site.slice(1);
+            if (site === 'chatgpt') site = 'ChatGPT';
+            if (site === 'claude') site = 'Claude';
+            if (site === 'gemini') site = 'Gemini';
             
+            capturedData.platform = site.charAt(0).toUpperCase() + site.slice(1);
             showAnalysis(capturedData);
-        });
+        };
+
+        // Standard flow
+        extractBtn.disabled = true;
+        extractBtn.textContent = 'Scanning...';
+        chrome.tabs.sendMessage(activeTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, activeTab));
+        return;
     });
 
     const showAnalysis = (data) => {
