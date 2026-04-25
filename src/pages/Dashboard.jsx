@@ -160,7 +160,7 @@ const ForgeModal = ({ isOpen, onClose, context, onDispatch }) => {
   );
 };
 
-const BridgeCard = ({ ctx, onDelete, onForge, loadData }) => {
+const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) => {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizedPrompt, setOptimizedPrompt] = useState(null);
   const [showExport, setShowExport] = useState(false);
@@ -1117,7 +1117,9 @@ const Dashboard = () => {
                       ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} 
                       onDelete={(id) => setConfirmModal({ isOpen: true, id })} 
                       onForge={handleForge} 
-                      loadData={loadData} 
+                      loadData={loadData}
+                      stats={stats}
+                      triggerToast={triggerToast}
                     />
                   ))}
                   {olderBridges.length > 0 && (
@@ -1131,7 +1133,9 @@ const Dashboard = () => {
                       ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} 
                       onDelete={(id) => setConfirmModal({ isOpen: true, id })} 
                       onForge={handleForge} 
-                      loadData={loadData} 
+                      loadData={loadData}
+                      stats={stats}
+                      triggerToast={triggerToast}
                     />
                   ))}
                 </div>
@@ -1267,7 +1271,17 @@ const Dashboard = () => {
                 <p style={{ color: 'var(--text-muted)' }}>Fetching deep history from cloud...</p>
               ) : historyBridges.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {historyBridges.map(ctx => <BridgeCard key={ctx.id} ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Historical context bridged to clipboard!') }} onDelete={handleDelete} onForge={handleForge} loadData={loadData} />)}
+                  {historyBridges.map(ctx => (
+                    <BridgeCard 
+                      key={ctx.id} 
+                      ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Historical context bridged to clipboard!') }} 
+                      onDelete={handleDelete} 
+                      onForge={handleForge} 
+                      loadData={loadData} 
+                      stats={stats} 
+                      triggerToast={triggerToast} 
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="glass-card" style={{ padding: '64px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
