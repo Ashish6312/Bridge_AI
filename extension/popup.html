@@ -101,13 +101,13 @@
         }
 
         /* ── Intelligence Mode Grid ── */
-        .mode-label {
+        .context-title {
             font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px;
             color: var(--text-muted); text-transform: uppercase; margin-bottom: 14px;
             padding-left: 4px;
         }
         .modes {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
             margin-bottom: 28px;
         }
         .mode-opt input { display: none; }
@@ -157,9 +157,9 @@
 
     <!-- Main Section -->
     <div class="body animate-in" id="main">
-        <div class="platform-chip">
-            <div class="dot"></div>
-            <span>Active: <strong id="platform-name">Detecting...</strong></span>
+        <div class="status-pill">
+            <div class="pulse-dot"></div>
+            <span>Secure Connection</span>
         </div>
         
         <button id="extract-btn" class="btn">
@@ -174,23 +174,23 @@
     <div class="body" id="result">
         <div class="success-badge">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            <span><strong id="msg-count">0</strong> Messages Saved</span>
+            <span><strong id="msg-count">0</strong> Messages</span>
         </div>
 
-        <p class="mode-label">Intelligence Mode</p>
+        <div class="context-title">Save Mode</div>
         <div class="modes">
             <div class="mode-opt">
                 <input type="radio" name="summary-mode" id="m-quick" value="quick" checked>
                 <label for="m-quick">
                     <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    <span class="mode-name">Quick</span>
+                    <span class="mode-name">Fast</span>
                 </label>
             </div>
             <div class="mode-opt">
                 <input type="radio" name="summary-mode" id="m-dev" value="developer">
                 <label for="m-dev">
                     <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
-                    <span class="mode-name">Dev</span>
+                    <span class="mode-name">Technical</span>
                 </label>
             </div>
             <div class="mode-opt">

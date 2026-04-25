@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const points = [
             { label: 'SOURCE', value: data.platform },
             { label: 'SESSION TITLE', value: data.title },
-            { label: 'DATA VOLUME', value: `${data.messages.length} signals captured` }
+            { label: 'DATA VOLUME', value: `${data.messages.length} messages saved` }
         ];
 
         points.forEach(p => {
