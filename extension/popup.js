@@ -23,6 +23,13 @@ async function syncUserSession() {
         t.url?.includes('localhost:5173')
     );
 
+    // Sort tabs: active tab first, then production urls
+    targetTabs.sort((a, b) => {
+        if (a.active) return -1;
+        if (b.active) return 1;
+        return 0;
+    });
+
     if (targetTabs.length === 0) {
         return;
     }

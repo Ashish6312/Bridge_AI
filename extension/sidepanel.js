@@ -20,8 +20,16 @@ async function syncUserSession() {
     const tabs = await chrome.tabs.query({});
     const targetTabs = tabs.filter(t => 
         t.url?.includes('bridge-ai-brown.vercel.app') || 
+        t.url?.includes('bridgeai.com') ||
         t.url?.includes('localhost:5173')
     );
+
+    // Prioritize active tab
+    targetTabs.sort((a, b) => {
+        if (a.active) return -1;
+        if (b.active) return 1;
+        return 0;
+    });
 
     if (targetTabs.length === 0) return false;
 
@@ -78,6 +86,17 @@ function updateUIWithSession(session) {
 
 document.addEventListener('DOMContentLoaded', async () => {
     await syncUserSession();
+
+    // Auto-sync on tab changes
+    chrome.tabs.onActivated.addListener(async () => {
+        await syncUserSession();
+    });
+
+    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+        if (changeInfo.status === 'complete') {
+            await syncUserSession();
+        }
+    });
 
     const extractBtn = document.getElementById('extract-btn');
     const bridgeBtn = document.getElementById('bridge-btn');
