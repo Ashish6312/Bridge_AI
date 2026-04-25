@@ -354,19 +354,13 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
             {isOptimizing ? '🪄 Optimizing...' : '🪄 Optimize Prompt'}
           </button>
             <button
-              onClick={() => {
-                if (stats.plan === 'infinite') {
-                  setShowExport(v => !v);
-                } else {
-                  triggerToast('Upgrade to Infinite Hub to unlock Vault Export protocol.');
-                }
-              }}
+              onClick={() => setShowExport(v => !v)}
               className="btn-secondary"
-              style={{ fontSize: '0.875rem', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px', opacity: stats.plan === 'infinite' ? 1 : 0.5 }}
+              style={{ fontSize: '0.875rem', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Download size={14} /> Export
             </button>
-            {showExport && stats.plan === 'infinite' && (
+            {showExport && (
               <div style={{
                 position: 'absolute', bottom: '110%', left: 0,
                 background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)',
