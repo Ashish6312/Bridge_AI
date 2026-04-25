@@ -72,6 +72,15 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
     }
 });
 
+// Listener for internal messages to catch these auth updates
+chrome.runtime.onMessage.addListener((request) => {
+    if (request.action === 'AUTH_RELAY' && request.user) {
+        userSession = request.user;
+        chrome.storage.local.set({ bridge_user: userSession });
+        updateUIWithSession(userSession);
+    }
+});
+
 function updateUIWithSession(session) {
     const infoContainer = document.getElementById('user-info-container');
     const loginContainer = document.getElementById('login-container');

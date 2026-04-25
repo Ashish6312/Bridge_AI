@@ -153,6 +153,14 @@ function handleDashboardEvents() {
     await chrome.storage.local.set({ pending_bridge: context });
     console.log('BridgeAI: Context cached for cross-platform bridge.');
   });
+
+  // Relay Auth Updates to Extension (Bypasses hardcoded IDs)
+  window.addEventListener('BRIDGE_AUTH_UPDATE', (event) => {
+    const { user } = event.detail;
+    if (user) {
+      chrome.runtime.sendMessage({ action: 'AUTH_RELAY', user });
+    }
+  });
 }
 
 // ─── Initializers ────────────────────────────────────────────────

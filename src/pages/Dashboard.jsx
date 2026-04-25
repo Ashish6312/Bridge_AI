@@ -643,22 +643,15 @@ const Dashboard = () => {
     }
 
     // STANDALONE EXTENSION SYNC: 
-    // Push identity to the extension if it's installed (Apollo-style auto-linking)
+    // Dispatch a DOM event that the content script will catch and relay.
+    // This is the most robust way to sync without hardcoded IDs.
     const syncWithExtension = () => {
-       const EXTENSION_ID = 'alhgpfoeiimagjlnfekdhkjlkiomcapa'; // Placeholder or target ID from manifest
-       if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
-          try {
-             chrome.runtime.sendMessage(EXTENSION_ID, { 
-                action: 'STORE_AUTH', 
-                token: 'SESSION_ACTIVE', 
-                user: JSON.parse(user) 
-             }, (response) => {
-                if (response?.success) console.log('Sovereign Relay: Standalone Analyst Linked.');
-             });
-          } catch (e) {
-             // Extension not installed or ID mismatch - skip silently
-          }
-       }
+       try {
+         const event = new CustomEvent('BRIDGE_AUTH_UPDATE', { 
+           detail: { user: JSON.parse(user) } 
+         });
+         window.dispatchEvent(event);
+       } catch (e) {}
     };
     
     // Attempt sync immediately and on visibility (covers tab switching)
