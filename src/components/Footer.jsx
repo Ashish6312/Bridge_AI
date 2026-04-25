@@ -251,13 +251,13 @@ const Footer = () => {
 
           {/* Platform */}
           <div>
-            <h4 style={{ marginBottom: '24px', fontSize: '1.1rem', fontWeight: '800', letterSpacing: '0.5px' }}>Platform Capabilities</h4>
+            <h4 style={{ marginBottom: '24px', fontSize: '1.1rem', fontWeight: '800', letterSpacing: '0.5px' }}>Our Features</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
-                { l: 'Operational Services', t: '/services' },
-                { l: 'Intelligence Dashboard', t: '/dashboard' },
-                { l: 'Developer Options', t: '/dashboard' },
-                { l: 'Sovereign Vault', t: '/dashboard' }
+                { l: 'Plans & Pricing', t: '/services' },
+                { l: 'My Dashboard', t: '/dashboard' },
+                { l: 'AI Settings', t: '/dashboard' },
+                { l: 'Secure Storage', t: '/dashboard' }
               ].map(item => (
                 <Link key={item.l} to={item.t} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.95rem', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
                   onMouseEnter={e => { e.currentTarget.style.color = 'white'; e.currentTarget.querySelector('svg').style.opacity = '1'; e.currentTarget.querySelector('svg').style.transform = 'translateX(4px)'; }}
@@ -271,13 +271,13 @@ const Footer = () => {
 
           {/* Company */}
           <div>
-            <h4 style={{ marginBottom: '24px', fontSize: '1.1rem', fontWeight: '800', letterSpacing: '0.5px' }}>Sovereign Entity</h4>
+            <h4 style={{ marginBottom: '24px', fontSize: '1.1rem', fontWeight: '800', letterSpacing: '0.5px' }}>Company</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
-                { l: 'About BridgeAI', t: '/about' },
-                { l: 'Mission & Vision', t: '/about' },
-                { l: 'Security Protocols', t: '/services' },
-                { l: 'Privacy Rights', t: '/services' }
+                { l: 'About Us', t: '/about' },
+                { l: 'Our Goal', t: '/about' },
+                { l: 'Safety First', t: '/services' },
+                { l: 'Your Data', t: '/services' }
               ].map(item => (
                 <Link key={item.l} to={item.t} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.95rem', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
                   onMouseEnter={e => { e.currentTarget.style.color = 'white'; e.currentTarget.querySelector('svg').style.opacity = '1'; e.currentTarget.querySelector('svg').style.transform = 'translateX(4px)'; }}

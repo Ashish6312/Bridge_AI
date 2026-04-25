@@ -19,16 +19,10 @@ async function syncUserSession() {
     const tabs = await chrome.tabs.query({});
     const targetTabs = tabs.filter(t => 
         t.url?.includes('bridge-ai-brown.vercel.app') || 
-        t.url?.includes('bridgeai.com')
+        t.url?.includes('bridgeai.com') ||
+        t.url?.includes('localhost:5173')
     );
 
-    // ✅ Always prefer production
-    targetTabs.sort((a, b) => {
-        const isProdA = a.url?.includes('vercel.app') || a.url?.includes('bridgeai.com');
-        const isProdB = b.url?.includes('vercel.app') || b.url?.includes('bridgeai.com');
-        return isProdA === isProdB ? 0 : isProdA ? -1 : 1;
-    });
-    
     if (targetTabs.length === 0) {
         return;
     }
@@ -59,13 +53,37 @@ async function syncUserSession() {
                    statusResult.textContent = `Analyst Connected: ${userSession.email}`;
                    statusResult.style.color = '#4ade80';
                 }
+
+                // Enforce Plan Limits in UI
+                enforcePlanLimits(userSession.plan || 'free');
                 return true;
             }
-        } catch (e) {
-            // Silently skip tabs without perms or issues
-        }
+        } catch (e) { }
     }
     return false;
+}
+
+function enforcePlanLimits(plan) {
+    const isFree = plan === 'free';
+    const modes = ['developer', 'research', 'study', 'project'];
+    modes.forEach(mode => {
+        const el = document.getElementById(`m-${mode}`);
+        if (el) {
+            el.disabled = isFree;
+            const label = document.querySelector(`label[for="m-${mode}"]`);
+            if (label) {
+                label.style.opacity = isFree ? '0.3' : '1';
+                label.style.cursor = isFree ? 'not-allowed' : 'pointer';
+                if (isFree) {
+                    label.onclick = (e) => {
+                        e.preventDefault();
+                        const statusResult = document.getElementById('status-text-result');
+                        if (statusResult) statusResult.textContent = 'Upgrade to Pro for advanced modes.';
+                    };
+                }
+            }
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

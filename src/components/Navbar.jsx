@@ -96,25 +96,26 @@ const Navbar = () => {
 
             <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.1)', margin: '0 12px' }} />
 
-            {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Link to="/dashboard" className="nav-link-professional" style={{ gap: '6px', fontSize: '0.8rem', fontWeight: '800' }}>
-                   DASHBOARD
-                </Link>
-                <Link to="/profile" className="user-profile-mini" style={{ width: '32px', height: '32px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                   <div className="user-avatar-mini" style={{ width: '28px', height: '28px', fontSize: '0.75rem' }}>{user.name?.charAt(0)}</div>
-                </Link>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <button onClick={() => setShowExtModal(true)} className="ext-pill-minimal" style={{ fontSize: '0.75rem', padding: '6px 14px' }}>
-                  EXTENSION
-                </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button onClick={() => setShowExtModal(true)} className="ext-pill-minimal" style={{ fontSize: '0.75rem', padding: '6px 14px' }}>
+                EXTENSION
+              </button>
+
+              {user ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Link to="/dashboard" className="nav-link-professional" style={{ gap: '6px', fontSize: '0.8rem', fontWeight: '800' }}>
+                     DASHBOARD
+                  </Link>
+                  <Link to="/profile" className="user-profile-mini" style={{ width: '32px', height: '32px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                     <div className="user-avatar-mini" style={{ width: '28px', height: '28px', fontSize: '0.75rem' }}>{user.name?.charAt(0)}</div>
+                  </Link>
+                </div>
+              ) : (
                 <Link to="/login" className="btn-primary-small" style={{ fontSize: '0.75rem', padding: '8px 18px', borderRadius: '100px' }}>
                   JOIN NOW
                 </Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <button className="nav-hamburger" onClick={() => setMenuOpen(v => !v)} style={{ display: 'none', background: 'transparent', border: 'none', color: 'white' }}>

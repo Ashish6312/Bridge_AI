@@ -353,15 +353,20 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData }) => {
           >
             {isOptimizing ? '🪄 Optimizing...' : '🪄 Optimize Prompt'}
           </button>
-          <div style={{ position: 'relative' }}>
             <button
-              onClick={() => setShowExport(v => !v)}
+              onClick={() => {
+                if (stats.plan === 'infinite') {
+                  setShowExport(v => !v);
+                } else {
+                  triggerToast('Upgrade to Infinite Hub to unlock Vault Export protocol.');
+                }
+              }}
               className="btn-secondary"
-              style={{ fontSize: '0.875rem', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ fontSize: '0.875rem', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px', opacity: stats.plan === 'infinite' ? 1 : 0.5 }}
             >
               <Download size={14} /> Export
             </button>
-            {showExport && (
+            {showExport && stats.plan === 'infinite' && (
               <div style={{
                 position: 'absolute', bottom: '110%', left: 0,
                 background: '#1e293b', border: '1px solid var(--glass-border)',
@@ -383,7 +388,6 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData }) => {
                 ))}
               </div>
             )}
-          </div>
           <button 
             onClick={() => setShowRaw(!showRaw)}
             className="btn-secondary" 
@@ -922,9 +926,15 @@ const Dashboard = () => {
             </button>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
                 <button 
-                  onClick={() => setPromptModal({ isOpen: true })}
+                  onClick={() => {
+                    if (stats.plan === 'pro' || stats.plan === 'infinite') {
+                      setPromptModal({ isOpen: true });
+                    } else {
+                      triggerToast('Upgrade to Pro to initialize Project Memory Folders.');
+                    }
+                  }}
                   className="btn-secondary" 
-                  style={{ flex: 1, justifyContent: 'center', padding: '14px', fontSize: '0.85rem', fontWeight: '800', borderRadius: '16px' }}
+                  style={{ flex: 1, justifyContent: 'center', padding: '14px', fontSize: '0.85rem', fontWeight: '800', borderRadius: '16px', opacity: (stats.plan === 'pro' || stats.plan === 'infinite') ? 1 : 0.5 }}
                 >
                   <Layers size={18} /> New Project
                 </button>
@@ -1198,7 +1208,7 @@ const Dashboard = () => {
                         <button 
                             className="btn-primary" 
                             style={{ width: '100%', padding: '10px' }}
-                            onClick={() => window.open('/BridgeAI-Extension.zip', '_blank')}
+                            onClick={() => window.open('/bridgeai-extension.zip', '_blank')}
                         >
                             Download Analyst Package
                         </button>
@@ -1298,31 +1308,44 @@ const Dashboard = () => {
                 <label style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '8px', fontSize: '0.875rem' }}>Intelligence Mode</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
                   {[
-                    { val: 'quick', label: '⚡ Quick', desc: 'TL;DR', color: '#22c55e' },
-                    { val: 'developer', label: '👨‍💻 Dev', desc: 'Code + Tasks', color: '#8b5cf6' },
-                    { val: 'research', label: '🔬 Research', desc: 'Concepts', color: '#06b6d4' },
-                    { val: 'study', label: '📚 Study', desc: 'Notes', color: '#f59e0b' },
-                    { val: 'project', label: '🚀 Project', desc: 'Status', color: '#f43f5e' },
-                  ].map(m => (
-                    <label key={m.val} htmlFor={`mode-${m.val}`} style={{ cursor: 'pointer' }}>
-                      <input type="radio" id={`mode-${m.val}`} name="manual-mode" value={m.val} defaultChecked={m.val === 'quick'} style={{ display: 'none' }} />
-                      <div style={{ 
-                        padding: '12px 8px', borderRadius: '12px', textAlign: 'center',
-                        border: `1px solid rgba(255,255,255,0.1)`, background: 'rgba(255,255,255,0.03)',
-                        transition: 'all 0.2s'
-                      }}
-                      onClick={(e) => {
-                        document.querySelectorAll('.mode-card').forEach(c => c.style.border = '1px solid rgba(255,255,255,0.1)');
-                        e.currentTarget.style.border = `1px solid ${m.color}`;
-                      }}
-                      className="mode-card"
-                      >
-                        <div style={{ fontSize: '1.2rem' }}>{m.label.split(' ')[0]}</div>
-                        <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'white', marginTop: '4px' }}>{m.label.split(' ').slice(1).join(' ')}</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>{m.desc}</div>
-                      </div>
-                    </label>
-                  ))}
+                    { val: 'quick', label: '⚡ Quick', desc: 'TL;DR', color: '#22c55e', tier: 'free' },
+                    { val: 'developer', label: '👨‍💻 Dev', desc: 'Code + Tasks', color: '#8b5cf6', tier: 'pro' },
+                    { val: 'research', label: '🔬 Research', desc: 'Concepts', color: '#06b6d4', tier: 'pro' },
+                    { val: 'study', label: '📚 Study', desc: 'Notes', color: '#f59e0b', tier: 'pro' },
+                    { val: 'project', label: '🚀 Project', desc: 'Status', color: '#f43f5e', tier: 'pro' },
+                  ].map(m => {
+                    const isLocked = m.tier === 'pro' && stats.plan === 'free';
+                    return (
+                      <label key={m.val} htmlFor={`mode-${m.val}`} style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}>
+                        <input 
+                          type="radio" id={`mode-${m.val}`} name="manual-mode" value={m.val} 
+                          defaultChecked={m.val === 'quick'} style={{ display: 'none' }} 
+                          disabled={isLocked}
+                        />
+                        <div style={{ 
+                          padding: '12px 8px', borderRadius: '12px', textAlign: 'center',
+                          border: `1px solid rgba(255,255,255,0.1)`, background: 'rgba(255,255,255,0.03)',
+                          transition: 'all 0.2s', opacity: isLocked ? 0.3 : 1,
+                          position: 'relative'
+                        }}
+                        onClick={(e) => {
+                          if (isLocked) {
+                            triggerToast('Upgrade to Pro to unlock 5 Intelligence Modes.');
+                            return;
+                          }
+                          document.querySelectorAll('.mode-card').forEach(c => c.style.border = '1px solid rgba(255,255,255,0.1)');
+                          e.currentTarget.style.border = `1px solid ${m.color}`;
+                        }}
+                        className="mode-card"
+                        >
+                          {isLocked && <div style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#f43f5e', borderRadius: '50%', padding: '2px' }}><X size={8} color="white" /></div>}
+                          <div style={{ fontSize: '1.2rem' }}>{m.label.split(' ')[0]}</div>
+                          <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'white', marginTop: '4px' }}>{m.label.split(' ').slice(1).join(' ')}</div>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>{m.desc}</div>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1347,17 +1370,21 @@ const Dashboard = () => {
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button 
                       onClick={() => {
-                        if (bridges.length < 2) return triggerToast('Need at least 2 bridges to merge!');
-                        const last3 = bridges.slice(0, 3);
-                        const merged = last3.map(b => `## ${b.title}\n${b.summary}`).join('\n\n---\n\n');
-                        const textInput = document.getElementById('manual-text');
-                        const titleInput = document.getElementById('manual-title');
-                        if (textInput) textInput.value = merged;
-                        if (titleInput) titleInput.value = 'Merged Intelligence Hub';
-                        triggerToast('Last 3 active bridges merged into editor!');
+                        if (stats.plan === 'infinite') {
+                          if (bridges.length < 2) return triggerToast('Need at least 2 bridges to merge!');
+                          const last3 = bridges.slice(0, 3);
+                          const merged = last3.map(b => `## ${b.title}\n${b.summary}`).join('\n\n---\n\n');
+                          const textInput = document.getElementById('manual-text');
+                          const titleInput = document.getElementById('manual-title');
+                          if (textInput) textInput.value = merged;
+                          if (titleInput) titleInput.value = 'Merged Intelligence Hub';
+                          triggerToast('Last 3 active bridges merged into editor!');
+                        } else {
+                          triggerToast('Upgrade to Infinite Hub to unlock Multi-Chat Logic Merge.');
+                        }
                       }}
                       className="btn-secondary"
-                      style={{ fontSize: '0.8rem', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      style={{ fontSize: '0.8rem', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px', opacity: stats.plan === 'infinite' ? 1 : 0.5 }}
                     >
                       <GitMerge size={14} /> Merge Last 3
                     </button>

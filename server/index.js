@@ -177,6 +177,14 @@ app.post('/api/summarize', async (req, res) => {
         maxLimit: limit
       });
     }
+
+    // ── Mode Enforcement ─────────────────────────────────────
+    // Free users can ONLY use 'quick' mode. Pro/Infinite can use any.
+    let finalMode = mode;
+    if (userPlan === 'free' && mode !== 'quick') {
+      console.log(`[SECURITY] Downgrading distillation mode from ${mode} to quick for user ${email}`);
+      finalMode = 'quick';
+    }
     // ────────────────────────────────────────────────────────
     
     const userPrompts = messages.filter(m => m.role === 'user' || m.role === 'user-message');
@@ -194,14 +202,14 @@ app.post('/api/summarize', async (req, res) => {
     const formattedChat = messages.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n\n');
     const id = 'brid_' + Date.now().toString(36);
 
-    const summaryHeader = `### ${mode.toUpperCase()} INTELLIGENCE LOG [${platform.toUpperCase()}]\n\n`;
+    const summaryHeader = `### ${finalMode.toUpperCase()} INTELLIGENCE LOG [${platform.toUpperCase()}]\n\n`;
     const summary = `${summaryHeader}${formattedChat}`;
     
     const query = `
       INSERT INTO bridges (id, user_email, title, source, summary, chat_log, tokens, snippets, mode) 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
     `;
-    const values = [id, email, title || `Bridge: ${goal.substring(0, 30)}`, platform, summary, formattedChat, `${Math.round(formattedChat.length/4)} tokens`, snippetsCount, mode];
+    const values = [id, email, title || `Bridge: ${goal.substring(0, 30)}`, platform, summary, formattedChat, `${Math.round(formattedChat.length/4)} tokens`, snippetsCount, finalMode];
     
     try {
       await pool.query(query, values);
