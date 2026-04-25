@@ -122,6 +122,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // Persistent Sync: Poll for session/platform changes every 3 seconds
+    // This handles login/logout on the website without refresh
+    setInterval(async () => {
+        await syncUserSession();
+        await updatePlatformUI();
+    }, 3000);
+
     // Mode Selection
     document.querySelectorAll('.mode-item').forEach(item => {
         item.addEventListener('click', () => {
@@ -147,17 +154,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!activeTab) return;
+        if (!activeTab || !activeTab.id) {
+            alert('Please select a chat tab first.');
+            return;
+        }
 
+        // Clear stale data before new scan
+        capturedData = null;
         extractBtn.disabled = true;
         extractBtn.textContent = 'Scanning...';
+        
+        console.log('BridgeAI: Dispatching extraction to Tab ID:', activeTab.id, activeTab.url);
         
         chrome.tabs.sendMessage(activeTab.id, { action: 'EXTRACT_CHAT' }, (response) => {
             extractBtn.disabled = false;
             extractBtn.innerHTML = `Capture Chat`;
 
             if (chrome.runtime.lastError || !response?.data) {
-                alert('Connection lost. Please refresh the chat page and try again.');
+                console.error('BridgeAI Sync Error:', chrome.runtime.lastError);
+                alert('Connection lost. Please refresh your chat page (ChatGPT/Gemini) and try again.');
                 return;
             }
 

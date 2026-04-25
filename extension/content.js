@@ -78,6 +78,7 @@ function extractChat() {
 
   return {
     platform: siteName,
+    url: window.location.href,
     title: document.title,
     timestamp: new Date().toISOString(),
     messages: messages.filter(m => m.text.length > 5)
