@@ -112,13 +112,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    extractBtn.addEventListener('click', () => {
-        statusText.textContent = 'Scanning for intelligence...';
+    extractBtn.addEventListener('click', async () => {
+        // Enforce Login First
+        if (!userSession) await syncUserSession();
+        
+        if (!userSession) {
+            statusText.textContent = 'Please log in to your account first.';
+            statusText.style.color = '#fb7185';
+            extractBtn.textContent = 'Log In to Sync';
+            setTimeout(() => {
+                chrome.tabs.create({ url: `${PRODUCTION_URL}/login?redirect=dashboard` });
+            }, 1000);
+            return;
+        }
+
+        statusText.textContent = 'Scanning chat...';
         extractBtn.disabled = true;
 
         chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_CHAT' }, (response) => {
             if (chrome.runtime.lastError) {
-                statusText.textContent = 'Not linked — Refresh (F5) the chat page.';
+                statusText.textContent = 'Not linked — Refresh the chat page.';
                 extractBtn.disabled = false;
                 return;
             }
@@ -128,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 mainSection.style.display  = 'none';
                 resultSection.style.display = 'block';
             } else {
-                statusText.textContent = 'No intelligence detected. Scroll context then retry.';
+                statusText.textContent = 'No messages found. Try scrolling up.';
                 extractBtn.disabled = false;
             }
         });

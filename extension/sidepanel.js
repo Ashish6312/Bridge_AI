@@ -122,12 +122,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     extractBtn.addEventListener('click', async () => {
+        // Enforce Login First
+        if (!userSession) await syncUserSession();
+
+        if (!userSession) {
+            alert('Please log in to your account first.');
+            chrome.tabs.create({ url: `${PRODUCTION_URL}/login?redirect=dashboard` });
+            return;
+        }
+
         extractBtn.disabled = true;
         extractBtn.textContent = 'Scanning...';
         
         chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_CHAT' }, (response) => {
             extractBtn.disabled = false;
-            extractBtn.innerHTML = `Capture Intelligence`;
+            extractBtn.innerHTML = `Capture Chat`;
 
             if (chrome.runtime.lastError || !response?.data) {
                 alert('Connection lost. Please refresh the page and try again.');
@@ -184,20 +193,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const result = await res.json();
             if (result.success) {
-                bridgeBtn.textContent = '✅ VAULTED';
-                setTimeout(() => {
-                    analysisView.style.display = 'none';
-                    dashboardView.style.display = 'block';
-                    bridgeBtn.disabled = false;
-                    bridgeBtn.innerHTML = 'Vault to Hub';
+                    bridgeBtn.innerHTML = 'Save to My Account';
                 }, 2000);
             } else {
                 throw new Error(result.error);
             }
         } catch (err) {
-            alert('Vault Sync Failed: ' + err.message);
+            alert('Save Failed: ' + err.message);
             bridgeBtn.disabled = false;
-            bridgeBtn.textContent = 'Retry Sync';
+            bridgeBtn.textContent = 'Retry Save';
         }
     });
 });

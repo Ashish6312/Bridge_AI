@@ -281,7 +281,7 @@
         </div>
         <div class="status-pill">
             <div class="pulse-dot"></div>
-            <span>Vault Active</span>
+            <span>Secure Sync</span>
         </div>
     </div>
 
@@ -293,29 +293,29 @@
                     <div class="site-icon" id="site-emoji">🌐</div>
                     <div class="site-info">
                         <h2 id="platform-name">Current Site</h2>
-                        <p id="platform-status">Scanning for intelligence...</p>
+                        <p id="platform-status">Ready to capture chat...</p>
                     </div>
                 </div>
                 
                 <button id="extract-btn" class="action-button">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Capture Intelligence
+                    Capture Chat
                 </button>
             </div>
 
-            <div class="mode-title">Bridge Mode</div>
+            <div class="mode-title">Chat Mode</div>
             <div class="modes-grid">
                 <div class="mode-item active" data-mode="quick">
-                    <h4>Quick Sync</h4>
+                    <h4>Quick Mode</h4>
                 </div>
                 <div class="mode-item" data-mode="developer">
-                    <h4>Dev Sync</h4>
+                    <h4>Dev Mode</h4>
                 </div>
                 <div class="mode-item" data-mode="research">
-                    <h4>Deep Dive</h4>
+                    <h4>Research Mode</h4>
                 </div>
                 <div class="mode-item" data-mode="project">
-                    <h4>Forge Sync</h4>
+                    <h4>Project Mode</h4>
                 </div>
             </div>
         </div>
@@ -323,14 +323,14 @@
         <!-- Analysis View -->
         <div id="analysis-view" class="fade-in">
             <div class="card">
-                <h3 style="margin-bottom: 16px; font-size: 0.9rem; color: var(--primary);">Extracted Context</h3>
+                <h3 style="margin-bottom: 16px; font-size: 0.9rem; color: var(--primary);">Captured Summary</h3>
                 <div id="data-container">
                     <!-- Data points injected here -->
                 </div>
                 
                 <button id="bridge-btn" class="action-button" style="margin-top: 20px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
-                    Vault to Hub
+                    Save to My Account
                 </button>
                 <button id="cancel-btn" style="width: 100%; margin-top: 10px; background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); padding: 10px; border-radius: 10px; cursor: pointer; font-size: 0.8rem;">
                     Rescan
@@ -344,7 +344,7 @@
             <div class="user-avatar" id="user-initial">?</div>
             <div class="user-details">
                 <strong id="user-email">Guest User</strong>
-                <span id="sync-status">Syncing with Hub...</span>
+                <span id="sync-status">Connecting...</span>
             </div>
         </div>
     </div>
