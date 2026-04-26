@@ -99,7 +99,14 @@
             flex: 1;
             overflow-y: auto;
             padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
             position: relative;
+        }
+
+        #dashboard-view, #analysis-view {
+            width: 100%;
         }
 
         .card {
@@ -308,6 +315,7 @@
             <h1>BridgeAI</h1>
         </div>
         <div class="status-pill">
+            <span style="opacity: 0.5; margin-right: 8px; font-size: 0.6rem;">v1.0.1</span>
             <div id="hub-dot" class="pulse-dot"></div>
             <span id="hub-status-text">Hub Active</span>
         </div>

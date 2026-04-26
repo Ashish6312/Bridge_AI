@@ -209,17 +209,13 @@ const showCustomModal = (title, message, type = 'warning') => {
 
 const showAnalysis = (data) => {
     if (!dashboardView || !analysisView || !dataContainer) return;
-    dashboardView.style.display = 'none';
-    analysisView.style.display = 'block';
-    dataContainer.innerHTML = '';
-
-    const platform = data.platform.toLowerCase();
-    const isAI = ['chatgpt', 'gemini', 'claude', 'perplexity'].some(s => platform.includes(s));
+    dashboardView.style.setProperty('display', 'none', 'important');
+    analysisView.style.setProperty('display', 'block', 'important');
+    dataContainer.innerHTML = ''; // Clear old data
     
+    const isAI = data.messages && data.messages.length > 0;
     const points = [
-        { label: 'Intelligence Source', value: data.platform },
-        { label: 'Origin URL', value: data.url },
-        { label: 'Context Title', value: data.title },
+        { label: 'Origin Platform', value: data.platform || 'Universal' },
         { 
             label: isAI ? 'Conversation Depth' : 'Intelligence Signals', 
             value: isAI ? `${data.messages.length} messages captured` : `${data.messages.length} data points extracted` 
@@ -481,9 +477,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
             capturedData = null; // Clear old capture
-            if (analysisView) analysisView.style.display = 'none';
+            if (analysisView) analysisView.style.setProperty('display', 'none', 'important');
             if (dashboardView) {
-                dashboardView.style.display = 'block';
+                dashboardView.style.setProperty('display', 'block', 'important');
                 dashboardView.classList.remove('fade-in');
                 void dashboardView.offsetWidth; // Trigger reflow
                 dashboardView.classList.add('fade-in');
