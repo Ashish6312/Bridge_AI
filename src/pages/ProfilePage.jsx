@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   User, 
   CreditCard, 
@@ -18,10 +19,10 @@ import {
   Bell,
   Lock
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { API_BASE } from '../apiConfig';
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [stats, setStats] = useState({ usage: 0, total: 0 });
@@ -351,7 +352,7 @@ const ProfilePage = () => {
                    <button 
                     onClick={() => {
                       localStorage.removeItem('bridge_user');
-                      window.location.href = '/';
+                      navigate('/logout');
                     }}
                     className="btn-exit-minimal" style={{ width: '100%', textAlign: 'center', justifyContent: 'center', borderColor: 'rgba(244,63,94,0.2)', padding: '14px', fontSize: '0.9rem', fontWeight: '800' }}
                    >

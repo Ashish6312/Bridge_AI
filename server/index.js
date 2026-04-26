@@ -3,6 +3,8 @@ const cors = require('cors');
 require('dotenv').config();
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
+const cron = require('node-cron');
+const { sendWelcomeEmail, sendPromotionEmail } = require('./emailService');
 
 const app = express();
 // Sovereign Extension Protocol: Enable universal handshake
@@ -90,6 +92,12 @@ const initDB = async () => {
         currency TEXT DEFAULT 'USD',
         status TEXT DEFAULT 'paid',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS subscribers (
+        email TEXT PRIMARY KEY,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_promo_sent TIMESTAMP
       );
 
       -- Performance Indexing
@@ -230,20 +238,24 @@ app.post('/api/summarize', async (req, res) => {
       project:   'Summarize as project update: 1. Current Status 2. Milestone Progress 3. Risks 4. Next Actions.'
     };
 
-    const distillationResponse = await fetch('https://text.pollinations.ai/', {
+    const distillationResponse = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
+      },
       body: JSON.stringify({
         messages: [
           { role: 'system', content: `You are an expert intelligence analyst. ${PROMPTS[finalMode] || PROMPTS.quick} Output ONLY the summary in professional markdown.` },
           { role: 'user', content: formattedChat.substring(0, 8000) }
         ],
         model: 'openai',
-        seed: Date.now()
+        seed: Math.floor(Math.random() * 1000000)
       })
     });
 
-    const aiSummary = await distillationResponse.text();
+    const distillationData = await distillationResponse.json();
+    const aiSummary = distillationData.choices?.[0]?.message?.content || "Protocol Error: Intelligence could not be distilled.";
     const summaryHeader = `### ${finalMode.toUpperCase()} INTELLIGENCE LOG [${platform.toUpperCase()}]\n\n`;
     const summary = `${summaryHeader}${aiSummary.trim()}`;
     
@@ -278,9 +290,12 @@ app.post('/api/optimize', async (req, res) => {
     if (!summary) return res.status(400).json({ success: false, error: "No summary provided" });
 
     // Enterprise-Grade Prompt Engineering via AI Pulse
-    const response = await fetch('https://text.pollinations.ai/', {
+    const response = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
+      },
       body: JSON.stringify({
         messages: [
           { role: 'system', content: 'You are an expert prompt engineer. Turn the following context into a highly efficient, professional system prompt for another AI. Be structured and authoritative.' },
@@ -291,7 +306,8 @@ app.post('/api/optimize', async (req, res) => {
       })
     });
 
-    const optimized = await response.text();
+    const data = await response.json();
+    const optimized = data.choices?.[0]?.message?.content || "Optimization Failed.";
     res.json({ success: true, optimized: optimized.trim() });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -303,9 +319,12 @@ app.post('/api/rename', async (req, res) => {
     const { summary } = req.body;
     if (!summary) return res.status(400).json({ success: false, error: "No summary provided" });
 
-    const response = await fetch('https://text.pollinations.ai/', {
+    const response = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
+      },
       body: JSON.stringify({
         messages: [
           { role: 'system', content: 'Generate a short, professional, authoritative title (max 5 words) for the following context. Output ONLY the title.' },
@@ -316,7 +335,8 @@ app.post('/api/rename', async (req, res) => {
       })
     });
 
-    const title = await response.text();
+    const data = await response.json();
+    const title = data.choices?.[0]?.message?.content || "Unnamed Bridge";
     res.json({ success: true, title: title.replace(/"/g, '').trim() });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -466,13 +486,51 @@ app.post('/api/dispatch/mail', async (req, res) => {
 app.post('/api/subscribe', async (req, res) => {
   try {
     const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    
     console.log(`[SUBSCRIPTION] Email registered: ${email}`);
-    if (email === 'starterscope7@gmail.com') {
-      console.log("[PROTOCOL] Special Sovereign handshake for analyst starterscope7.");
-    }
-    res.json({ success: true, message: "Welcome to the Revolution." });
+    
+    // Save to subscribers table
+    await pool.query(
+      'INSERT INTO subscribers (email) VALUES ($1) ON CONFLICT (email) DO NOTHING',
+      [email]
+    );
+
+    // Send welcome email immediately
+    await sendWelcomeEmail(email);
+
+    res.json({ success: true, message: "Welcome to the Revolution. Check your inbox!" });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── DAILY PROMOTIONAL CRON JOB ─────────────────────────────
+// Runs every day at 10:00 AM
+cron.schedule('0 10 * * *', async () => {
+  console.log('[CRON] Initiating daily promotional email broadcast...');
+  try {
+    // Get all subscribers who haven't upgraded to a paid plan yet
+    // We join with users table to check their current plan
+    const result = await pool.query(`
+      SELECT s.email 
+      FROM subscribers s
+      LEFT JOIN users u ON s.email = u.email
+      WHERE u.plan IS NULL OR u.plan = 'free'
+    `);
+
+    console.log(`[CRON] Found ${result.rowCount} potential targets for promotion.`);
+
+    for (const row of result.rows) {
+      console.log(`[CRON] Sending promotion to: ${row.email}`);
+      await sendPromotionEmail(row.email);
+      // Update last_promo_sent
+      await pool.query('UPDATE subscribers SET last_promo_sent = CURRENT_TIMESTAMP WHERE email = $1', [row.email]);
+    }
+    
+    console.log('[CRON] Daily broadcast completed successfully.');
+  } catch (err) {
+    console.error('[CRON] Broadcast failure:', err);
   }
 });
 

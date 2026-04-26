@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Plus, Search, MessageSquare, Clock, Code, Target, Layers, Activity,
-  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw
+  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw, FileText, X
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
 import IntelligenceBridge from '../components/IntelligenceBridge';
@@ -169,6 +169,54 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
   const [mailSending, setMailSending] = useState(null);
   const [showUniversalModal, setShowUniversalModal] = useState(false);
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const handleRegenerate = async () => {
+    setIsRegenerating(true);
+    try {
+      const prompt = `Give a brief TL;DR summary (3-5 bullet points) of the following text:\n\n${ctx.chat_log || ctx.chatLog}`;
+      const response = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: 'You are an expert AI context summarizer. Be concise, structured, and accurate. Output only the summary.' },
+            { role: 'user', content: prompt }
+          ],
+          model: 'openai',
+          seed: Math.floor(Math.random() * 1000000)
+        })
+      });
+
+      const raw = await response.text();
+      let filtered = raw;
+      if (filtered.includes('IMPORTANT NOTICE')) {
+        const parts = filtered.split('work normally.');
+        if (parts.length > 1) filtered = parts[1].trim();
+      }
+
+      let summary = filtered;
+      try {
+        const json = JSON.parse(filtered);
+        if (json.choices && json.choices[0]?.message?.content) summary = json.choices[0].message.content;
+        else if (json.content) summary = json.content;
+      } catch (e) {}
+
+      const res = await fetch(`${API_BASE}/api/bridge/${ctx.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary })
+      });
+      if (res.ok) {
+        triggerToast('Intelligence re-distilled.');
+        loadData();
+      }
+    } catch (err) {
+      triggerToast('Protocol Timeout: AI Hub unreachable.');
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
 
   const handleOptimize = async () => {
     setIsOptimizing(true);
@@ -179,14 +227,12 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
         body: JSON.stringify({ summary: ctx.summary })
       });
       const data = await response.json();
-      console.log('Hub Optimization Response:', data);
       if (data.success) {
         setOptimizedPrompt(data.optimized);
       } else {
         triggerToast('Optimization engine idle. Check Hub logs.');
       }
     } catch (err) {
-      console.error('Optimization Failed:', err);
       triggerToast('Hub Intelligence unreachable.');
     } finally {
       setIsOptimizing(false);
@@ -247,17 +293,19 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="glass-card" style={{ padding: '24px', borderLeft: '4px solid var(--primary)' }}
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}
+      className="glass-card" style={{ padding: '24px', borderLeft: '4px solid var(--primary)', transition: 'all 0.3s ease' }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--primary)', letterSpacing: '1px' }}>{ctx.source.toUpperCase()} BRIDGE</span>
+            <span style={{ fontSize: '0.7rem', fontWeight: '900', color: 'var(--primary)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>{(ctx.source || 'Manual')} BRIDGE</span>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>• {formatTime(ctx.created_at)}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'white' }}>{ctx.title}</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'white' }}>{ctx.title}</h3>
             <button onClick={handleSmartRename} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '4px', opacity: 0.6 }} title="Smart Rename">
               <Wand2 size={14} />
             </button>
@@ -269,9 +317,12 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
             >
               {mailSending === ctx.id ? '...' : <Mail size={14} />}
             </button>
+            <button onClick={handleRegenerate} disabled={isRegenerating} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '4px', opacity: 0.6 }} title="Regenerate Intelligence">
+               <RefreshCw size={12} className={isRegenerating ? 'pulse' : ''} />
+            </button>
           </div>
         </div>
-        <button onClick={() => onDelete(ctx.id)} style={{ background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', opacity: 0.6, fontSize: '0.85rem', fontWeight: '700' }}>Delete</button>
+        <button onClick={() => onDelete(ctx.id)} style={{ background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', opacity: 0.6, fontSize: '0.85rem', fontWeight: '900' }}>DELETE</button>
       </div>
 
       <div style={{ 
@@ -371,23 +422,23 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
                   boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
                 }}>
                   {[
-                    { fmt: 'markdown', label: '📄 Markdown (.md)' },
-                    { fmt: 'json',     label: '🗂 JSON (.json)' },
-                    { fmt: 'prompt',   label: '⚡ Prompt Pack (.txt)' },
-                  ].map(({ fmt, label }) => (
+                    { fmt: 'markdown', label: '📄 Markdown (.md)', icon: <FileText size={16} /> },
+                    { fmt: 'json',     label: '🗂 JSON (.json)', icon: <Database size={16} /> },
+                    { fmt: 'prompt',   label: '⚡ Prompt Pack (.txt)', icon: <Zap size={16} /> },
+                  ].map(({ fmt, label, icon }) => (
                     <button 
                       key={fmt} 
                       onClick={() => { exportBridge(ctx, fmt); setShowExport(false); }}
                       style={{ 
-                        display: 'block', width: '100%', background: 'transparent', border: 'none',
+                        display: 'flex', width: '100%', background: 'transparent', border: 'none',
                         color: 'white', padding: '12px 16px', textAlign: 'left', cursor: 'pointer',
                         borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600',
-                        transition: 'background 0.2s' 
+                        transition: 'background 0.2s', alignItems: 'center', gap: '10px'
                       }}
-                      onMouseEnter={e => e.target.style.background='rgba(255,255,255,0.08)'}
-                      onMouseLeave={e => e.target.style.background='transparent'}
+                      onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background='transparent'}
                     >
-                      {label}
+                      {icon} {label}
                     </button>
                   ))}
                 </div>
@@ -428,8 +479,8 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
                 transition: 'transform 0.2s, filter 0.2s',
                 boxShadow: `0 4px 12px ${plat.color}33`
               }}
-              onMouseEnter={e => { e.target.style.transform = 'translateY(-2px)'; e.target.style.filter = 'brightness(1.1)'; }}
-              onMouseLeave={e => { e.target.style.transform = 'none'; e.target.style.filter = 'none'; }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.1)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.filter = 'none'; }}
             >
               {plat.icon} {plat.name}
             </button>
@@ -525,40 +576,6 @@ const ManualBridgeSubmit = ({ projects, triggerToast, setActiveTab, setBridges, 
     setLoading(true);
 
     try {
-      const prompt = PROMPTS[mode] + text.substring(0, 6000);
-      const response = await fetch('https://text.pollinations.ai/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'You are an expert AI context summarizer. Be concise, structured, and accurate. Output only the summary.' },
-            { role: 'user', content: prompt }
-          ],
-          model: 'openai',
-          seed: Math.floor(Math.random() * 1000000)
-        })
-      });
-
-      const raw = await response.text();
-      let filtered = raw;
-      // Filter out Pollinations technical notices
-      if (filtered.includes('IMPORTANT NOTICE')) {
-        const parts = filtered.split('work normally.');
-        if (parts.length > 1) filtered = parts[1].trim();
-      }
-
-      let summary = filtered;
-      try {
-        const json = JSON.parse(filtered);
-        if (json.choices && json.choices[0]?.message?.content) {
-          summary = json.choices[0].message.content;
-        } else if (json.content) {
-          summary = json.content;
-        }
-      } catch (e) {
-        // use raw
-      }
-
       const userStr = localStorage.getItem('bridge_user');
       const user = userStr ? JSON.parse(userStr) : null;
       const email = user?.email || 'guest';
@@ -570,7 +587,8 @@ const ManualBridgeSubmit = ({ projects, triggerToast, setActiveTab, setBridges, 
           messages: [{ role: 'user', text }], 
           platform: 'Manual', 
           title,
-          email 
+          email,
+          mode
         })
       });
 
@@ -601,7 +619,61 @@ const ManualBridgeSubmit = ({ projects, triggerToast, setActiveTab, setBridges, 
   );
 };
 
+/* ─── Skeleton Loading Component ────────────────────────────────── */
+const SkeletonCard = () => (
+  <div className="glass-card" style={{ padding: '24px', marginBottom: '16px', borderLeft: '4px solid rgba(255,255,255,0.05)', opacity: 0.5 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div style={{ width: '140px', height: '14px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }} />
+      <div style={{ width: '60px', height: '14px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }} />
+    </div>
+    <div style={{ width: '80%', height: '24px', background: 'rgba(255,255,255,0.08)', borderRadius: '6px', marginBottom: '12px' }} />
+    <div style={{ width: '100%', height: '80px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }} />
+  </div>
+);
+
+/* ─── Reusable Sidebar Item Component ────────────────────────────── */
+const NavItem = ({ active, icon, label, count, status, onClick }) => (
+  <motion.button 
+    whileHover={{ x: 4, background: 'rgba(255,255,255,0.05)' }}
+    whileTap={{ scale: 0.98 }}
+    onClick={onClick}
+    style={{ 
+      width: '100%',
+      background: active ? 'rgba(139, 92, 246, 0.12)' : 'transparent',
+      padding: '12px 16px', borderRadius: '12px', 
+      color: active ? 'white' : 'rgba(255,255,255,0.4)',
+      border: '1px solid', borderColor: active ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+      textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px',
+      transition: 'all 0.2s', position: 'relative'
+    }}
+  >
+    {active && (
+      <motion.div 
+        layoutId="active-nav"
+        style={{ position: 'absolute', left: '0', width: '3px', height: '20px', background: 'var(--primary)', borderRadius: '0 4px 4px 0', boxShadow: '0 0 10px var(--primary)' }} 
+      />
+    )}
+    <div style={{ color: active ? 'var(--primary)' : 'currentColor', display: 'flex', alignItems: 'center' }}>
+      {icon}
+    </div>
+    <span style={{ fontSize: '0.9rem', fontWeight: active ? '800' : '600', letterSpacing: '-0.01em' }}>{label}</span>
+    {count !== undefined && (
+      <div style={{ marginLeft: 'auto', background: active ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '900', color: active ? 'white' : 'rgba(255,255,255,0.3)' }}>
+        {count}
+      </div>
+    )}
+    {status && (
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div className="pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+        <span style={{ fontSize: '0.6rem', color: '#10b981', fontWeight: '900' }}>{status}</span>
+      </div>
+    )}
+  </motion.button>
+);
+
 const Dashboard = () => {
+
+
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'saved';
@@ -651,8 +723,6 @@ const Dashboard = () => {
     }
 
     // STANDALONE EXTENSION SYNC: 
-    // Dispatch a DOM event that the content script will catch and relay.
-    // This is the most robust way to sync without hardcoded IDs.
     const syncWithExtension = () => {
        try {
          const event = new CustomEvent('BRIDGE_AUTH_UPDATE', { 
@@ -662,15 +732,11 @@ const Dashboard = () => {
        } catch (e) {}
     };
     
-    // Initial data load
     loadData();
-
-    // Attempt sync immediately and on visibility (covers tab switching)
     syncWithExtension();
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         syncWithExtension();
-        // Silent update to avoid UI flashing
         loadData(true);
       }
     };
@@ -699,7 +765,6 @@ const Dashboard = () => {
     if (isFetchingRef.current) return;
     try {
       isFetchingRef.current = true;
-      // Only show full loading UI if we have no bridges yet to prevent flickering on scroll/refresh
       if (!isSilent && bridges.length === 0) setLoading(true);
       
       const userStr = localStorage.getItem('bridge_user');
@@ -711,7 +776,6 @@ const Dashboard = () => {
         return;
       }
 
-      // Parallel Intelligence Fetching with Timeout Guard
       const fetchWithTimeout = (url, options = {}, timeout = 5000) => {
         return Promise.race([
           fetch(url, options),
@@ -729,44 +793,26 @@ const Dashboard = () => {
       if (bridgesData.success) {
         setHubStatus('online');
         const localBridges = bridgesData.data || [];
+        setBridges(localBridges);
         
-        // Prevent Flickering: Only update if bridge count or content changed
-        setBridges(prev => {
-          if (JSON.stringify(prev) === JSON.stringify(localBridges)) return prev;
-          return localBridges;
-        });
-        
-        // Extract project segments
         const uniqueProjects = [...new Set(localBridges.map(b => b.project_id).filter(Boolean))];
-        setProjects(prev => {
-          const newProj = uniqueProjects.map(id => ({ id, name: id }));
-          if (JSON.stringify(prev) === JSON.stringify(newProj)) return prev;
-          return newProj;
-        });
+        setProjects(uniqueProjects.map(id => ({ id, name: id })));
         
-        // Distill telemetry
         const rawTokens = localBridges.reduce((acc, b) => {
           const match = String(b.tokens || '').match(/\d+/);
           return acc + (match ? parseInt(match[0]) : 0);
         }, 0);
         
-        const newStats = { 
+        setStats(prev => ({ 
+          ...prev, 
           totalBridges: localBridges.length, 
           totalTokens: rawTokens * 2.5 
-        };
-
-        setStats(prev => {
-          if (prev.totalBridges === newStats.totalBridges && prev.totalTokens === newStats.totalTokens) return prev;
-          return { ...prev, ...newStats };
-        });
+        }));
       } else {
         setHubStatus('offline');
       }
 
-      // Force loading false as soon as primary bridges are distilled
       setLoading(false);
-
-      // Silent status update
       if (statusRes) {
         const statusData = await statusRes.json().catch(() => null);
         if (statusData && statusData.success) {
@@ -777,62 +823,39 @@ const Dashboard = () => {
           }));
         }
       }
-
     } catch (err) {
-      console.error('Core Hub Fetch Failed:', err);
       setHubStatus('offline');
     } finally {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, []);
+  }, [bridges.length]);
 
   const refreshVault = () => {
     loadData();
-    try {
-      window.dispatchEvent(new CustomEvent('RELOAD_EXTENSION'));
-    } catch (e) {}
-    // Internal sync: No toast to keep UI clean
+    try { window.dispatchEvent(new CustomEvent('RELOAD_EXTENSION')); } catch (e) {}
   };
 
   useEffect(() => {
-    // Watch for both native storage events (from other tabs) and custom events
     const handleStorage = (e) => {
-      if (e.key === 'bridge_user' || e.key === 'bridge_vault_updated') {
-        loadData(true);
-      }
+      if (e.key === 'bridge_user' || e.key === 'bridge_vault_updated') loadData(true);
     };
-    const handleVaultUpdate = () => {
-      // Direct silent update for immediate feedback without flicker
-      loadData(true);
-    };
-
+    const handleVaultUpdate = () => loadData(true);
     window.addEventListener('storage', handleStorage);
     window.addEventListener('bridge-vault-update', handleVaultUpdate);
-    
-    // Safety check on mount
     loadData(false);
-
-    // ─── Real-Time Pulse ──────────────────────────────────
-    // Keep the Hub synchronized with the backend every 10s silently
-    const pulseInterval = setInterval(() => {
-      loadData(true);
-    }, 10000);
-
+    const pulseInterval = setInterval(() => loadData(true), 10000);
     return () => {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('bridge-vault-update', handleVaultUpdate);
       clearInterval(pulseInterval);
-      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     };
-  }, [loadData]); // Added loadData to dependencies for freshness
+  }, [loadData]);
 
   const handleCreateProject = (name) => {
     if (!name) return;
     const newProject = { id: 'proj_' + Date.now(), name, created_at: new Date().toISOString() };
-    const updated = [...projects, newProject];
-    setProjects(updated);
-    localStorage.setItem('bridge_projects', JSON.stringify(updated));
+    setProjects(prev => [...prev, newProject]);
     triggerToast(`Vault "${name}" successfully initialized.`);
   };
 
@@ -846,7 +869,6 @@ const Dashboard = () => {
     return matchesSearch && matchesProject;
   });
 
-  // Show ALL bridges in "All Vaults" tab; only split for History tab
   const recentBridges  = filteredBridges.filter(b =>  isRecent(b.created_at));
   const olderBridges   = filteredBridges.filter(b => !isRecent(b.created_at));
   const historyBridges = olderBridges;
@@ -855,9 +877,7 @@ const Dashboard = () => {
     const id = confirmModal.id;
     if (!id) return;
     try {
-      const res = await fetch(`${API_BASE}/api/bridge/${id}`, {
-        method: 'DELETE'
-      });
+      const res = await fetch(`${API_BASE}/api/bridge/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         triggerToast('Bridge successfully expunged from Vault.');
@@ -872,210 +892,145 @@ const Dashboard = () => {
     <div className="container" style={{ padding: '40px 0', background: 'transparent' }}>
       <div className="dashboard-layout" style={{ display: 'flex', gap: '32px' }}>
         
-        {/* Sidebar */}
+        {/* Elite Dashboard Sidebar */}
         <motion.aside 
-          initial={{ x: -20, opacity: 0 }}
+          initial={{ x: -30, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="dashboard-sidebar" style={{ width: '280px', flexShrink: 0, position: 'sticky', top: '90px', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="dashboard-sidebar" 
+          style={{ 
+            width: '320px', flexShrink: 0, position: 'sticky', top: '100px', 
+            maxHeight: 'calc(100vh - 120px)', overflowY: 'auto', paddingRight: '4px' 
+          }}
         >
-          {activeTab === 'saved' && (
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '2px', height: '100%', background: 'rgba(255,255,255,0.05)', zIndex: 10 }}>
-              <motion.div style={{ width: '100%', height: `${scrollProgress}%`, background: 'var(--primary)', boxShadow: '0 0 10px var(--primary)' }} />
-            </div>
-          )}
-          <div className="glass-card" style={{ padding: '0', marginBottom: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 10px 40px rgba(0,0,0,0.4)', position: 'relative' }}>
-            <div style={{ padding: '24px', position: 'relative', zIndex: 2 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <span style={{ fontSize: '0.65rem', fontWeight: '900', letterSpacing: '1.5px', color: 'var(--text-muted)' }}>
-                  SOVEREIGN HUB
-                </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: hubStatus === 'online' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(244, 63, 94, 0.1)', padding: '4px 10px', borderRadius: '100px', border: hubStatus === 'online' ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid rgba(244, 63, 94, 0.2)' }}>
-                  <div style={{ 
-                    width: '6px', height: '6px', borderRadius: '50%',
-                    background: hubStatus === 'online' ? '#22c55e' : '#f43f5e',
-                    boxShadow: hubStatus === 'online' ? '0 0 10px #22c55e' : '0 0 10px #f43f5e',
-                    animation: 'pulse 2s infinite'
-                  }} />
-                  <span style={{ fontSize: '0.65rem', fontWeight: '800', color: hubStatus === 'online' ? '#22c55e' : '#f43f5e', letterSpacing: '0.5px' }}>
-                    {hubStatus.toUpperCase()}
-                  </span>
+          <div className="glass-card" style={{ padding: '0', marginBottom: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(24px)' }}>
+            
+            {/* Hub Identity & Status */}
+            <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--gradient-1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Cpu size={18} color="white" />
+                  </div>
+                  <span style={{ fontSize: '0.85rem', fontWeight: '900', letterSpacing: '1px', color: 'white' }}>SOVEREIGN HUB</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: hubStatus === 'online' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(244, 63, 94, 0.1)', padding: '4px 12px', borderRadius: '100px', border: hubStatus === 'online' ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid rgba(244, 63, 94, 0.2)' }}>
+                  <div className={hubStatus === 'online' ? 'pulse' : ''} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hubStatus === 'online' ? '#22c55e' : '#f43f5e' }} />
+                  <span style={{ fontSize: '0.65rem', fontWeight: '900', color: hubStatus === 'online' ? '#22c55e' : '#f43f5e' }}>{hubStatus.toUpperCase()}</span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--gradient-1)', padding: '2px', boxShadow: '0 8px 20px rgba(139, 92, 246, 0.3)' }}>
-                  <div style={{ width: '100%', height: '100%', background: '#020617', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '1.2rem' }}>
-                    {JSON.parse(localStorage.getItem('bridge_user') || '{}').name?.charAt(0) || 'A'}
-                  </div>
-                </div>
-                <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <div style={{ fontSize: '0.95rem', color: 'white', fontWeight: '800', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
-                    {JSON.parse(localStorage.getItem('bridge_user') || '{}').email || 'Connecting Hub...'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }}></div>
-                    <div style={{ fontSize: '0.65rem', color: '#4ade80', fontWeight: '800', letterSpacing: '0.5px' }}>ACTIVE IDENTITY</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--text-muted)' }}>
-                  <Zap size={14} /> <strong style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>TELEMETRY</strong>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'white' }}>{stats.totalBridges || 0}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '700' }}>BRIDGES</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'white' }}>{Math.round(stats.totalTokens || 0).toLocaleString()}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '700' }}>TOKENS</div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800' }}>SOVEREIGN QUOTA</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                    <span style={{ 
-                      fontSize: '0.65rem', padding: '4px 10px', borderRadius: '6px', 
-                      background: stats.plan === 'infinite' ? 'var(--gradient-1)' : 'rgba(255,255,255,0.05)',
-                      color: 'white', fontWeight: '900', border: '1px solid rgba(255,255,255,0.1)'
-                    }}>{(stats.plan || 'FREE').toUpperCase()}</span>
-                    <div style={{ fontSize: '0.55rem', color: '#10b981', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                       <CheckCircle2 size={10} /> DB SYNCED
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ position: 'relative' }}>
+                  <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'var(--gradient-1)', padding: '2px' }}>
+                    <div style={{ width: '100%', height: '100%', background: '#020617', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '1.4rem' }}>
+                      {JSON.parse(localStorage.getItem('bridge_user') || '{}').name?.charAt(0) || 'A'}
                     </div>
                   </div>
+                  <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '16px', height: '16px', borderRadius: '50%', background: '#10b981', border: '3px solid #020617', boxShadow: '0 0 10px #10b981' }} />
                 </div>
-                <div style={{ height: '8px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden', margin: '12px 0' }}>
-                   <motion.div 
-                      initial={{ width: 0 }} 
-                      animate={{ width: `${Math.min(100, (stats.usageCount / (stats.plan === 'pro' ? 100 : 3)) * 100)}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      style={{ height: '100%', background: 'var(--gradient-1)', borderRadius: '100px', boxShadow: '0 0 10px var(--primary)' }} 
-                   />
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ fontSize: '1rem', color: 'white', fontWeight: '800', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {JSON.parse(localStorage.getItem('bridge_user') || '{}').name || 'Anonymous Analyst'}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600' }}>{JSON.parse(localStorage.getItem('bridge_user') || '{}').email}</div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '600' }}>
-                  <span style={{ color: 'white' }}>{stats.usageCount || 0} extracted</span>
-                  <span style={{ color: 'var(--text-muted)' }}>{stats.plan === 'infinite' ? 'Unlimited' : (stats.plan === 'pro' ? '100 limit' : '3 limit')}</span>
-                </div>
-                {(stats.plan !== 'infinite') && (
-                  <Link to="/services" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '16px', color: 'var(--primary)', fontSize: '0.75rem', textDecoration: 'none', fontWeight: '800', background: 'rgba(139, 92, 246, 0.1)', padding: '8px', borderRadius: '8px', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}>
-                    Upgrade Capacity <ArrowRight size={14} />
-                  </Link>
-                )}
               </div>
             </div>
-          </div>
 
-          <div className="glass-card" style={{ padding: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <button 
-              onClick={() => setActiveTab('manual')}
-              className="btn-primary" 
-              style={{ width: '100%', marginBottom: '12px', justifyContent: 'center', padding: '14px', fontSize: '0.95rem', fontWeight: '800' }}
-            >
-              <Plus size={20} /> New Bridge
-            </button>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
-                <button 
-                  onClick={() => {
-                    if (stats.plan === 'pro' || stats.plan === 'infinite') {
-                      setPromptModal({ isOpen: true });
-                    } else {
-                      triggerToast('Upgrade to Pro to initialize Project Memory Folders.');
-                    }
-                  }}
-                  className="btn-secondary" 
-                  style={{ flex: 1, justifyContent: 'center', padding: '14px', fontSize: '0.85rem', fontWeight: '800', borderRadius: '16px', opacity: (stats.plan === 'pro' || stats.plan === 'infinite') ? 1 : 0.5 }}
-                >
-                  <Layers size={18} /> New Project
-                </button>
-                <button 
-                  onClick={refreshVault}
-                  className="btn-secondary"
-                  style={{ flex: 1, justifyContent: 'center', padding: '14px', fontSize: '0.85rem', fontWeight: '800', borderRadius: '16px' }}
-                >
-                  <RefreshCw size={18} /> Refresh
-                </button>
-            </div>
-
-            <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0 -20px 20px' }} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <button 
-                onClick={() => { setActiveTab('saved'); setActiveProject(null); }}
-                style={{ 
-                  background: (activeTab === 'saved' && !activeProject) ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
-                  padding: '14px 16px', borderRadius: '12px', 
-                  color: (activeTab === 'saved' && !activeProject) ? 'white' : 'var(--text-muted)',
-                  border: '1px solid', borderColor: (activeTab === 'saved' && !activeProject) ? 'rgba(139, 92, 246, 0.3)' : 'transparent',
-                  textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
-                  transition: 'all 0.2s', fontWeight: (activeTab === 'saved' && !activeProject) ? '700' : '600'
-                }}
-              >
-                <MessageSquare size={18} color={(activeTab === 'saved' && !activeProject) ? 'var(--primary)' : 'currentColor'} /> All Vaults
-              </button>
+            {/* Navigation Engine */}
+            <div style={{ padding: '24px' }}>
               
-              {projects.length > 0 && (
-                <div style={{ marginTop: '16px', marginBottom: '8px' }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '12px', paddingLeft: '16px', fontWeight: '800', letterSpacing: '1px' }}>PROJECTS</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {projects.map(p => (
-                        <button 
-                          key={p.id}
-                          onClick={() => { setActiveTab('saved'); setActiveProject(p.id); }}
-                          style={{ 
-                            width: '100%',
-                            background: activeProject === p.id ? 'rgba(255,255,255,0.04)' : 'transparent',
-                            padding: '12px 16px', borderRadius: '12px', 
-                            color: activeProject === p.id ? 'white' : 'var(--text-muted)',
-                            border: '1px solid', borderColor: activeProject === p.id ? 'rgba(255,255,255,0.08)' : 'transparent',
-                            textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
-                            transition: 'all 0.2s', fontWeight: activeProject === p.id ? '700' : '500'
-                          }}
-                        >
-                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeProject === p.id ? 'var(--primary)' : 'rgba(255,255,255,0.1)', boxShadow: activeProject === p.id ? '0 0 10px var(--primary)' : 'none' }}></div>
-                          {p.name}
-                        </button>
-                      ))}
+              {/* Group: Vault Ops */}
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '900', letterSpacing: '2px', marginBottom: '16px', paddingLeft: '8px' }}>VAULT ENGINE</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <NavItem 
+                    active={activeTab === 'saved' && !activeProject} 
+                    icon={<MessageSquare size={18} />} 
+                    label="All Intelligence" 
+                    count={stats.totalBridges}
+                    onClick={() => { setActiveTab('saved'); setActiveProject(null); }} 
+                  />
+                  <NavItem 
+                    active={activeTab === 'history'} 
+                    icon={<Clock size={18} />} 
+                    label="History Archive" 
+                    onClick={() => setActiveTab('history')} 
+                  />
+                  <NavItem 
+                    active={activeTab === 'extension'} 
+                    icon={<Zap size={18} />} 
+                    label="Analyst Module" 
+                    status="LIVE"
+                    onClick={() => setActiveTab('extension')} 
+                  />
+                </div>
+              </div>
+
+              {/* Group: Project Folders */}
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingLeft: '8px' }}>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '900', letterSpacing: '2px' }}>PROJECTS</div>
+                  <button onClick={() => setPromptModal({ isOpen: true })} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '4px' }}>
+                    <Plus size={14} />
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
+                  {projects.map(p => (
+                    <NavItem 
+                      key={p.id}
+                      active={activeProject === p.id} 
+                      icon={<div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeProject === p.id ? 'var(--primary)' : 'rgba(255,255,255,0.2)' }} />} 
+                      label={p.name} 
+                      count={bridges.filter(b => b.project_id === p.id).length}
+                      onClick={() => { setActiveTab('saved'); setActiveProject(p.id); }} 
+                    />
+                  ))}
+                  {projects.length === 0 && (
+                    <div style={{ padding: '12px 16px', fontSize: '0.75rem', color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>No project folders initialized</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Group: Capacity Protocol */}
+              <div style={{ marginTop: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingLeft: '8px' }}>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '900', letterSpacing: '2px' }}>CAPACITY</div>
+                  <span style={{ fontSize: '0.65rem', fontWeight: '900', color: 'var(--primary)' }}>{(stats.plan || 'FREE').toUpperCase()}</span>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: '800', color: 'white', marginBottom: '8px' }}>
+                    <span>Extraction Usage</span>
+                    <span>{Math.round((stats.usageCount / (stats.plan === 'pro' ? 100 : 3)) * 100)}%</span>
                   </div>
+                  <div style={{ height: '6px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
+                    <motion.div 
+                      initial={{ width: 0 }} 
+                      animate={{ width: `${Math.min(100, (stats.usageCount / (stats.plan === 'pro' ? 100 : 3)) * 100)}%` }}
+                      transition={{ duration: 1 }}
+                      style={{ height: '100%', background: 'var(--gradient-1)', boxShadow: '0 0 15px var(--primary)' }} 
+                    />
+                  </div>
+                  <Link to="/services" style={{ display: 'block', textAlign: 'center', marginTop: '16px', fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', textDecoration: 'none', background: 'rgba(139, 92, 246, 0.1)', padding: '8px', borderRadius: '10px' }}>
+                    UPGRADE HUB
+                  </Link>
                 </div>
-              )}
+              </div>
 
-              <div style={{ height: '1px', background: 'var(--glass-border)', margin: '12px -20px' }} />
-
-              <button 
-                onClick={() => setActiveTab('extension')}
-                style={{ 
-                  background: activeTab === 'extension' ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                  padding: '14px 16px', borderRadius: '12px', color: activeTab === 'extension' ? 'white' : 'var(--text-muted)',
-                  border: '1px solid', borderColor: activeTab === 'extension' ? 'rgba(16, 185, 129, 0.3)' : 'transparent',
-                  textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
-                  transition: 'all 0.2s', width: '100%', fontWeight: activeTab === 'extension' ? '700' : '600'
-                }}
-              >
-                <Zap size={18} color={activeTab === 'extension' ? '#10b981' : 'currentColor'} /> Extension
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div className="pulse" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
-                  <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: '900', letterSpacing: '0.5px' }}>LIVE</span>
-                </div>
-              </button>
-              <button 
-                onClick={() => setActiveTab('history')}
-                style={{ 
-                  background: activeTab === 'history' ? 'rgba(255,255,255,0.05)' : 'transparent',
-                  padding: '14px 16px', borderRadius: '12px', color: activeTab === 'history' ? 'white' : 'var(--text-muted)',
-                  border: '1px solid', borderColor: activeTab === 'history' ? 'rgba(255,255,255,0.1)' : 'transparent',
-                  textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
-                  transition: 'all 0.2s', fontWeight: activeTab === 'history' ? '700' : '600'
-                }}
-              >
-                <Clock size={18} /> History
-              </button>
             </div>
+
+            {/* Sidebar Footer */}
+            <div style={{ padding: '20px 24px', background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Activity size={14} color="#10b981" />
+                  <span style={{ fontSize: '0.6rem', fontWeight: '900', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>SECURE SYNC v2.4.0</span>
+               </div>
+               <button onClick={refreshVault} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+                  <RefreshCw size={14} />
+               </button>
+            </div>
+
           </div>
         </motion.aside>
 
@@ -1102,30 +1057,36 @@ const Dashboard = () => {
               
               <div style={{ position: 'relative', overflow: 'hidden', padding: '40px', borderRadius: '40px', background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '40px' }}>
                 <IntelligenceBridge />
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <h1 className="premium-gradient-text" style={{ fontSize: '3.2rem', fontWeight: '900', letterSpacing: '-0.03em', marginBottom: '4px' }}>
-                          {activeProject ? projects.find(p => p.id === activeProject)?.name : `Hello, ${JSON.parse(localStorage.getItem('bridge_user') || '{}').name || 'Bridge Analyst'}`}
-                        </h1>
-                        <div style={{ 
-                          padding: '6px 12px', borderRadius: '100px', fontSize: '0.6rem', fontWeight: '900', 
-                          background: hubStatus === 'online' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(244, 63, 94, 0.08)',
-                          color: hubStatus === 'online' ? '#22c55e' : '#f43f5e',
-                          border: `1px solid ${hubStatus === 'online' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(244, 63, 94, 0.15)'}`,
-                          display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '1px'
-                        }}>
-                          <div className={hubStatus === 'online' ? 'pulse' : ''} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hubStatus === 'online' ? '#22c55e' : '#f43f5e' }} />
-                          Hub {hubStatus}
-                        </div>
-                      </div>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', fontWeight: '500' }}>
-                        {filteredBridges.length} intelligence contexts organized and ready to bridge.
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  style={{ position: 'relative', zIndex: 1 }}
+                >
+                  <div style={{ 
+                    padding: '6px 12px', borderRadius: '100px', fontSize: '0.6rem', fontWeight: '900', 
+                    background: hubStatus === 'online' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(244, 63, 94, 0.08)',
+                    color: hubStatus === 'online' ? '#22c55e' : '#f43f5e',
+                    border: `1px solid ${hubStatus === 'online' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(244, 63, 94, 0.15)'}`,
+                    display: 'inline-flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '1px',
+                    marginBottom: '24px'
+                  }}>
+                    <div className={hubStatus === 'online' ? 'pulse' : ''} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hubStatus === 'online' ? '#22c55e' : '#f43f5e' }} />
+                    Hub {hubStatus}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '40px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, maxWidth: '650px' }}>
+                      <h1 className="premium-gradient-text" style={{ fontSize: '3.8rem', fontWeight: '900', letterSpacing: '-0.04em', marginBottom: '16px', lineHeight: '1.05' }}>
+                        {activeProject ? projects.find(p => p.id === activeProject)?.name : `Hello, ${JSON.parse(localStorage.getItem('bridge_user') || '{}').name || 'Analyst'}`}
+                      </h1>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', fontWeight: '500', lineHeight: '1.5' }}>
+                        Your Sovereign Hub is currently presiding over <strong>{filteredBridges.length}</strong> active intelligence bridges.
                       </p>
                     </div>
-                    <div style={{ position: 'relative' }}>
-                      <Search size={22} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', opacity: 0.7 }} />
+                    
+                    <div style={{ position: 'relative', width: '340px' }}>
+                      <Search size={20} style={{ position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 2 }} />
                       <input 
                         type="text" 
                         placeholder="Search intelligence..." 
@@ -1133,15 +1094,20 @@ const Dashboard = () => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ 
-                          paddingLeft: '48px', 
-                          width: '320px',
-                          fontSize: '1rem',
-                          background: 'rgba(15, 23, 42, 0.6)'
+                          width: '100%',
+                          padding: '20px 24px 20px 60px', 
+                          fontSize: '1rem', 
+                          background: 'rgba(15, 23, 42, 0.6)', 
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '20px', 
+                          backdropFilter: 'blur(12px)',
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                          transition: 'all 0.3s ease'
                         }}
                       />
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
 
               <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
@@ -1155,11 +1121,13 @@ const Dashboard = () => {
                     key={i} 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.02, y: -5, boxShadow: `0 20px 40px ${s.color}15` }}
                     transition={{ delay: 0.1 + (i * 0.1) }}
                     className="glass-card"
                     style={{ 
                       padding: '24px', position: 'relative', overflow: 'hidden',
-                      background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.05)'
+                      background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.05)',
+                      cursor: 'default'
                     }}
                   >
                     <div style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.05, transform: 'rotate(-15deg)' }}>
@@ -1181,7 +1149,9 @@ const Dashboard = () => {
               </div>
 
               {loading ? (
-                <p style={{ color: 'var(--text-muted)' }}>Loading vault…</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
+                </div>
               ) : filteredBridges.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {recentBridges.length > 0 && (
@@ -1417,11 +1387,11 @@ const Dashboard = () => {
                 <label style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '8px', fontSize: '0.875rem' }}>Intelligence Mode</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
                   {[
-                    { val: 'quick', label: '⚡ Quick', desc: 'TL;DR', color: '#22c55e', tier: 'free' },
-                    { val: 'developer', label: '👨‍💻 Dev', desc: 'Code + Tasks', color: '#8b5cf6', tier: 'pro' },
-                    { val: 'research', label: '🔬 Research', desc: 'Concepts', color: '#06b6d4', tier: 'pro' },
-                    { val: 'study', label: '📚 Study', desc: 'Notes', color: '#f59e0b', tier: 'pro' },
-                    { val: 'project', label: '🚀 Project', desc: 'Status', color: '#f43f5e', tier: 'pro' },
+                    { val: 'quick', label: 'Quick', icon: <Zap size={14} />, desc: 'TL;DR', color: '#22c55e', tier: 'free' },
+                    { val: 'developer', label: 'Dev', icon: <Code size={14} />, desc: 'Code + Tasks', color: '#8b5cf6', tier: 'pro' },
+                    { val: 'research', label: 'Research', icon: <BookOpen size={14} />, desc: 'Concepts', color: '#06b6d4', tier: 'pro' },
+                    { val: 'study', label: 'Study', icon: <Target size={14} />, desc: 'Notes', color: '#f59e0b', tier: 'pro' },
+                    { val: 'project', label: 'Project', icon: <Layers size={14} />, desc: 'Status', color: '#f43f5e', tier: 'pro' },
                   ].map(m => {
                     const isLocked = m.tier === 'pro' && stats.plan === 'free';
                     return (
@@ -1448,8 +1418,8 @@ const Dashboard = () => {
                         className="mode-card"
                         >
                           {isLocked && <div style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#f43f5e', borderRadius: '50%', padding: '2px' }}><X size={8} color="white" /></div>}
-                          <div style={{ fontSize: '1.2rem' }}>{m.label.split(' ')[0]}</div>
-                          <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'white', marginTop: '4px' }}>{m.label.split(' ').slice(1).join(' ')}</div>
+                          <div style={{ fontSize: '1.2rem', color: m.color, marginBottom: '4px' }}>{m.icon}</div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'white' }}>{m.label}</div>
                           <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>{m.desc}</div>
                         </div>
                       </label>

@@ -15,6 +15,7 @@ import ServicesPage from './pages/ServicesPage';
 import AboutPage from './pages/AboutPage';
 import ProfilePage from './pages/ProfilePage';
 import ExtensionPage from './pages/ExtensionPage';
+import LogoutPage from './pages/LogoutPage';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -32,6 +33,7 @@ const BridgeRoutes = () => {
         <Route path="/services"  element={<ServicesPage />} />
         <Route path="/about"     element={<AboutPage />} />
         <Route path="/extension" element={<ExtensionPage />} />
+        <Route path="/logout"    element={<LogoutPage />} />
       </Routes>
     </AnimatePresence>
   );
@@ -45,7 +47,7 @@ function App() {
   }, []);
 
   const location = useLocation();
-  const hideChrome = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/dashboard';
+  const hideChrome = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/dashboard' || location.pathname === '/logout';
   const hideNavbar = location.pathname === '/dashboard'; 
 
   // Real-Time Extension Sync (Global)

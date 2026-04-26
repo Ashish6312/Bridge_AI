@@ -36,7 +36,7 @@ const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem('bridge_user');
     setUser(null);
-    navigate('/');
+    navigate('/logout');
   };
 
   return (
