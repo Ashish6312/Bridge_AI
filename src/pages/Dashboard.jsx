@@ -957,7 +957,12 @@ const Dashboard = () => {
     const source  = (b.source  || '').toLowerCase();
     const term    = searchTerm.toLowerCase();
     const matchesSearch  = !term || title.includes(term) || summary.includes(term) || source.includes(term);
-    const matchesProject = activeProject ? b.project_id === activeProject : true;
+    
+    // Improved project filtering logic
+    const matchesProject = activeProject 
+      ? (String(b.project_id || '') === String(activeProject))
+      : true;
+
     return matchesSearch && matchesProject;
   });
 
@@ -1034,53 +1039,34 @@ const Dashboard = () => {
                     <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>{JSON.parse(localStorage.getItem('bridge_user') || '{}').email}</span>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Navigation Engine */}
-            <div style={{ padding: '24px' }}>
-              
-              {/* Group: Vault Ops */}
-              <div style={{ marginBottom: '32px' }}>
-                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '900', letterSpacing: '2px', marginBottom: '16px', paddingLeft: '8px' }}>VAULT ENGINE</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <NavItem 
-                    active={activeTab === 'saved' && !activeProject} 
-                    icon={<MessageSquare size={18} />} 
-                    label="All Intelligence" 
-                    count={stats.totalBridges}
-                    onClick={() => { setActiveTab('saved'); setActiveProject(null); }} 
-                  />
-                  <NavItem 
-                    active={activeTab === 'history'} 
-                    icon={<Clock size={18} />} 
-                    label="History Archive" 
-                    onClick={() => setActiveTab('history')} 
-                  />
-                  <NavItem 
-                    active={activeTab === 'extension'} 
-                    icon={<Zap size={18} />} 
-                    label="Analyst Module" 
-                    status="LIVE"
-                    onClick={() => setActiveTab('extension')} 
-                  />
-                </div>
+                <NavItem 
+                  active={!activeProject} 
+                  icon={<Layers size={18} />} 
+                  label="All Intelligence" 
+                  count={bridges.length} 
+                  onClick={() => setActiveProject(null)} 
+                />
+                <NavItem icon={<Clock size={18} />} label="History Archive" onClick={() => setActiveTab('history')} />
+                <NavItem icon={<Zap size={18} />} label="Analyst Module" status="LIVE" onClick={() => setActiveTab('extension')} />
               </div>
 
-              {/* Group: Project Folders */}
-              <div style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingLeft: '8px' }}>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '900', letterSpacing: '2px' }}>PROJECTS</div>
-                  <button onClick={() => setPromptModal({ isOpen: true })} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '4px' }}>
-                    <Plus size={14} />
-                  </button>
+              <div style={{ marginTop: '32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: '900', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px' }}>PROJECTS</div>
+                  <button onClick={() => setPromptModal({ isOpen: true })} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}><Plus size={18} /></button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', paddingRight: '4px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {projects.length === 0 && (
+                    <div style={{ padding: '20px 16px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No projects initialized.</p>
+                    </div>
+                  )}
                   {projects.map(p => (
                     <NavItem 
                       key={p.id}
                       active={activeProject === p.id} 
-                      icon={<div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeProject === p.id ? 'var(--primary)' : 'rgba(255,255,255,0.2)', boxShadow: activeProject === p.id ? '0 0 8px var(--primary)' : 'none' }} />} 
+                      icon={<div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeProject === p.id ? 'var(--primary)' : 'rgba(255,255,255,0.2)' }} />} 
                       label={p.name} 
                       count={bridges.filter(b => b.project_id === p.id).length}
                       onClick={() => { setActiveTab('saved'); setActiveProject(p.id); }} 
