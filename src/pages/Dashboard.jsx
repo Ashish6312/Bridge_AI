@@ -169,6 +169,7 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
   const [mailSending, setMailSending] = useState(null);
   const [showUniversalModal, setShowUniversalModal] = useState(false);
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
 
   const handleMoveToProject = async (projectId) => {
