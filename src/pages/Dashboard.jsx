@@ -695,7 +695,7 @@ const Dashboard = () => {
 
   const isFetchingRef = React.useRef(false);
 
-  const loadData = async (isSilent = false) => {
+  const loadData = React.useCallback(async (isSilent = false) => {
     if (isFetchingRef.current) return;
     try {
       isFetchingRef.current = true;
@@ -785,7 +785,7 @@ const Dashboard = () => {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  };
+  }, [bridges.length]);
 
   const refreshVault = () => {
     loadData();
