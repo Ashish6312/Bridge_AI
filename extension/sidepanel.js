@@ -94,6 +94,9 @@ function updateUIWithSession(session) {
         document.getElementById('sync-status').textContent = 'Relay Secure';
         document.getElementById('sync-status').style.color = '#4ade80';
 
+        // Refresh Quota
+        fetchQuota(session.email);
+
         // Enforce Plan Limits
         const plan = (session.plan || 'free').toLowerCase();
         const isUnlimited = plan === 'pro' || plan === 'infinite';
@@ -123,20 +126,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     await syncUserSession();
 
     function formatPlatformName(host) {
-        if (!host) return 'Universal Session';
+        if (!host) return 'Universal Bridge';
         const h = host.toLowerCase();
         if (h.includes('chatgpt') || h.includes('openai')) return 'ChatGPT';
         if (h.includes('gemini') || h.includes('google')) return 'Gemini';
         if (h.includes('claude')) return 'Claude';
         if (h.includes('perplexity')) return 'Perplexity';
-        if (h.includes('bridge-ai-brown') || h.includes('localhost')) return 'Bridge Dashboard';
+        if (h.includes('bridge-ai-brown') || h.includes('localhost')) return 'Bridge Hub';
         
         let name = host.replace('www.', '').split('.')[0];
         return name.charAt(0).toUpperCase() + name.slice(1);
     }
 
     async function updatePlatformUI() {
-        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
         if (activeTab?.url) {
             try {
                 const urlObj = new URL(activeTab.url);
@@ -150,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 else if (url.includes('internship')) siteEmoji.textContent = '🎓';
                 else siteEmoji.textContent = '🌐';
             } catch {
-                platformName.textContent = 'Universal Session';
+                platformName.textContent = 'Universal Bridge';
             }
         }
     }
@@ -185,12 +188,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         chrome.tabs.create({ url: `${PRODUCTION_URL}/login?redirect=dashboard` });
     });
 
+    // Account Menu Toggling
+    const accountTrigger = document.getElementById('user-info-container');
+    const accountMenu = document.getElementById('account-menu');
+
+    accountTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        accountMenu.style.display = accountMenu.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.addEventListener('click', () => {
+        accountMenu.style.display = 'none';
+    });
+
+    // Logout Logic
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        userSession = null;
+        await chrome.storage.local.remove(['bridge_user', 'bridge_token']);
+        updateUIWithSession(null);
+        showCustomModal('System Logout', 'Sovereign session terminated successfully.', 'success');
+    });
+
+    // Refresh Logic
+    document.getElementById('refresh-ext-btn').addEventListener('click', async () => {
+        const synced = await syncUserSession();
+        if (synced) {
+            showCustomModal('Sync Complete', 'Intelligence relay re-established.', 'success');
+        } else {
+            showCustomModal('Sync Failed', 'Could not detect active Bridge Hub session.', 'error');
+        }
+    });
+
     // Mode Selection
     document.querySelectorAll('.mode-item').forEach(item => {
         item.addEventListener('click', () => {
             const isFree = (userSession?.plan || 'free') === 'free';
             if (isFree && item.dataset.mode !== 'quick') {
-                showCustomModal('Advanced Mode Locked', 'Upgrade to Pro or Infinite plans to unlock specialized Intelligence Modes.');
+                showCustomModal('Forge Access Locked', 'Upgrade to Pro or Infinite plans to unlock specialized Intelligence Modes.');
                 return;
             }
             document.querySelectorAll('.mode-item').forEach(i => i.classList.remove('active'));
@@ -247,8 +281,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Standard flow: Dispatch extraction to the active tab
         extractBtn.disabled = true;
-        extractBtn.textContent = 'Scanning...';
+        extractBtn.textContent = 'Syncing...';
         chrome.tabs.sendMessage(activeTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, activeTab));
+    });
+
+    // Real-time Sync: Catch updates from dashboard
+    chrome.runtime.onMessage.addListener((request) => {
+        if (request.action === 'VAULT_UPDATED') {
+            if (userSession?.email) fetchQuota(userSession.email);
+            // Optionally blink the logo or update status
+            document.getElementById('hub-dot').classList.add('pulse');
+            document.getElementById('hub-status-text').textContent = 'Relay Updated';
+            setTimeout(() => {
+                document.getElementById('hub-status-text').textContent = 'Hub Active';
+            }, 3000);
+        }
     });
 
     // ─── Professional Modal Logic ────────────────────────────
@@ -263,14 +310,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalMessage.textContent = message;
         modal.style.display = 'flex';
         
+        const iconContainer = document.getElementById('modal-icon');
+        const iconSvg = iconContainer.querySelector('svg');
+        
         if (type === 'error') {
-            document.getElementById('modal-icon').style.background = 'rgba(244, 63, 94, 0.1)';
-            document.getElementById('modal-icon').querySelector('svg').style.stroke = '#f43f5e';
+            iconContainer.style.background = 'rgba(244, 63, 94, 0.1)';
+            iconSvg.style.stroke = '#f43f5e';
+            iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+        } else if (type === 'success') {
+            iconContainer.style.background = 'rgba(16, 185, 129, 0.1)';
+            iconSvg.style.stroke = '#10b981';
+            iconSvg.innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
         } else {
-            document.getElementById('modal-icon').style.background = 'rgba(139, 92, 246, 0.1)';
-            document.getElementById('modal-icon').querySelector('svg').style.stroke = '#8b5cf6';
+            iconContainer.style.background = 'rgba(139, 92, 246, 0.1)';
+            iconSvg.style.stroke = '#8b5cf6';
+            iconSvg.innerHTML = '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>';
         }
     };
+
+    async function fetchQuota(email) {
+        try {
+            const res = await fetch(`${API_BASE}/api/user/status?email=${email}`);
+            const data = await res.json();
+            if (data.success) {
+                const limit = data.plan === 'pro' ? 100 : (data.plan === 'infinite' ? 1000 : 3);
+                const used = data.usage || 0;
+                const remaining = Math.max(0, limit - used);
+                
+                const quotaText = document.getElementById('quota-text');
+                const quotaBar = document.getElementById('quota-bar');
+                
+                quotaText.textContent = `${remaining} / ${limit} Left`;
+                const percent = (remaining / limit) * 100;
+                quotaBar.style.width = `${percent}%`;
+                
+                if (percent < 20) {
+                    quotaBar.style.background = '#f43f5e';
+                } else if (percent < 50) {
+                    quotaBar.style.background = '#f59e0b';
+                } else {
+                    quotaBar.style.background = 'var(--accent-gradient)';
+                }
+            }
+        } catch (e) {
+            console.error('Quota Fetch Error:', e);
+        }
+    }
 
     modalCloseBtn.addEventListener('click', () => modal.style.display = 'none');
     modalUpgradeBtn.addEventListener('click', () => {

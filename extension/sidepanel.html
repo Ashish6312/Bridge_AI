@@ -280,42 +280,53 @@
             <h1>BridgeAI</h1>
         </div>
         <div class="status-pill">
-            <div class="pulse-dot"></div>
-            <span>Secure Sync</span>
+            <div id="hub-dot" class="pulse-dot"></div>
+            <span id="hub-status-text">Hub Active</span>
         </div>
     </div>
 
     <div class="content">
         <!-- Dashboard View -->
         <div id="dashboard-view" class="fade-in">
-            <div class="card" style="margin-bottom: 20px;">
+            <div class="card" style="margin-bottom: 16px;">
                 <div class="context-indicator">
                     <div class="site-icon" id="site-emoji">🌐</div>
                     <div class="site-info">
-                        <h2 id="platform-name">Current Site</h2>
-                        <p id="platform-status">Ready to capture chat...</p>
+                        <h2 id="platform-name">Scanning...</h2>
+                        <p id="platform-status">Ready to bridge intelligence...</p>
                     </div>
                 </div>
                 
+                <!-- Quota Tracker -->
+                <div id="quota-tracker" style="margin-bottom: 20px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 800; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                        <span>Sovereign Quota</span>
+                        <span id="quota-text">3 / 3 Left</span>
+                    </div>
+                    <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                        <div id="quota-bar" style="width: 100%; height: 100%; background: var(--accent-gradient); box-shadow: 0 0 10px var(--primary-glow); transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                    </div>
+                </div>
+
                 <button id="extract-btn" class="action-button">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Capture Chat
+                    Capture Intelligence
                 </button>
             </div>
 
             <div class="mode-title">Chat Mode</div>
             <div class="modes-grid">
                 <div class="mode-item active" data-mode="quick">
-                    <h4>Quick Mode</h4>
+                    <h4>Quick Sync</h4>
                 </div>
                 <div class="mode-item" data-mode="developer">
-                    <h4>Dev Mode</h4>
+                    <h4>Dev Sync</h4>
                 </div>
                 <div class="mode-item" data-mode="research">
-                    <h4>Research Mode</h4>
+                    <h4>Deep Dive</h4>
                 </div>
                 <div class="mode-item" data-mode="project">
-                    <h4>Project Mode</h4>
+                    <h4>Forge Sync</h4>
                 </div>
             </div>
         </div>
@@ -340,11 +351,24 @@
     </div>
 
     <div class="footer">
-        <div id="user-info-container" class="user-info">
+        <div id="user-info-container" class="user-info" style="cursor: pointer; position: relative;">
             <div class="user-avatar" id="user-initial">?</div>
-            <div class="user-details">
+            <div class="user-details" id="account-trigger">
                 <strong id="user-email">Guest User</strong>
                 <span id="sync-status">Connecting...</span>
+            </div>
+            
+            <!-- Account Popup Menu -->
+            <div id="account-menu" style="display: none; position: absolute; bottom: 100%; left: 0; width: 180px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 16px; margin-bottom: 12px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000;">
+                <button id="refresh-ext-btn" style="width: 100%; text-align: left; background: transparent; border: none; color: white; padding: 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border-radius: 8px; display: flex; alignItems: center; gap: 10px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                    Refresh Session
+                </button>
+                <div style="height: 1px; background: var(--glass-border); margin: 4px 0;"></div>
+                <button id="logout-btn" style="width: 100%; text-align: left; background: transparent; border: none; color: #fb7185; padding: 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border-radius: 8px; display: flex; alignItems: center; gap: 10px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Logout System
+                </button>
             </div>
         </div>
 

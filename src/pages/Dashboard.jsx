@@ -6,6 +6,7 @@ import {
   CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
+import IntelligenceBridge from '../components/IntelligenceBridge';
 
 const isRecent = (dateString) => {
   if (!dateString) return false;
@@ -797,7 +798,7 @@ const Dashboard = () => {
     const source  = (b.source  || '').toLowerCase();
     const term    = searchTerm.toLowerCase();
     const matchesSearch  = !term || title.includes(term) || summary.includes(term) || source.includes(term);
-    const matchesProject = activeProject ? b.projectId === activeProject : true;
+    const matchesProject = activeProject ? b.project_id === activeProject : true;
     return matchesSearch && matchesProject;
   });
 
@@ -858,17 +859,20 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--gradient-1)', padding: '2px' }}>
-                  <div style={{ width: '100%', height: '100%', background: '#020617', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900' }}>
-                    {JSON.parse(localStorage.getItem('bridge_user') || '{}').name?.charAt(0) || 'U'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--gradient-1)', padding: '2px', boxShadow: '0 8px 20px rgba(139, 92, 246, 0.3)' }}>
+                  <div style={{ width: '100%', height: '100%', background: '#020617', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '1.2rem' }}>
+                    {JSON.parse(localStorage.getItem('bridge_user') || '{}').name?.charAt(0) || 'A'}
                   </div>
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <div style={{ fontSize: '0.9rem', color: 'white', fontWeight: '800', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {JSON.parse(localStorage.getItem('bridge_user') || '{}').email || 'Connecting...'}
+                  <div style={{ fontSize: '0.95rem', color: 'white', fontWeight: '800', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
+                    {JSON.parse(localStorage.getItem('bridge_user') || '{}').email || 'Connecting Hub...'}
                   </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '700', marginTop: '2px' }}>ACTIVE IDENTITY</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }}></div>
+                    <div style={{ fontSize: '0.65rem', color: '#4ade80', fontWeight: '800', letterSpacing: '0.5px' }}>ACTIVE IDENTITY</div>
+                  </div>
                 </div>
               </div>
 
@@ -1052,59 +1056,82 @@ const Dashboard = () => {
                 </motion.div>
               )}
               
-              <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <h1 className="premium-gradient-text" style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
-                      {activeProject ? projects.find(p => p.id === activeProject)?.name : `Hello, ${JSON.parse(localStorage.getItem('bridge_user') || '{}').name || 'Bridge User'}`}
-                    </h1>
-                    <div style={{ 
-                      padding: '4px 10px', borderRadius: '20px', fontSize: '0.65rem', fontWeight: '800', 
-                      background: hubStatus === 'online' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
-                      color: hubStatus === 'online' ? '#10b981' : '#fb7185',
-                      border: `1px solid ${hubStatus === 'online' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)'}`,
-                      display: 'flex', alignItems: 'center', gap: '6px', marginTop: '-4px'
-                    }}>
-                      <div className={hubStatus === 'online' ? 'pulse' : ''} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hubStatus === 'online' ? '#10b981' : '#fb7185' }} />
-                      HUB {hubStatus.toUpperCase()}
+              <div style={{ position: 'relative', overflow: 'hidden', padding: '40px', borderRadius: '40px', background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '40px' }}>
+                <IntelligenceBridge />
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <h1 className="premium-gradient-text" style={{ fontSize: '3.2rem', fontWeight: '900', letterSpacing: '-0.03em', marginBottom: '4px' }}>
+                          {activeProject ? projects.find(p => p.id === activeProject)?.name : `Hello, ${JSON.parse(localStorage.getItem('bridge_user') || '{}').name || 'Bridge Analyst'}`}
+                        </h1>
+                        <div style={{ 
+                          padding: '6px 12px', borderRadius: '100px', fontSize: '0.6rem', fontWeight: '900', 
+                          background: hubStatus === 'online' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(244, 63, 94, 0.08)',
+                          color: hubStatus === 'online' ? '#22c55e' : '#f43f5e',
+                          border: `1px solid ${hubStatus === 'online' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(244, 63, 94, 0.15)'}`,
+                          display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '1px'
+                        }}>
+                          <div className={hubStatus === 'online' ? 'pulse' : ''} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hubStatus === 'online' ? '#22c55e' : '#f43f5e' }} />
+                          Hub {hubStatus}
+                        </div>
+                      </div>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', fontWeight: '500' }}>
+                        {filteredBridges.length} intelligence contexts organized and ready to bridge.
+                      </p>
+                    </div>
+                    <div style={{ position: 'relative' }}>
+                      <Search size={22} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', opacity: 0.7 }} />
+                      <input 
+                        type="text" 
+                        placeholder="Search intelligence..." 
+                        className="input-premium"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ 
+                          paddingLeft: '48px', 
+                          width: '320px',
+                          fontSize: '1rem',
+                          background: 'rgba(15, 23, 42, 0.6)'
+                        }}
+                      />
                     </div>
                   </div>
-                  <p style={{ color: 'var(--text-muted)' }}>{filteredBridges.length} contexts organized and ready to bridge.</p>
-                </div>
-                <div style={{ position: 'relative' }}>
-                  <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input 
-                    type="text" 
-                    placeholder="Search context..." 
-                    className="input-premium"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ 
-                      paddingLeft: '44px', 
-                      width: '300px'
-                    }}
-                  />
                 </div>
               </div>
 
               <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
                 {[
-                  { label: 'Total Bridges', val: stats.totalBridges || 0, icon: <Layers size={18} /> },
-                  { label: 'Intelligence Ratio', val: '99.4%', icon: <Zap size={18} /> },
-                  { label: 'Context Tokens', val: Math.round(stats.totalTokens || 0).toLocaleString(), icon: <Database size={18} /> },
-                  { label: 'Active Vaults', val: projects.length, icon: <Folder size={18} /> }
+                  { label: 'Total Bridges', val: stats.totalBridges || 0, icon: <Layers size={22} />, color: '#8b5cf6' },
+                  { label: 'Intelligence Ratio', val: '99.4%', icon: <Zap size={22} />, color: '#f59e0b' },
+                  { label: 'Context Tokens', val: Math.round(stats.totalTokens || 0).toLocaleString(), icon: <Database size={22} />, color: '#06b6d4' },
+                  { label: 'Active Vaults', val: projects.length, icon: <Folder size={22} />, color: '#10b981' }
                 ].map((s, i) => (
                   <motion.div 
                     key={i} 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 + (i * 0.1) }}
-                    className="glass-card" 
-                    style={{ padding: '24px', textAlign: 'center' }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + (i * 0.1) }}
+                    className="glass-card"
+                    style={{ 
+                      padding: '24px', position: 'relative', overflow: 'hidden',
+                      background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.05)'
+                    }}
                   >
-                    <div style={{ color: 'var(--primary)', marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white' }}>{s.val}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>{s.label}</div>
+                    <div style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.05, transform: 'rotate(-15deg)' }}>
+                      {React.cloneElement(s.icon, { size: 80, color: s.color })}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                      <div style={{ 
+                        width: '40px', height: '40px', borderRadius: '12px', background: `${s.color}15`, 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color,
+                        border: `1px solid ${s.color}33`
+                      }}>
+                        {s.icon}
+                      </div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{s.label}</span>
+                    </div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'white', letterSpacing: '-0.02em' }}>{s.val}</div>
                   </motion.div>
                 ))}
               </div>
@@ -1147,17 +1174,26 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="glass-card" style={{ padding: '64px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <Target size={48} style={{ margin: '0 auto 16px auto', opacity: 0.5 }} />
-                  <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', color: 'white' }}>
+                <div className="glass-card" style={{ padding: '80px 24px', textAlign: 'center', background: 'rgba(15, 23, 42, 0.3)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                  <div style={{ width: '80px', height: '80px', background: 'rgba(139, 92, 246, 0.05)', borderRadius: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto', border: '1px solid rgba(139, 92, 246, 0.1)' }}>
+                    <Target size={40} style={{ color: 'var(--primary)', opacity: 0.8 }} />
+                  </div>
+                  <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '12px', color: 'white', letterSpacing: '-0.02em' }}>
                     {loading ? 'Consulting the Hub...' : 'Sovereign Vault is Empty'}
                   </h3>
-                  <p style={{ marginBottom: '24px', maxWidth: '400px', margin: '0 auto 24px auto' }}>
+                  <p style={{ marginBottom: '32px', maxWidth: '440px', margin: '0 auto 32px auto', color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: '1.6' }}>
                     {searchTerm 
-                      ? "No intelligence matches your current search criteria."
-                      : "Welcome, Bridge Analyst. Your private vault is currently empty. Extract intelligence from Gemini, Claude, or ChatGPT to begin building your knowledge base."
+                      ? "No intelligence matches your current search criteria. Refine your query to locate specific context bridges."
+                      : "Welcome, Bridge Analyst. Your private vault is currently empty. Extract intelligence from Gemini, Claude, or ChatGPT to begin building your professional knowledge base."
                     }
                   </p>
+                  {!searchTerm && (
+                    <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                       <button onClick={() => setActiveTab('manual')} className="btn-primary" style={{ padding: '14px 28px' }}><Plus size={18} /> New Bridge</button>
+                       <button onClick={refreshVault} className="btn-secondary" style={{ padding: '14px 28px' }}><RefreshCw size={18} /> Refresh Vault</button>
+                    </div>
+                  )}
+                </div>
                   <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button onClick={() => setActiveTab('manual')} className="btn-primary" style={{ padding: '10px 22px' }}>
                       <Plus size={16} /> New Bridge
