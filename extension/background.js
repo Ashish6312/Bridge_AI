@@ -18,8 +18,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Broadcast to all BridgeAI tabs to refresh their dashboard
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach(tab => {
-        if (tab.url && tab.url.includes('bridge-ai-brown.vercel.app')) {
-          chrome.tabs.sendMessage(tab.id, { action: 'VAULT_UPDATED' });
+        if (tab.url && (
+            tab.url.includes('bridge-ai-brown') || 
+            tab.url.includes('localhost:5173') ||
+            tab.url.includes('localhost:5001')
+        )) {
+          chrome.tabs.sendMessage(tab.id, { action: 'VAULT_UPDATED' }).catch(() => {});
         }
       });
     });

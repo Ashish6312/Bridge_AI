@@ -754,25 +754,30 @@ const Dashboard = () => {
         loadData();
       }
     };
+    const handleVaultUpdate = () => {
+      // Small delay to ensure DB write is finalized on server
+      setTimeout(() => loadData(true), 1000);
+    };
+
     window.addEventListener('storage', handleStorage);
-    window.addEventListener('bridge-vault-update', loadData);
+    window.addEventListener('bridge-vault-update', handleVaultUpdate);
     
     // Safety check on mount
     loadData(false);
 
     // ─── Real-Time Pulse ──────────────────────────────────
-    // Keep the Hub synchronized with the backend every 30s silently
+    // Keep the Hub synchronized with the backend every 10s silently
     const pulseInterval = setInterval(() => {
       loadData(true);
-    }, 30000);
+    }, 10000);
 
     return () => {
       window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('bridge-vault-update', loadData);
+      window.removeEventListener('bridge-vault-update', handleVaultUpdate);
       clearInterval(pulseInterval);
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     };
-  }, []);
+  }, [loadData]); // Added loadData to dependencies for freshness
 
   const handleCreateProject = (name) => {
     if (!name) return;
