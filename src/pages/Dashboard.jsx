@@ -161,7 +161,7 @@ const ForgeModal = ({ isOpen, onClose, context, onDispatch }) => {
   );
 };
 
-const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) => {
+const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, projects }) => {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizedPrompt, setOptimizedPrompt] = useState(null);
   const [showExport, setShowExport] = useState(false);
@@ -1271,7 +1271,10 @@ const Dashboard = () => {
                         <motion.path
                           d="M0 20 Q 25 10, 50 20 T 100 20 V 40 H 0 Z"
                           fill={s.color}
-                          animate={{ d: ["M0 20 Q 25 10, 50 20 T 100 20 V 40 H 0 Z", "M0 20 Q 25 30, 50 20 T 100 20 V 40 H 0 Z", "M0 20 Q 25 10, 50 20 T 100 20 V 40 H 0 Z"] }}
+                          animate={{ 
+                            opacity: [0.1, 0.2, 0.1],
+                            y: [0, -2, 0]
+                          }}
                           transition={{ repeat: Infinity, duration: 4, delay: i * 0.5 }}
                         />
                       </svg>
@@ -1314,6 +1317,7 @@ const Dashboard = () => {
                       loadData={loadData}
                       stats={stats}
                       triggerToast={triggerToast}
+                      projects={projects}
                     />
                   ))}
                   {olderBridges.length > 0 && (
@@ -1330,6 +1334,7 @@ const Dashboard = () => {
                       loadData={loadData}
                       stats={stats}
                       triggerToast={triggerToast}
+                      projects={projects}
                     />
                   ))}
                 </div>
@@ -1496,6 +1501,7 @@ const Dashboard = () => {
                       loadData={loadData} 
                       stats={stats} 
                       triggerToast={triggerToast} 
+                      projects={projects}
                     />
                   ))}
                 </div>

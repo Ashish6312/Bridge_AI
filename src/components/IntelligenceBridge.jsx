@@ -103,10 +103,18 @@ const BridgeNodes = () => {
 export default function IntelligenceBridge() {
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0, opacity: 0.6 }}>
-      <Canvas dpr={[1, 2]}>
+      <Canvas 
+        dpr={[1, 1.5]} 
+        gl={{ 
+          antialias: false, 
+          powerPreference: "high-performance",
+          alpha: true,
+          preserveDrawingBuffer: false
+        }}
+      >
         <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={50} />
         <ambientLight intensity={0.5} />
-        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+        <Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={1} />
         <IntelligenceCore />
         <BridgeNodes />
       </Canvas>
