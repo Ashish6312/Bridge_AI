@@ -157,17 +157,26 @@
 
     <!-- Main Section -->
     <div class="body animate-in" id="main">
-        <div class="status-pill">
-            <div class="pulse-dot"></div>
-            <span>Secure Connection</span>
+        <div id="quota-tracker" style="margin-bottom: 24px; padding: 14px; background: rgba(0,0,0,0.3); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="display: flex; justify-content: space-between; font-size: 0.6rem; font-weight: 900; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;">
+                <span>Vault Capacity</span>
+                <span id="quota-text">Syncing...</span>
+            </div>
+            <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin-bottom: 12px;">
+                <div id="quota-bar" style="width: 100%; height: 100%; background: var(--gradient); box-shadow: 0 0 10px rgba(139, 92, 246, 0.2); transition: width 1s;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.55rem; font-weight: 800; color: rgba(255,255,255,0.25); letter-spacing: 1px;">
+                <div>RELAY: <span id="relay-speed" style="color: var(--primary);">-- ms</span></div>
+                <div>DENSITY: <span id="intel-density" style="color: var(--secondary);">--</span></div>
+            </div>
         </div>
         
         <button id="extract-btn" class="btn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-            Capture Chat
+            Capture Intelligence
         </button>
         
-        <p class="status" id="status-text">Ready to save this conversation.</p>
+        <p class="status" id="status-text">Hub ready for extraction.</p>
     </div>
 
     <!-- Result Section -->

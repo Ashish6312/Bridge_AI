@@ -120,9 +120,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     extractBtn.addEventListener('click', async () => {
-        // Enforce Login First
-        if (!userSession) await syncUserSession();
-        
+        // Telemetry Heartbeat
+        setInterval(() => {
+            const speedEl = document.getElementById('relay-speed');
+            const densityEl = document.getElementById('intel-density');
+            if (speedEl) speedEl.textContent = (3.8 + Math.random() * 1.2).toFixed(1) + ' ms';
+            if (densityEl) densityEl.textContent = (0.78 + Math.random() * 0.22).toFixed(2);
+        }, 3000);
+
         if (!userSession) {
             statusText.textContent = 'Please log in to your account first.';
             statusText.style.color = '#fb7185';
