@@ -13,7 +13,7 @@ app.use(express.json());
 app.use((req, res, next) => {
   console.log(`[${new Date().toLocaleTimeString()}] -> ${req.method} ${req.url}`);
   // Sovereign Security Policy
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   next();
 });

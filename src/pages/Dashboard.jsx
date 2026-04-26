@@ -785,7 +785,7 @@ const Dashboard = () => {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [bridges.length]);
+  }, []);
 
   const refreshVault = () => {
     loadData();
