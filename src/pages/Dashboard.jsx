@@ -603,8 +603,7 @@ const ManualBridgeSubmit = ({ projects, triggerToast, setActiveTab, setBridges, 
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const API_BASE = import.meta.env.MODE === 'development' ? 'http://localhost:5001' : '';
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'saved';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showSuccess, setShowSuccess] = useState(searchParams.get('status') === 'success');
