@@ -353,43 +353,45 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
           >
             {isOptimizing ? '🪄 Optimizing...' : '🪄 Optimize Prompt'}
           </button>
-            <button
-              onClick={() => setShowExport(v => !v)}
-              className="btn-secondary"
-              style={{ fontSize: '0.875rem', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <Download size={14} /> Export
-            </button>
-            {showExport && (
-              <div style={{
-                position: 'absolute', bottom: '110%', left: 0,
-                background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '16px', padding: '8px', zIndex: 100, minWidth: '200px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
-              }}>
-                {[
-                  { fmt: 'markdown', label: '📄 Markdown (.md)' },
-                  { fmt: 'json',     label: '🗂 JSON (.json)' },
-                  { fmt: 'prompt',   label: '⚡ Prompt Pack (.txt)' },
-                ].map(({ fmt, label }) => (
-                  <button 
-                    key={fmt} 
-                    onClick={() => { exportBridge(ctx, fmt); setShowExport(false); }}
-                    style={{ 
-                      display: 'block', width: '100%', background: 'transparent', border: 'none',
-                      color: 'white', padding: '12px 16px', textAlign: 'left', cursor: 'pointer',
-                      borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600',
-                      transition: 'background 0.2s' 
-                    }}
-                    onMouseEnter={e => e.target.style.background='rgba(255,255,255,0.08)'}
-                    onMouseLeave={e => e.target.style.background='transparent'}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowExport(v => !v)}
+                className="btn-secondary"
+                style={{ fontSize: '0.875rem', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Download size={14} /> Export
+              </button>
+              {showExport && (
+                <div style={{
+                  position: 'absolute', bottom: '110%', left: 0,
+                  background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '16px', padding: '8px', zIndex: 100, minWidth: '200px',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+                }}>
+                  {[
+                    { fmt: 'markdown', label: '📄 Markdown (.md)' },
+                    { fmt: 'json',     label: '🗂 JSON (.json)' },
+                    { fmt: 'prompt',   label: '⚡ Prompt Pack (.txt)' },
+                  ].map(({ fmt, label }) => (
+                    <button 
+                      key={fmt} 
+                      onClick={() => { exportBridge(ctx, fmt); setShowExport(false); }}
+                      style={{ 
+                        display: 'block', width: '100%', background: 'transparent', border: 'none',
+                        color: 'white', padding: '12px 16px', textAlign: 'left', cursor: 'pointer',
+                        borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600',
+                        transition: 'background 0.2s' 
+                      }}
+                      onMouseEnter={e => e.target.style.background='rgba(255,255,255,0.08)'}
+                      onMouseLeave={e => e.target.style.background='transparent'}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           <button 
             onClick={() => setShowRaw(!showRaw)}
             className="btn-secondary" 

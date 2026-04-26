@@ -122,19 +122,32 @@ function updateUIWithSession(session) {
 document.addEventListener('DOMContentLoaded', async () => {
     await syncUserSession();
 
+    function formatPlatformName(host) {
+        if (!host) return 'Universal Session';
+        const h = host.toLowerCase();
+        if (h.includes('chatgpt') || h.includes('openai')) return 'ChatGPT';
+        if (h.includes('gemini') || h.includes('google')) return 'Gemini';
+        if (h.includes('claude')) return 'Claude';
+        if (h.includes('perplexity')) return 'Perplexity';
+        if (h.includes('bridge-ai-brown') || h.includes('localhost')) return 'Bridge Dashboard';
+        
+        let name = host.replace('www.', '').split('.')[0];
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
     async function updatePlatformUI() {
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (activeTab?.url) {
             try {
                 const urlObj = new URL(activeTab.url);
-                let site = urlObj.hostname.replace('www.', '').split('.')[0];
-                platformName.textContent = site.charAt(0).toUpperCase() + site.slice(1);
+                platformName.textContent = formatPlatformName(urlObj.hostname);
                 
                 // Emoji logic
-                if (activeTab.url.includes('chatgpt')) siteEmoji.textContent = '🤖';
-                else if (activeTab.url.includes('gemini')) siteEmoji.textContent = '✨';
-                else if (activeTab.url.includes('claude')) siteEmoji.textContent = '🧠';
-                else if (activeTab.url.includes('internship')) siteEmoji.textContent = '🎓';
+                const url = activeTab.url.toLowerCase();
+                if (url.includes('chatgpt')) siteEmoji.textContent = '🤖';
+                else if (url.includes('gemini')) siteEmoji.textContent = '✨';
+                else if (url.includes('claude')) siteEmoji.textContent = '🧠';
+                else if (url.includes('internship')) siteEmoji.textContent = '🎓';
                 else siteEmoji.textContent = '🌐';
             } catch {
                 platformName.textContent = 'Universal Session';
@@ -228,12 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Critical: Force source detection from the ACTUAL tab we extracted from
             const urlObj = new URL(targetTab.url);
-            let site = urlObj.hostname.replace('www.', '').split('.')[0];
-            if (site === 'chatgpt') site = 'ChatGPT';
-            if (site === 'claude') site = 'Claude';
-            if (site === 'gemini') site = 'Gemini';
-            
-            capturedData.platform = site.charAt(0).toUpperCase() + site.slice(1);
+            capturedData.platform = formatPlatformName(urlObj.hostname);
             showAnalysis(capturedData);
         };
 
@@ -280,6 +288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const points = [
             { label: 'Intelligence Source', value: data.platform },
+            { label: 'Origin URL', value: data.url },
             { label: 'Context Title', value: data.title },
             { 
                 label: isAI ? 'Conversation Depth' : 'Intelligence Signals', 

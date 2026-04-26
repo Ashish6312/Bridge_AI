@@ -25,11 +25,26 @@ const EXTRACTORS = {
 
 function getPlatform() {
   const host = window.location.hostname;
-  if (host.includes('chatgpt')) return 'chatgpt';
+  if (host.includes('chatgpt') || host.includes('openai')) return 'chatgpt';
   if (host.includes('gemini') || host.includes('google')) return 'gemini';
   if (host.includes('claude')) return 'claude';
   if (host.includes('perplexity')) return 'perplexity';
+  if (host.includes('bridge-ai-brown') || host.includes('localhost')) return 'dashboard';
   return 'universal';
+}
+
+function formatPlatformName(platform, host) {
+  const mapping = {
+    chatgpt: 'ChatGPT',
+    gemini: 'Gemini',
+    claude: 'Claude',
+    perplexity: 'Perplexity',
+    dashboard: 'Bridge Dashboard'
+  };
+  if (mapping[platform]) return mapping[platform];
+  
+  let name = host.replace('www.', '').split('.')[0];
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 function extractChat() {
@@ -87,8 +102,8 @@ function extractChat() {
     });
   }
 
-  let siteName = window.location.hostname.replace('www.', '').split('.')[0];
-  siteName = siteName.charAt(0).toUpperCase() + siteName.slice(1);
+  const host = window.location.hostname;
+  const siteName = formatPlatformName(platform, host);
 
   return {
     platform: siteName,
