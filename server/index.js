@@ -20,6 +20,24 @@ app.use((req, res, next) => {
 
 app.get('/api/health', (req, res) => res.json({ status: 'online', hub: 'BridgeAI Sovereign' }));
 
+app.get('/api/config', (req, res) => {
+  res.json({
+    success: true,
+    version: '1.0.0',
+    min_extension_version: '1.0.0',
+    platforms: {
+      chatgpt: { enabled: true, name: 'ChatGPT' },
+      gemini: { enabled: true, name: 'Gemini' },
+      claude: { enabled: true, name: 'Claude' },
+      perplexity: { enabled: true, name: 'Perplexity' }
+    },
+    features: {
+      realTimeSync: true,
+      autoSummarize: true
+    }
+  });
+});
+
 
 
 const pool = new Pool({

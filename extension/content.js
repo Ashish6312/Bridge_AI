@@ -16,9 +16,21 @@ const EXTRACTORS = {
     messageSelector: '.font-claude-message',
     authorSelector: '.nickname'
   },
+  mistral: {
+    messageSelector: '[class*="chat-message"]',
+    authorSelector: '[class*="message-author"]'
+  },
+  deepseek: {
+    messageSelector: '[class*="ds-message"]',
+    authorSelector: '[class*="ds-message-author"]'
+  },
+  poe: {
+    messageSelector: '[class*="Message_column"]',
+    authorSelector: '[class*="Message_botName"]'
+  },
   universal: {
-    // Enhanced universal selector for any content-rich website
-    messageSelector: 'article, main, .content, #content, .post, .message, [class*="content"], [class*="body"], [class*="article"], p, li, td',
+    // Enhanced universal selector for any content-rich website or custom LLM UI
+    messageSelector: 'article, main, .content, #content, .post, .message, [class*="message"], [class*="content"], [class*="body"], [class*="article"], p, li, td',
     dataSelector: 'input[type="text"], input[type="email"], textarea, select'
   }
 };
@@ -29,6 +41,9 @@ function getPlatform() {
   if (host.includes('gemini') || host.includes('google')) return 'gemini';
   if (host.includes('claude')) return 'claude';
   if (host.includes('perplexity')) return 'perplexity';
+  if (host.includes('mistral')) return 'mistral';
+  if (host.includes('deepseek')) return 'deepseek';
+  if (host.includes('poe')) return 'poe';
   if (host.includes('bridge-ai-brown') || host.includes('localhost')) return 'dashboard';
   return 'universal';
 }
@@ -39,6 +54,9 @@ function formatPlatformName(platform, host) {
     gemini: 'Gemini',
     claude: 'Claude',
     perplexity: 'Perplexity',
+    mistral: 'Mistral',
+    deepseek: 'DeepSeek',
+    poe: 'Poe',
     dashboard: 'Bridge Dashboard'
   };
   if (mapping[platform]) return mapping[platform];

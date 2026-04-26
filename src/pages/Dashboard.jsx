@@ -407,6 +407,9 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
             { name: 'Claude',    url: 'https://claude.ai/chats',        color: '#D97757', icon: <Cpu size={14} /> },
             { name: 'ChatGPT',   url: 'https://chatgpt.com',           color: '#10A37F', icon: <Code size={14} /> },
             { name: 'Perplexity', url: 'https://perplexity.ai',        color: '#20B2AA', icon: <Search size={14} /> },
+            { name: 'DeepSeek',  url: 'https://chat.deepseek.com',     color: '#60a5fa', icon: <Target size={14} /> },
+            { name: 'Mistral',   url: 'https://chat.mistral.ai',       color: '#f97316', icon: <Activity size={14} /> },
+            { name: 'Poe',       url: 'https://poe.com',               color: '#8b5cf6', icon: <Globe size={14} /> },
           ].map(plat => (
             <button 
               key={plat.name}
@@ -1171,94 +1174,111 @@ const Dashboard = () => {
           {activeTab === 'extension' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={{ marginBottom: '32px' }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ marginBottom: '40px' }}
               >
-                <h1 style={{ fontSize: '2rem', fontWeight: '800', color: 'white', marginBottom: '8px' }}>Operational Hub</h1>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Orchestrate your cross-LLM intelligence relays.</p>
+                <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'white', marginBottom: '12px' }}>Operational Hub</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '1rem', maxWidth: '600px' }}>
+                  BridgeAI works everywhere you do. Install the analyst module to orchestrate your cross-LLM intelligence relays.
+                </p>
               </motion.div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '32px' }}>
-                <div className="glass-card" style={{ padding: '28px' }}>
-                  <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#4ade80', padding: '16px', borderRadius: '50%', width: 'fit-content', marginBottom: '16px' }}>
-                    <Zap size={32} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '40px' }}>
+                {/* Left Side: Status & Capabilities */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div className="glass-card" style={{ padding: '32px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: 0, right: 0, width: '100px', height: '100px', background: 'var(--primary)', filter: 'blur(80px)', opacity: 0.1, pointerEvents: 'none' }}></div>
+                    <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#4ade80', padding: '16px', borderRadius: '20px', width: 'fit-content', marginBottom: '20px' }}>
+                      <Zap size={32} />
+                    </div>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '12px', color: 'white' }}>Relay Status: ACTIVE</h3>
+                    <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '24px', fontSize: '0.95rem' }}>
+                      Your environment is ready. Intelligence extraction can be initiated from any compatible browser tab once the module is loaded.
+                    </p>
+                    
+                    <div style={{ padding: '20px', borderRadius: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1.5px', marginBottom: '16px' }}>CORE CAPABILITIES</div>
+                      <ul style={{ listStyle: 'none', padding: 0, fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={16} color="#10b981" /> Universal Chat Extraction</li>
+                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={16} color="#10b981" /> Multi-Platform Context Sync</li>
+                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={16} color="#10b981" /> Side-Panel Analyst View</li>
+                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={16} color="#10b981" /> Secure Sovereign Relay</li>
+                      </ul>
+                    </div>
                   </div>
-                  <h3 style={{ fontSize: '1.5rem', marginBottom: '12px' }}>Relay Status: ACTIVE</h3>
-                  <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '24px' }}>
-                    Your extension is successfully linked with the Hub. Intelligence extraction can now be initiated from any compatible browser tab.
-                  </p>
-                  
-                  <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)' }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1px', marginBottom: '8px' }}>CAPABILITIES</div>
-                    <ul style={{ listStyle: 'none', padding: 0, fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle2 size={14} color="#10b981" /> Universal Chat Extraction</li>
-                      <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle2 size={14} color="#10b981" /> Multi-Platform Context Sync</li>
-                      <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle2 size={14} color="#10b981" /> Side-Panel Analyst View</li>
-                      <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle2 size={14} color="#10b981" /> Secure Sovereign Relay</li>
-                    </ul>
+
+                  <div style={{ padding: '24px', borderRadius: '24px', background: 'rgba(244, 63, 94, 0.05)', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
+                    <h4 style={{ color: '#f43f5e', fontSize: '0.9rem', fontWeight: '700', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Clock size={16} /> DEVELOPMENT BUILD
+                    </h4>
+                    <p style={{ fontSize: '0.85rem', color: 'rgba(244, 63, 94, 0.8)', lineHeight: '1.5' }}>
+                      This is a standalone developer build. Automatic updates are currently handled via manual re-installation. Chrome Web Store release is pending.
+                    </p>
                   </div>
                 </div>
 
-                <div className="glass-card" style={{ padding: '28px', borderStyle: 'dashed', borderColor: 'var(--primary)' }}>
-                  <h3 style={{ fontSize: '1.25rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Eye size={20} color="var(--primary)" /> Pin Extension for Immediate Access
-                  </h3>
+                {/* Right Side: Installation Steps */}
+                <div className="glass-card" style={{ padding: '40px', borderStyle: 'dashed', borderColor: 'var(--primary)', borderWidth: '2px' }}>
+                  <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    🚀 Quick Installation Guide
+                  </h2>
                   
-                  <div style={{ position: 'relative', background: 'rgba(0,0,0,0.3)', borderRadius: '16px', padding: '24px', overflow: 'hidden' }}>
-                    <div style={{ marginBottom: '24px', padding: '16px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid var(--primary)' }}>
-                        <h4 style={{ color: 'white', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Download size={18} /> Standalone Sovereign Pack (.zip)
-                        </h4>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                            Download the packaged analyst module. This version runs completely independent of this dashboard.
-                        </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                    {/* Step 1 */}
+                    <div style={{ display: 'flex', gap: '24px' }}>
+                      <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white', boxShadow: '0 8px 20px rgba(139, 92, 246, 0.3)' }}>1</div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Download Extension Package</h4>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '16px' }}>Get the latest BridgeAI analyst module packaged as a .zip file.</p>
                         <button 
-                            className="btn-primary" 
-                            style={{ width: '100%', padding: '10px' }}
-                            onClick={() => window.open('/bridgeai-extension.zip', '_blank')}
+                          className="btn-primary" 
+                          style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                          onClick={() => window.open('/bridgeai-extension.zip', '_blank')}
                         >
-                            Download Analyst Package
+                          <Download size={18} /> Download BridgeAI (.zip)
                         </button>
+                      </div>
                     </div>
 
-                    {/* Visual representation of pinning steps */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>1</div>
-                        <div>
-                          <p style={{ fontWeight: '600' }}>Click the Puzzle Piece Icon</p>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Located in the top right of your browser toolbar.</p>
-                        </div>
+                    {/* Step 2 */}
+                    <div style={{ display: 'flex', gap: '24px' }}>
+                      <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white' }}>2</div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Open Extensions Dashboard</h4>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                          Navigate to <code style={{ color: 'var(--primary)', background: 'rgba(139, 92, 246, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>chrome://extensions</code> and enable <strong>Developer Mode</strong> in the top-right corner.
+                        </p>
                       </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>2</div>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ fontWeight: '600' }}>Find BridgeAI and click Pin (<span style={{ fontSize: '1.2rem' }}>📌</span>)</p>
-                          <div style={{ 
-                            marginTop: '12px', background: '#1e293b', padding: '12px 16px', borderRadius: '10px', 
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(255,255,255,0.05)'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div style={{ width: '20px', height: '20px', background: 'var(--primary)', borderRadius: '4px' }} />
-                              <span style={{ fontSize: '0.85rem' }}>BridgeAI - Cross-LLM...</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: '12px', color: 'var(--primary)' }}>
-                              <span title="Pin to toolbar" style={{ cursor: 'pointer', fontSize: '1.1rem' }}>📌</span>
-                              <span style={{ opacity: 0.3 }}>⋮</span>
-                            </div>
-                          </div>
-                        </div>
+                    </div>
+
+                    {/* Step 3 */}
+                    <div style={{ display: 'flex', gap: '24px' }}>
+                      <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white' }}>3</div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Load Unpacked Module</h4>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                          Extract the downloaded ZIP, click <strong>"Load Unpacked"</strong>, and select the <code style={{ color: 'white' }}>BridgeAI</code> folder.
+                        </p>
                       </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>3</div>
-                        <div>
-                          <p style={{ fontWeight: '600' }}>Launch Side-Panel Analyst</p>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click the logo to open your workspace sidebar.</p>
-                        </div>
+                    </div>
+
+                    {/* Step 4 */}
+                    <div style={{ display: 'flex', gap: '24px' }}>
+                      <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white' }}>4</div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Pin for Immediate Access</h4>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                          Click the puzzle icon (🧩) in your toolbar and pin <strong>BridgeAI</strong> for one-click extraction.
+                        </p>
                       </div>
+                    </div>
+
+                    <div style={{ marginTop: '16px', paddingTop: '32px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ background: 'var(--primary)', width: '12px', height: '12px', borderRadius: '50%', boxShadow: '0 0 15px var(--primary)' }}></div>
+                      <p style={{ fontSize: '0.95rem', fontWeight: '600', color: 'white' }}>
+                        Ready to bridge. Open ChatGPT, Gemini, or Claude to begin.
+                      </p>
                     </div>
                   </div>
                 </div>
