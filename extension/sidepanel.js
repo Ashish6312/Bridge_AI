@@ -418,7 +418,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (bridgeBtn) {
         bridgeBtn.addEventListener('click', async () => {
+            if (!capturedData || !capturedData.messages) {
+                showCustomModal('Protocol Error', 'No intelligence data captured. Please rescan the chat.', 'error');
+                return;
+            }
             if (!userSession) await syncUserSession();
+            
             bridgeBtn.disabled = true;
             bridgeBtn.textContent = '⚡ SAVING...';
 
