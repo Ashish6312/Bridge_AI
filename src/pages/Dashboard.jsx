@@ -699,38 +699,43 @@ const SkeletonCard = () => (
 /* ─── Reusable Sidebar Item Component ────────────────────────────── */
 const NavItem = ({ active, icon, label, count, status, onClick }) => (
   <motion.button 
-    whileHover={{ x: 4, background: 'rgba(255,255,255,0.05)' }}
+    whileHover={{ x: 6, background: 'rgba(255,255,255,0.05)' }}
     whileTap={{ scale: 0.98 }}
     onClick={onClick}
     style={{ 
       width: '100%',
       background: active ? 'rgba(139, 92, 246, 0.12)' : 'transparent',
-      padding: '12px 16px', borderRadius: '12px', 
+      padding: '12px 18px', borderRadius: '16px', 
       color: active ? 'white' : 'rgba(255,255,255,0.4)',
       border: '1px solid', borderColor: active ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
       textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px',
-      transition: 'all 0.2s', position: 'relative'
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', position: 'relative',
+      boxShadow: active ? 'inset 0 0 15px rgba(139, 92, 246, 0.05)' : 'none'
     }}
   >
     {active && (
       <motion.div 
         layoutId="active-nav"
-        style={{ position: 'absolute', left: '0', width: '3px', height: '20px', background: 'var(--primary)', borderRadius: '0 4px 4px 0', boxShadow: '0 0 10px var(--primary)' }} 
+        style={{ 
+          position: 'absolute', left: '0', top: '25%', bottom: '25%', width: '4px', 
+          background: 'var(--primary)', borderRadius: '0 4px 4px 0', 
+          boxShadow: '0 0 15px var(--primary)' 
+        }} 
       />
     )}
-    <div style={{ color: active ? 'var(--primary)' : 'currentColor', display: 'flex', alignItems: 'center' }}>
-      {icon}
+    <div style={{ color: active ? 'var(--primary)' : 'currentColor', display: 'flex', alignItems: 'center', transition: '0.2s' }}>
+      {React.cloneElement(icon, { size: 18, strokeWidth: active ? 2.5 : 2 })}
     </div>
-    <span style={{ fontSize: '0.9rem', fontWeight: active ? '800' : '600', letterSpacing: '-0.01em' }}>{label}</span>
+    <span style={{ fontSize: '0.9rem', fontWeight: active ? '800' : '600', letterSpacing: '-0.01em', transition: '0.2s' }}>{label}</span>
     {count !== undefined && (
-      <div style={{ marginLeft: 'auto', background: active ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '900', color: active ? 'white' : 'rgba(255,255,255,0.3)' }}>
+      <div style={{ marginLeft: 'auto', background: active ? 'var(--primary)' : 'rgba(255,255,255,0.05)', padding: '2px 10px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: '900', color: active ? 'white' : 'rgba(255,255,255,0.3)', boxShadow: active ? '0 4px 10px rgba(139, 92, 246, 0.3)' : 'none' }}>
         {count}
       </div>
     )}
     {status && (
-      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <div className="pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-        <span style={{ fontSize: '0.6rem', color: '#10b981', fontWeight: '900' }}>{status}</span>
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="pulse" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }} />
+        <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: '900', letterSpacing: '0.5px' }}>{status}</span>
       </div>
     )}
   </motion.button>
