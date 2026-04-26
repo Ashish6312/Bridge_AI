@@ -150,16 +150,18 @@ async function fetchQuota(email) {
                 }
             }
 
-            const limit = data.plan === 'pro' ? 100 : (data.plan === 'infinite' ? 1000 : 3);
+            const limit = data.plan === 'pro' ? 100 : (data.plan === 'infinite' ? Infinity : 3);
             const used = data.usage || 0;
-            const remaining = Math.max(0, limit - used);
+            const remaining = limit === Infinity ? 'Unlimited' : Math.max(0, limit - used);
             
             const quotaText = document.getElementById('quota-text');
             const quotaBar = document.getElementById('quota-bar');
             
-            if (quotaText) quotaText.textContent = `${remaining} / ${limit} Left`;
+            if (quotaText) {
+                quotaText.textContent = limit === Infinity ? 'Unlimited' : `${remaining} / ${limit} Left`;
+            }
             if (quotaBar) {
-                const percent = (remaining / limit) * 100;
+                const percent = limit === Infinity ? 100 : (remaining / limit) * 100;
                 quotaBar.style.width = `${percent}%`;
                 
                 if (percent < 20) {
