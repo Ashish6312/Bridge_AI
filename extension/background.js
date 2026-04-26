@@ -1,6 +1,6 @@
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    chrome.tabs.create({ url: 'https://bridge-ai-brown.vercel.app/dashboard?tab=extension' });
+    chrome.tabs.create({ url: 'https://bridgeai-realworld-problem.vercel.app/dashboard?tab=extension' });
   }
 });
 
@@ -19,7 +19,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach(tab => {
         if (tab.url && (
-            tab.url.includes('bridge-ai-brown') || 
+            tab.url.includes('bridgeai-realworld-problem') || 
             tab.url.includes('localhost:5173') ||
             tab.url.includes('localhost:5001')
         )) {

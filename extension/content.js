@@ -44,7 +44,7 @@ function getPlatform() {
   if (host.includes('mistral')) return 'mistral';
   if (host.includes('deepseek')) return 'deepseek';
   if (host.includes('poe')) return 'poe';
-  if (host.includes('bridge-ai-brown') || host.includes('localhost')) return 'dashboard';
+  if (host.includes('bridgeai-realworld-problem') || host.includes('localhost')) return 'dashboard';
   return 'universal';
 }
 

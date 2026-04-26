@@ -25,13 +25,13 @@
     }
   ],
   "host_permissions": [
-    "https://bridge-ai-brown.vercel.app/*",
+    "https://bridgeai-realworld-problem.vercel.app/*",
     "https://*.vercel.app/*",
     "http://localhost:5001/*"
   ],
   "externally_connectable": {
     "matches": [
-      "https://bridge-ai-brown.vercel.app/*",
+      "https://bridgeai-realworld-problem.vercel.app/*",
       "https://*.vercel.app/*"
     ]
   }
