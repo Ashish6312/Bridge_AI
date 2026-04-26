@@ -1193,15 +1193,6 @@ const Dashboard = () => {
                     </div>
                   )}
                 </div>
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <button onClick={() => setActiveTab('manual')} className="btn-primary" style={{ padding: '10px 22px' }}>
-                      <Plus size={16} /> New Bridge
-                    </button>
-                    <button onClick={refreshVault} className="btn-secondary" style={{ padding: '10px 22px' }}>
-                      🔄 Refresh Vault
-                    </button>
-                  </div>
-                </div>
               )}
             </motion.div>
           )}
