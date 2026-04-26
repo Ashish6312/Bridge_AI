@@ -377,24 +377,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
             
-            const handleExtractionResponse = (response, targetTab) => {
-                extractBtn.disabled = false;
-                extractBtn.innerHTML = `Capture Chat`;
+            const attemptExtraction = (tabId, targetTab, retryOnFail = true) => {
+                chrome.tabs.sendMessage(tabId, { action: 'EXTRACT_CHAT' }, async (response) => {
+                    if (chrome.runtime.lastError || !response?.data) {
+                        console.warn('BridgeAI: Connection lost. Attempting smart re-injection...');
+                        
+                        if (retryOnFail) {
+                            try {
+                                // Manually inject content script if connection is lost
+                                await chrome.scripting.executeScript({
+                                    target: { tabId: tabId },
+                                    files: ['content.js']
+                                });
+                                // Wait a bit for injection to settle
+                                setTimeout(() => attemptExtraction(tabId, targetTab, false), 500);
+                                return;
+                            } catch (err) {
+                                console.error('Smart Injection Failed:', err);
+                            }
+                        }
 
-                if (chrome.runtime.lastError || !response?.data) {
-                    console.error('BridgeAI Sync Error:', chrome.runtime.lastError);
-                    showCustomModal(
-                        'Link Interrupted', 
-                        'Failed to communicate with the Chat Hub. If you just updated the extension, please REFRESH your ChatGPT/Gemini page to re-establish the intelligence relay.', 
-                        'error'
-                    );
-                    return;
-                }
+                        extractBtn.disabled = false;
+                        extractBtn.innerHTML = `Capture Chat`;
+                        showCustomModal(
+                            'Relay Interrupted', 
+                            'Failed to link with the Hub. Please refresh the page (ChatGPT/Gemini) manually to re-establish the connection.', 
+                            'error'
+                        );
+                        return;
+                    }
 
-                capturedData = response.data;
-                const urlObj = new URL(targetTab.url);
-                capturedData.platform = formatPlatformName(urlObj.hostname);
-                showAnalysis(capturedData);
+                    extractBtn.disabled = false;
+                    extractBtn.innerHTML = `Capture Chat`;
+                    capturedData = response.data;
+                    const urlObj = new URL(targetTab.url);
+                    capturedData.platform = formatPlatformName(urlObj.hostname);
+                    showAnalysis(capturedData);
+                });
             };
 
             if (!activeTab || !activeTab.id || activeTab.url.includes('bridgeai-realworld-problem.vercel.app')) {
@@ -402,7 +421,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const chatTab = allTabs.find(t => t.url && (t.url.includes('chatgpt.com') || t.url.includes('gemini.google') || t.url.includes('claude.ai')));
                 
                 if (chatTab) {
-                    chrome.tabs.sendMessage(chatTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, chatTab));
+                    attemptExtraction(chatTab.id, chatTab);
                     return;
                 } else {
                     showCustomModal('Target Not Found', 'Please select a chat tab (ChatGPT/Gemini/Claude) before initiating extraction.');
@@ -412,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             extractBtn.disabled = true;
             extractBtn.textContent = 'Syncing...';
-            chrome.tabs.sendMessage(activeTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, activeTab));
+            attemptExtraction(activeTab.id, activeTab);
         });
     }
 
