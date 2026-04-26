@@ -268,6 +268,11 @@
         .user-details strong { display: block; font-size: 0.85rem; font-weight: 700; color: white; margin-bottom: 2px; }
         .user-details span { font-size: 0.7rem; font-weight: 600; color: var(--success); }
 
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05) !important;
+            transform: translateX(4px);
+        }
+
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -404,14 +409,14 @@
             </div>
             
             <!-- Account Popup Menu -->
-            <div id="account-menu" style="display: none; position: absolute; bottom: 100%; left: 0; width: 180px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 16px; margin-bottom: 12px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000;">
-                <button id="refresh-ext-btn" style="width: 100%; text-align: left; background: transparent; border: none; color: white; padding: 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border-radius: 8px; display: flex; alignItems: center; gap: 10px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            <div id="account-menu" style="display: none; position: absolute; bottom: 100%; left: 0; width: 200px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 16px; margin-bottom: 12px; padding: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1000; backdrop-filter: blur(20px);">
+                <button id="refresh-ext-btn" class="menu-item" style="width: 100%; text-align: left; background: transparent; border: none; color: white; padding: 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 10px; display: flex; align-items: center; gap: 12px; transition: all 0.2s;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
                     Refresh Session
                 </button>
-                <div style="height: 1px; background: var(--glass-border); margin: 4px 0;"></div>
-                <button id="logout-btn" style="width: 100%; text-align: left; background: transparent; border: none; color: #fb7185; padding: 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border-radius: 8px; display: flex; alignItems: center; gap: 10px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <div style="height: 1px; background: var(--glass-border); margin: 6px 0;"></div>
+                <button id="logout-btn" class="menu-item" style="width: 100%; text-align: left; background: transparent; border: none; color: #fb7185; padding: 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 10px; display: flex; align-items: center; gap: 12px; transition: all 0.2s;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     Logout System
                 </button>
             </div>
