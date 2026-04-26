@@ -662,6 +662,9 @@ const Dashboard = () => {
        } catch (e) {}
     };
     
+    // Initial data load
+    loadData();
+
     // Attempt sync immediately and on visibility (covers tab switching)
     syncWithExtension();
     const handleVisibilityChange = () => {
