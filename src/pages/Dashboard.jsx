@@ -705,41 +705,65 @@ const Dashboard = () => {
         return;
       }
 
-      // Parallel Intelligence Fetching
+      // Parallel Intelligence Fetching with Timeout Guard
+      const fetchWithTimeout = (url, options = {}, timeout = 5000) => {
+        return Promise.race([
+          fetch(url, options),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Protocol Timeout')), timeout))
+        ]);
+      };
+
       const [bridgesRes, statusRes] = await Promise.all([
-        fetch(`${API_BASE}/api/bridges?email=${email}`, { headers: { 'Cache-Control': 'no-cache' } }),
-        fetch(`${API_BASE}/api/user/status?email=${email}`).catch(() => null)
+        fetchWithTimeout(`${API_BASE}/api/bridges?email=${email}`, { headers: { 'Cache-Control': 'no-cache' } }),
+        fetchWithTimeout(`${API_BASE}/api/user/status?email=${email}`).catch(() => null)
       ]);
 
       const bridgesData = await bridgesRes.json();
       
       if (bridgesData.success) {
         setHubStatus('online');
-        const localBridges = bridgesData.data;
-        setBridges(localBridges);
+        const localBridges = bridgesData.data || [];
+        
+        // Prevent Flickering: Only update if bridge count or content changed
+        setBridges(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(localBridges)) return prev;
+          return localBridges;
+        });
         
         // Extract project segments
         const uniqueProjects = [...new Set(localBridges.map(b => b.project_id).filter(Boolean))];
-        setProjects(uniqueProjects.map(id => ({ id, name: id })));
+        setProjects(prev => {
+          const newProj = uniqueProjects.map(id => ({ id, name: id }));
+          if (JSON.stringify(prev) === JSON.stringify(newProj)) return prev;
+          return newProj;
+        });
         
         // Distill telemetry
         const rawTokens = localBridges.reduce((acc, b) => {
-          const match = b.tokens?.match(/\d+/);
+          const match = String(b.tokens || '').match(/\d+/);
           return acc + (match ? parseInt(match[0]) : 0);
         }, 0);
         
-        setStats(prev => ({ 
-          ...prev,
+        const newStats = { 
           totalBridges: localBridges.length, 
           totalTokens: rawTokens * 2.5 
-        }));
+        };
+
+        setStats(prev => {
+          if (prev.totalBridges === newStats.totalBridges && prev.totalTokens === newStats.totalTokens) return prev;
+          return { ...prev, ...newStats };
+        });
       } else {
         setHubStatus('offline');
       }
 
+      // Force loading false as soon as primary bridges are distilled
+      setLoading(false);
+
+      // Silent status update
       if (statusRes) {
-        const statusData = await statusRes.json();
-        if (statusData.success) {
+        const statusData = await statusRes.json().catch(() => null);
+        if (statusData && statusData.success) {
           setStats(prev => ({ 
             ...prev, 
             plan: statusData.plan, 
@@ -751,7 +775,6 @@ const Dashboard = () => {
     } catch (err) {
       console.error('Core Hub Fetch Failed:', err);
       setHubStatus('offline');
-    } finally {
       setLoading(false);
     }
   };
@@ -772,8 +795,8 @@ const Dashboard = () => {
       }
     };
     const handleVaultUpdate = () => {
-      // Small delay to ensure DB write is finalized on server
-      setTimeout(() => loadData(true), 1000);
+      // Direct silent update for immediate feedback without flicker
+      loadData(true);
     };
 
     window.addEventListener('storage', handleStorage);
