@@ -54,38 +54,20 @@ const CustomCursor = () => {
 
   return (
     <>
-      {/* Inner Dot */}
-      <motion.div
-        style={{
-          position: 'fixed',
-          left: 0,
-          top: 0,
-          width: 8,
-          height: 8,
-          backgroundColor: 'var(--primary)',
-          borderRadius: '50%',
-          zIndex: 999999,
-          pointerEvents: 'none',
-          x: mouseX,
-          y: mouseY,
-          translateX: '-50%',
-          translateY: '-50%',
-        }}
-      />
-      {/* Outer Ring */}
+      {/* Refined Professional Mouse Follower Ring */}
       <motion.div
         animate={{
-          scale: isClicking ? 0.8 : isPointer ? 1.5 : 1,
-          borderColor: isPointer ? 'rgba(139, 92, 246, 0.5)' : 'rgba(255, 255, 255, 0.2)',
-          backgroundColor: isPointer ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+          scale: isClicking ? 0.9 : isPointer ? 1.3 : 1,
+          borderColor: isPointer ? 'rgba(139, 92, 246, 0.4)' : 'rgba(148, 163, 184, 0.2)',
+          backgroundColor: isPointer ? 'rgba(139, 92, 246, 0.05)' : 'transparent',
+          width: isPointer ? 48 : 32,
+          height: isPointer ? 48 : 32,
         }}
         style={{
           position: 'fixed',
           left: 0,
           top: 0,
-          width: 40,
-          height: 40,
-          border: '1.5px solid',
+          border: '1px solid',
           borderRadius: '50%',
           zIndex: 999998,
           pointerEvents: 'none',
@@ -93,7 +75,8 @@ const CustomCursor = () => {
           y: smoothY,
           translateX: '-50%',
           translateY: '-50%',
-          backdropFilter: isPointer ? 'blur(2px)' : 'none',
+          backdropFilter: isPointer ? 'blur(1px)' : 'none',
+          mixBlendMode: 'plus-lighter', // Professional blend mode
         }}
       />
     </>

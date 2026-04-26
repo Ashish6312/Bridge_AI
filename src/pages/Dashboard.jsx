@@ -653,7 +653,8 @@ const ManualBridgeSubmit = ({ projects, triggerToast, setActiveTab, setBridges, 
           platform: 'Manual', 
           title,
           email,
-          mode
+          mode,
+          project_id: projectId
         })
       });
 
@@ -925,6 +926,36 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    const userStr = localStorage.getItem('bridge_user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const email = user?.email;
+
+    if (!email) return;
+
+    // Realtime Sync Protocol via SSE
+    const eventSource = new EventSource(`${API_BASE}/api/realtime?email=${email}`);
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('[REALTIME] Hub update received:', data);
+        loadData(true);
+      } catch (e) {
+        console.error('[REALTIME] Protocol parse error:', e);
+      }
+    };
+
+    eventSource.onerror = () => {
+      console.warn('[REALTIME] Protocol link severed. Attempting handshake...');
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [loadData]);
+
+  useEffect(() => {
     const handleStorage = (e) => {
       if (e.key === 'bridge_user' || e.key === 'bridge_vault_updated') loadData(true);
     };
@@ -932,7 +963,7 @@ const Dashboard = () => {
     window.addEventListener('storage', handleStorage);
     window.addEventListener('bridge-vault-update', handleVaultUpdate);
     loadData(false);
-    const pulseInterval = setInterval(() => loadData(true), 10000);
+    const pulseInterval = setInterval(() => loadData(true), 30000); // Polling reduced as backup
     return () => {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('bridge-vault-update', handleVaultUpdate);

@@ -4,9 +4,11 @@ require('dotenv').config();
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const cron = require('node-cron');
+const EventEmitter = require('events');
 const { sendWelcomeEmail, sendPromotionEmail } = require('./emailService');
 
 const app = express();
+const hubEmitter = new EventEmitter();
 // Sovereign Extension Protocol: Enable universal handshake
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PATCH', 'DELETE'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 app.use(express.json());
@@ -18,6 +20,28 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   next();
+});
+
+app.get('/api/realtime', (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: "Email required for realtime sync" });
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const onUpdate = (data) => {
+    if (data.email === email) {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    }
+  };
+
+  hubEmitter.on('bridge-update', onUpdate);
+
+  req.on('close', () => {
+    hubEmitter.off('bridge-update', onUpdate);
+  });
 });
 
 app.get('/api/health', (req, res) => res.json({ status: 'online', hub: 'BridgeAI Sovereign' }));
@@ -81,6 +105,7 @@ const initDB = async () => {
         tokens VARCHAR(100),
         snippets INTEGER,
         mode VARCHAR(20) DEFAULT 'quick',
+        project_id TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -108,6 +133,7 @@ const initDB = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT \'free\'');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS settings JSON DEFAULT \'{"notifications":true,"autoBridge":false,"secureMode":true}\'');
     await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS mode VARCHAR(20) DEFAULT \'quick\'');
+    await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS project_id TEXT');
   } catch (err) {
     console.error("DB Init Error:", err);
   }
@@ -175,7 +201,7 @@ app.post('/api/auth/google', async (req, res) => {
 
 app.post('/api/summarize', async (req, res) => {
   try {
-    const { messages, platform, title, email, mode = 'quick' } = req.body;
+    const { messages, platform, title, email, mode = 'quick', project_id = null } = req.body;
     if (!email || email === 'guest') {
       return res.status(401).json({ success: false, error: "Unauthorized: User session required for hub dispatch." });
     }
@@ -262,10 +288,10 @@ app.post('/api/summarize', async (req, res) => {
     const id = 'brid_' + Date.now().toString(36);
     
     const query = `
-      INSERT INTO bridges (id, user_email, title, source, summary, chat_log, tokens, snippets, mode) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
+      INSERT INTO bridges (id, user_email, title, source, summary, chat_log, tokens, snippets, mode, project_id) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *;
     `;
-    const values = [id, email, title || `Bridge: ${goal.substring(0, 30)}`, platform, summary, formattedChat, `${Math.round(formattedChat.length/4)} tokens`, snippetsCount, finalMode];
+    const values = [id, email, title || `Bridge: ${goal.substring(0, 30)}`, platform, summary, formattedChat, `${Math.round(formattedChat.length/4)} tokens`, snippetsCount, finalMode, project_id];
     
     try {
       await pool.query(query, values);
@@ -277,6 +303,8 @@ app.post('/api/summarize', async (req, res) => {
         throw dbErr;
       }
     }
+
+    hubEmitter.emit('bridge-update', { email, type: 'create', bridgeId: id });
 
     res.json({ success: true, bridgeData: { id, title, summary, mode: finalMode } });
   } catch (error) {
@@ -394,8 +422,37 @@ app.get('/api/user/status', async (req, res) => {
 
 app.patch('/api/bridge/:id', async (req, res) => {
   try {
-    const { title } = req.body;
-    await pool.query('UPDATE bridges SET title = $1 WHERE id = $2', [title, req.params.id]);
+    const { title, project_id, summary } = req.body;
+    let query = 'UPDATE bridges SET ';
+    const params = [];
+    let setClauses = [];
+
+    if (title !== undefined) {
+      params.push(title);
+      setClauses.push(`title = $${params.length}`);
+    }
+    if (project_id !== undefined) {
+      params.push(project_id);
+      setClauses.push(`project_id = $${params.length}`);
+    }
+    if (summary !== undefined) {
+      params.push(summary);
+      setClauses.push(`summary = $${params.length}`);
+    }
+
+    if (setClauses.length === 0) return res.status(400).json({ error: "No fields to update" });
+
+    query += setClauses.join(', ') + ` WHERE id = $${params.length + 1}`;
+    params.push(req.params.id);
+
+    await pool.query(query, params);
+
+    // Get the user_email for this bridge to notify correctly
+    const bridgeInfo = await pool.query('SELECT user_email FROM bridges WHERE id = $1', [req.params.id]);
+    if (bridgeInfo.rowCount > 0) {
+      hubEmitter.emit('bridge-update', { email: bridgeInfo.rows[0].user_email, type: 'update', bridgeId: req.params.id });
+    }
+
     res.json({ success: true, message: "Bridge updated." });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -536,7 +593,13 @@ cron.schedule('0 10 * * *', async () => {
 
 app.delete('/api/bridge/:id', async (req, res) => {
   try {
+    const bridgeInfo = await pool.query('SELECT user_email FROM bridges WHERE id = $1', [req.params.id]);
     await pool.query('DELETE FROM bridges WHERE id = $1', [req.params.id]);
+    
+    if (bridgeInfo.rowCount > 0) {
+      hubEmitter.emit('bridge-update', { email: bridgeInfo.rows[0].user_email, type: 'delete', bridgeId: req.params.id });
+    }
+
     res.json({ success: true, message: "Bridge deleted successfully." });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
