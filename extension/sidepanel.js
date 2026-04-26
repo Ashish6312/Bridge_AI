@@ -195,6 +195,11 @@ const showCustomModal = (title, message, type = 'warning') => {
         iconContainer.style.background = 'rgba(16, 185, 129, 0.1)';
         iconSvg.style.stroke = '#10b981';
         iconSvg.innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
+        
+        // Auto-dismiss success modals after 3 seconds
+        setTimeout(() => {
+            if (modal.style.display === 'flex') modal.style.display = 'none';
+        }, 3000);
     } else {
         iconContainer.style.background = 'rgba(139, 92, 246, 0.1)';
         iconSvg.style.stroke = '#8b5cf6';
@@ -446,8 +451,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
+            capturedData = null; // Clear old capture
             if (analysisView) analysisView.style.display = 'none';
-            if (dashboardView) dashboardView.style.display = 'block';
+            if (dashboardView) {
+                dashboardView.style.display = 'block';
+                dashboardView.classList.remove('fade-in');
+                void dashboardView.offsetWidth; // Trigger reflow
+                dashboardView.classList.add('fade-in');
+            }
         });
     }
 
