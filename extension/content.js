@@ -28,6 +28,10 @@ const EXTRACTORS = {
     messageSelector: '[class*="Message_column"]',
     authorSelector: '[class*="Message_botName"]'
   },
+  gmail: {
+    messageSelector: '[role="gridcell"], .ii.gt, .ha',
+    authorSelector: '.gD'
+  },
   universal: {
     // Enhanced universal selector for any content-rich website or custom LLM UI
     messageSelector: 'article, main, .content, #content, .post, .message, [class*="message"], [class*="content"], [class*="body"], [class*="article"], p, li, td',
@@ -44,6 +48,7 @@ function getPlatform() {
   if (host.includes('mistral')) return 'mistral';
   if (host.includes('deepseek')) return 'deepseek';
   if (host.includes('poe')) return 'poe';
+  if (host.includes('mail.google')) return 'gmail';
   if (host.includes('bridgeai-realworld-problem') || host.includes('localhost')) return 'dashboard';
   return 'universal';
 }
@@ -229,7 +234,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
   }
   if (request.action === 'VAULT_UPDATED') {
-    window.dispatchEvent(new CustomEvent('bridge-vault-update'));
+    // Trigger real-time update in Dashboard via localStorage event
+    localStorage.setItem('bridge_vault_updated', Date.now());
     return;
   }
   return true;

@@ -798,8 +798,8 @@ const Dashboard = () => {
   useEffect(() => {
     // Watch for both native storage events (from other tabs) and custom events
     const handleStorage = (e) => {
-      if (e.key === 'bridge_user') {
-        loadData();
+      if (e.key === 'bridge_user' || e.key === 'bridge_vault_updated') {
+        loadData(true);
       }
     };
     const handleVaultUpdate = () => {

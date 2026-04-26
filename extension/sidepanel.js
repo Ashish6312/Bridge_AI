@@ -7,11 +7,16 @@ let userSession = null;
 let capturedData = null;
 let currentMode = 'quick';
 
+// DOM Elements (Initialized on Load)
+let extractBtn, platformName, siteEmoji, dashboardView, analysisView, dataContainer, cancelBtn, bridgeBtn, modal, modalTitle, modalMessage, modalCloseBtn, modalUpgradeBtn;
+
 async function syncUserSession() {
     // 1. Try persistent storage first (Standalone Mode)
-    const stored = await chrome.storage.local.get(['bridge_token', 'bridge_user']);
+    const stored = await chrome.storage.local.get(['bridge_token', 'bridge_user', 'api_base', 'web_base']);
     if (stored.bridge_user) {
         userSession = stored.bridge_user;
+        if (stored.api_base) API_BASE = stored.api_base;
+        if (stored.web_base) WEB_BASE = stored.web_base;
         updateUIWithSession(userSession);
         return true;
     }
@@ -85,14 +90,22 @@ function updateUIWithSession(session) {
     const infoContainer = document.getElementById('user-info-container');
     const loginContainer = document.getElementById('login-container');
 
+    if (!infoContainer || !loginContainer) return; // Wait for DOM
+
     if (session && session.email) {
         infoContainer.style.display = 'flex';
         loginContainer.style.display = 'none';
         
-        document.getElementById('user-email').textContent = session.email;
-        document.getElementById('user-initial').textContent = session.email[0].toUpperCase();
-        document.getElementById('sync-status').textContent = 'Relay Secure';
-        document.getElementById('sync-status').style.color = '#4ade80';
+        const emailEl = document.getElementById('user-email');
+        const initialEl = document.getElementById('user-initial');
+        const syncEl = document.getElementById('sync-status');
+
+        if (emailEl) emailEl.textContent = session.email;
+        if (initialEl) initialEl.textContent = session.email[0].toUpperCase();
+        if (syncEl) {
+            syncEl.textContent = 'Relay Secure';
+            syncEl.style.color = '#4ade80';
+        }
 
         // Refresh Quota
         fetchQuota(session.email);
@@ -122,7 +135,116 @@ function updateUIWithSession(session) {
     }
 }
 
+async function fetchQuota(email) {
+    if (!API_BASE) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/user/status?email=${email}`);
+        const data = await res.json();
+        if (data.success) {
+            // Live Plan Sync: Update session with server-side truth
+            if (data.plan && userSession) {
+                const planChanged = userSession.plan !== data.plan;
+                userSession.plan = data.plan;
+                if (planChanged) {
+                    updateUIWithSession(userSession);
+                }
+            }
+
+            const limit = data.plan === 'pro' ? 100 : (data.plan === 'infinite' ? 1000 : 3);
+            const used = data.usage || 0;
+            const remaining = Math.max(0, limit - used);
+            
+            const quotaText = document.getElementById('quota-text');
+            const quotaBar = document.getElementById('quota-bar');
+            
+            if (quotaText) quotaText.textContent = `${remaining} / ${limit} Left`;
+            if (quotaBar) {
+                const percent = (remaining / limit) * 100;
+                quotaBar.style.width = `${percent}%`;
+                
+                if (percent < 20) {
+                    quotaBar.style.background = '#f43f5e';
+                } else if (percent < 50) {
+                    quotaBar.style.background = '#f59e0b';
+                } else {
+                    quotaBar.style.background = 'var(--accent-gradient)';
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Quota Fetch Error:', e);
+    }
+}
+
+const showCustomModal = (title, message, type = 'warning') => {
+    if (!modalTitle || !modalMessage || !modal) return;
+    modalTitle.textContent = title;
+    modalMessage.textContent = message;
+    modal.style.display = 'flex';
+    
+    const iconContainer = document.getElementById('modal-icon');
+    if (!iconContainer) return;
+    const iconSvg = iconContainer.querySelector('svg');
+    if (!iconSvg) return;
+    
+    if (type === 'error') {
+        iconContainer.style.background = 'rgba(244, 63, 94, 0.1)';
+        iconSvg.style.stroke = '#f43f5e';
+        iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+    } else if (type === 'success') {
+        iconContainer.style.background = 'rgba(16, 185, 129, 0.1)';
+        iconSvg.style.stroke = '#10b981';
+        iconSvg.innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
+    } else {
+        iconContainer.style.background = 'rgba(139, 92, 246, 0.1)';
+        iconSvg.style.stroke = '#8b5cf6';
+        iconSvg.innerHTML = '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>';
+    }
+};
+
+const showAnalysis = (data) => {
+    if (!dashboardView || !analysisView || !dataContainer) return;
+    dashboardView.style.display = 'none';
+    analysisView.style.display = 'block';
+    dataContainer.innerHTML = '';
+
+    const platform = data.platform.toLowerCase();
+    const isAI = ['chatgpt', 'gemini', 'claude', 'perplexity'].some(s => platform.includes(s));
+    
+    const points = [
+        { label: 'Intelligence Source', value: data.platform },
+        { label: 'Origin URL', value: data.url },
+        { label: 'Context Title', value: data.title },
+        { 
+            label: isAI ? 'Conversation Depth' : 'Intelligence Signals', 
+            value: isAI ? `${data.messages.length} messages captured` : `${data.messages.length} data points extracted` 
+        }
+    ];
+
+    points.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'data-point fade-in';
+        div.innerHTML = `<label>${p.label}</label><span>${p.value}</span>`;
+        dataContainer.appendChild(div);
+    });
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize DOM elements
+    extractBtn = document.getElementById('extract-btn');
+    platformName = document.getElementById('platform-name');
+    siteEmoji = document.getElementById('site-emoji');
+    dashboardView = document.getElementById('dashboard-view');
+    analysisView = document.getElementById('analysis-view');
+    dataContainer = document.getElementById('data-container');
+    cancelBtn = document.getElementById('cancel-btn');
+    bridgeBtn = document.getElementById('bridge-btn');
+    modal = document.getElementById('custom-modal');
+    modalTitle = document.getElementById('modal-title');
+    modalMessage = document.getElementById('modal-message');
+    modalCloseBtn = document.getElementById('modal-close-btn');
+    modalUpgradeBtn = document.getElementById('modal-upgrade-btn');
+
     await syncUserSession();
 
     function formatPlatformName(host) {
@@ -132,6 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (h.includes('gemini') || h.includes('google')) return 'Gemini';
         if (h.includes('claude')) return 'Claude';
         if (h.includes('perplexity')) return 'Perplexity';
+        if (h.includes('mail.google')) return 'Gmail';
         if (h.includes('bridgeai-realworld-problem') || h.includes('localhost')) return 'Bridge Hub';
         
         let name = host.replace('www.', '').split('.')[0];
@@ -143,17 +266,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (activeTab?.url) {
             try {
                 const urlObj = new URL(activeTab.url);
-                platformName.textContent = formatPlatformName(urlObj.hostname);
+                if (platformName) platformName.textContent = formatPlatformName(urlObj.hostname);
                 
                 // Emoji logic
-                const url = activeTab.url.toLowerCase();
-                if (url.includes('chatgpt')) siteEmoji.textContent = '🤖';
-                else if (url.includes('gemini')) siteEmoji.textContent = '✨';
-                else if (url.includes('claude')) siteEmoji.textContent = '🧠';
-                else if (url.includes('internship')) siteEmoji.textContent = '🎓';
-                else siteEmoji.textContent = '🌐';
+                if (siteEmoji) {
+                    const url = activeTab.url.toLowerCase();
+                    if (url.includes('chatgpt')) siteEmoji.textContent = '🤖';
+                    else if (url.includes('gemini')) siteEmoji.textContent = '✨';
+                    else if (url.includes('claude')) siteEmoji.textContent = '🧠';
+                    else if (url.includes('mail.google')) siteEmoji.textContent = '✉️';
+                    else if (url.includes('internship')) siteEmoji.textContent = '🎓';
+                    else siteEmoji.textContent = '🌐';
+                }
             } catch {
-                platformName.textContent = 'Universal Bridge';
+                if (platformName) platformName.textContent = 'Universal Bridge';
             }
         }
     }
@@ -174,7 +300,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Persistent Sync: Poll for session/platform changes every 3 seconds
-    // This handles login/logout on the website without refresh
     setInterval(async () => {
         const synced = await syncUserSession();
         if (!synced && !userSession) {
@@ -183,43 +308,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         await updatePlatformUI();
     }, 3000);
 
-    // Login Action
-    document.getElementById('sidepanel-login-btn').addEventListener('click', () => {
-        chrome.tabs.create({ url: `${PRODUCTION_URL}/login?redirect=dashboard` });
-    });
+    // Button Listeners
+    if (document.getElementById('sidepanel-login-btn')) {
+        document.getElementById('sidepanel-login-btn').addEventListener('click', () => {
+            chrome.tabs.create({ url: `${PRODUCTION_URL}/login?redirect=dashboard` });
+        });
+    }
 
-    // Account Menu Toggling
     const accountTrigger = document.getElementById('user-info-container');
     const accountMenu = document.getElementById('account-menu');
-
-    accountTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        accountMenu.style.display = accountMenu.style.display === 'none' ? 'block' : 'none';
-    });
+    if (accountTrigger && accountMenu) {
+        accountTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            accountMenu.style.display = accountMenu.style.display === 'none' ? 'block' : 'none';
+        });
+    }
 
     document.addEventListener('click', () => {
-        accountMenu.style.display = 'none';
+        if (accountMenu) accountMenu.style.display = 'none';
     });
 
-    // Logout Logic
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        userSession = null;
-        await chrome.storage.local.remove(['bridge_user', 'bridge_token']);
-        updateUIWithSession(null);
-        showCustomModal('System Logout', 'Sovereign session terminated successfully.', 'success');
-    });
+    if (document.getElementById('logout-btn')) {
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            userSession = null;
+            await chrome.storage.local.remove(['bridge_user', 'bridge_token']);
+            updateUIWithSession(null);
+            showCustomModal('System Logout', 'Sovereign session terminated successfully.', 'success');
+        });
+    }
 
-    // Refresh Logic
-    document.getElementById('refresh-ext-btn').addEventListener('click', async () => {
-        const synced = await syncUserSession();
-        if (synced) {
-            showCustomModal('Sync Complete', 'Intelligence relay re-established.', 'success');
-        } else {
-            showCustomModal('Sync Failed', 'Could not detect active Bridge Hub session.', 'error');
-        }
-    });
+    if (document.getElementById('refresh-ext-btn')) {
+        document.getElementById('refresh-ext-btn').addEventListener('click', async () => {
+            const synced = await syncUserSession();
+            if (synced) {
+                showCustomModal('Sync Complete', 'Intelligence relay re-established.', 'success');
+            } else {
+                showCustomModal('Sync Failed', 'Could not detect active Bridge Hub session.', 'error');
+            }
+        });
+    }
 
-    // Mode Selection
     document.querySelectorAll('.mode-item').forEach(item => {
         item.addEventListener('click', () => {
             const isFree = (userSession?.plan || 'free') === 'free';
@@ -233,206 +361,112 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    extractBtn.addEventListener('click', async () => {
-        // Enforce Login First
-        if (!userSession) await syncUserSession();
-
-        if (!userSession) {
-            showCustomModal('Identity Required', 'Please sign in to your BridgeAI account to enable cross-LLM intelligence sync.');
-            chrome.tabs.create({ url: `${PRODUCTION_URL}/login?redirect=dashboard` });
-            return;
-        }
-
-        // Improved Tab Targeting: Use lastFocusedWindow to avoid capturing the sidepanel/dashboard context incorrectly
-        const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        
-        if (!activeTab || !activeTab.id || activeTab.url.includes('bridgeai-realworld-problem.vercel.app')) {
-            // If active tab is the dashboard, try to find the actual chat tab
-            const allTabs = await chrome.tabs.query({ lastFocusedWindow: true });
-            const chatTab = allTabs.find(t => t.url && (t.url.includes('chatgpt.com') || t.url.includes('gemini.google') || t.url.includes('claude.ai')));
-            
-            if (chatTab) {
-                // Switch to that tab context for extraction
-                chrome.tabs.sendMessage(chatTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, chatTab));
-                return;
-            } else if (!activeTab || !activeTab.id) {
-                showCustomModal('Target Not Found', 'Please select a chat tab (ChatGPT/Gemini/Claude) before initiating extraction.');
-                return;
-            }
-        }
-
-        const handleExtractionResponse = (response, targetTab) => {
-            extractBtn.disabled = false;
-            extractBtn.innerHTML = `Capture Chat`;
-
-            if (chrome.runtime.lastError || !response?.data) {
-                console.error('BridgeAI Sync Error:', chrome.runtime.lastError);
-                showCustomModal('Connection Error', 'Failed to communicate with the chat tab. Please refresh the page (ChatGPT/Gemini) and try again.', 'error');
+    if (extractBtn) {
+        extractBtn.addEventListener('click', async () => {
+            if (!userSession) await syncUserSession();
+            if (!userSession) {
+                showCustomModal('Identity Required', 'Please sign in to your BridgeAI account to enable cross-LLM intelligence sync.');
+                chrome.tabs.create({ url: `${PRODUCTION_URL}/login?redirect=dashboard` });
                 return;
             }
 
-            capturedData = response.data;
+            const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
             
-            // Critical: Force source detection from the ACTUAL tab we extracted from
-            const urlObj = new URL(targetTab.url);
-            capturedData.platform = formatPlatformName(urlObj.hostname);
-            showAnalysis(capturedData);
-        };
+            const handleExtractionResponse = (response, targetTab) => {
+                extractBtn.disabled = false;
+                extractBtn.innerHTML = `Capture Chat`;
 
-        // Standard flow: Dispatch extraction to the active tab
-        extractBtn.disabled = true;
-        extractBtn.textContent = 'Syncing...';
-        chrome.tabs.sendMessage(activeTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, activeTab));
-    });
+                if (chrome.runtime.lastError || !response?.data) {
+                    showCustomModal('Connection Error', 'Failed to communicate with the chat tab. Please refresh the page (ChatGPT/Gemini) and try again.', 'error');
+                    return;
+                }
 
-    // Real-time Sync: Catch updates from dashboard
-    chrome.runtime.onMessage.addListener((request) => {
-        if (request.action === 'VAULT_UPDATED') {
-            if (userSession?.email) fetchQuota(userSession.email);
-            // Optionally blink the logo or update status
-            document.getElementById('hub-dot').classList.add('pulse');
-            document.getElementById('hub-status-text').textContent = 'Relay Updated';
-            setTimeout(() => {
-                document.getElementById('hub-status-text').textContent = 'Hub Active';
-            }, 3000);
-        }
-    });
+                capturedData = response.data;
+                const urlObj = new URL(targetTab.url);
+                capturedData.platform = formatPlatformName(urlObj.hostname);
+                showAnalysis(capturedData);
+            };
 
-    // ─── Professional Modal Logic ────────────────────────────
-    const modal = document.getElementById('custom-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalMessage = document.getElementById('modal-message');
-    const modalCloseBtn = document.getElementById('modal-close-btn');
-    const modalUpgradeBtn = document.getElementById('modal-upgrade-btn');
-
-    const showCustomModal = (title, message, type = 'warning') => {
-        modalTitle.textContent = title;
-        modalMessage.textContent = message;
-        modal.style.display = 'flex';
-        
-        const iconContainer = document.getElementById('modal-icon');
-        const iconSvg = iconContainer.querySelector('svg');
-        
-        if (type === 'error') {
-            iconContainer.style.background = 'rgba(244, 63, 94, 0.1)';
-            iconSvg.style.stroke = '#f43f5e';
-            iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
-        } else if (type === 'success') {
-            iconContainer.style.background = 'rgba(16, 185, 129, 0.1)';
-            iconSvg.style.stroke = '#10b981';
-            iconSvg.innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
-        } else {
-            iconContainer.style.background = 'rgba(139, 92, 246, 0.1)';
-            iconSvg.style.stroke = '#8b5cf6';
-            iconSvg.innerHTML = '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>';
-        }
-    };
-
-    async function fetchQuota(email) {
-        try {
-            const res = await fetch(`${API_BASE}/api/user/status?email=${email}`);
-            const data = await res.json();
-            if (data.success) {
-                const limit = data.plan === 'pro' ? 100 : (data.plan === 'infinite' ? 1000 : 3);
-                const used = data.usage || 0;
-                const remaining = Math.max(0, limit - used);
+            if (!activeTab || !activeTab.id || activeTab.url.includes('bridgeai-realworld-problem.vercel.app')) {
+                const allTabs = await chrome.tabs.query({ lastFocusedWindow: true });
+                const chatTab = allTabs.find(t => t.url && (t.url.includes('chatgpt.com') || t.url.includes('gemini.google') || t.url.includes('claude.ai')));
                 
-                const quotaText = document.getElementById('quota-text');
-                const quotaBar = document.getElementById('quota-bar');
-                
-                quotaText.textContent = `${remaining} / ${limit} Left`;
-                const percent = (remaining / limit) * 100;
-                quotaBar.style.width = `${percent}%`;
-                
-                if (percent < 20) {
-                    quotaBar.style.background = '#f43f5e';
-                } else if (percent < 50) {
-                    quotaBar.style.background = '#f59e0b';
+                if (chatTab) {
+                    chrome.tabs.sendMessage(chatTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, chatTab));
+                    return;
                 } else {
-                    quotaBar.style.background = 'var(--accent-gradient)';
+                    showCustomModal('Target Not Found', 'Please select a chat tab (ChatGPT/Gemini/Claude) before initiating extraction.');
+                    return;
                 }
             }
-        } catch (e) {
-            console.error('Quota Fetch Error:', e);
-        }
+
+            extractBtn.disabled = true;
+            extractBtn.textContent = 'Syncing...';
+            chrome.tabs.sendMessage(activeTab.id, { action: 'EXTRACT_CHAT' }, (response) => handleExtractionResponse(response, activeTab));
+        });
     }
 
-    modalCloseBtn.addEventListener('click', () => modal.style.display = 'none');
-    modalUpgradeBtn.addEventListener('click', () => {
+    if (bridgeBtn) {
+        bridgeBtn.addEventListener('click', async () => {
+            if (!userSession) await syncUserSession();
+            bridgeBtn.disabled = true;
+            bridgeBtn.textContent = '⚡ SAVING...';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/summarize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: capturedData.messages,
+                        platform: capturedData.platform,
+                        title: capturedData.title,
+                        email: userSession?.email || 'guest',
+                        mode: currentMode
+                    })
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    bridgeBtn.textContent = '✅ SAVED';
+                    chrome.runtime.sendMessage({ action: 'VAULT_UPDATED' });
+                    setTimeout(() => {
+                        bridgeBtn.disabled = false;
+                        bridgeBtn.innerHTML = 'Save to My Account';
+                    }, 2000);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (err) {
+                showCustomModal('Vault Sync Failed', err.message, 'error');
+                bridgeBtn.disabled = false;
+                bridgeBtn.textContent = 'Retry Save';
+            }
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            if (analysisView) analysisView.style.display = 'none';
+            if (dashboardView) dashboardView.style.display = 'block';
+        });
+    }
+
+    if (modalCloseBtn) modalCloseBtn.addEventListener('click', () => modal.style.display = 'none');
+    if (modalUpgradeBtn) modalUpgradeBtn.addEventListener('click', () => {
         chrome.tabs.create({ url: `${PRODUCTION_URL}/services` });
         modal.style.display = 'none';
     });
 
-    const showAnalysis = (data) => {
-        dashboardView.style.display = 'none';
-        analysisView.style.display = 'block';
-        dataContainer.innerHTML = '';
-
-        const platform = data.platform.toLowerCase();
-        const isAI = ['chatgpt', 'gemini', 'claude', 'perplexity'].some(s => platform.includes(s));
-        
-        const points = [
-            { label: 'Intelligence Source', value: data.platform },
-            { label: 'Origin URL', value: data.url },
-            { label: 'Context Title', value: data.title },
-            { 
-                label: isAI ? 'Conversation Depth' : 'Intelligence Signals', 
-                value: isAI ? `${data.messages.length} messages captured` : `${data.messages.length} data points extracted` 
-            }
-        ];
-
-        points.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'data-point fade-in';
-            div.innerHTML = `<label>${p.label}</label><span>${p.value}</span>`;
-            dataContainer.appendChild(div);
-        });
-
-        console.log('Capture Analysis Complete:', data.platform, data.url);
-    };
-
-    cancelBtn.addEventListener('click', () => {
-        analysisView.style.display = 'none';
-        dashboardView.style.display = 'block';
-    });
-
-    bridgeBtn.addEventListener('click', async () => {
-        if (!userSession) await syncUserSession();
-        
-        bridgeBtn.disabled = true;
-        bridgeBtn.textContent = '⚡ SAVING...';
-
-        try {
-            const res = await fetch(`${API_BASE}/api/summarize`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: capturedData.messages,
-                    platform: capturedData.platform,
-                    title: capturedData.title,
-                    email: userSession?.email || 'guest',
-                    mode: currentMode
-                })
-            });
-
-            const result = await res.json();
-            if (result.success) {
-                bridgeBtn.textContent = '✅ SAVED';
-                
-                // Notify Dashboard to refresh real-time
-                chrome.runtime.sendMessage({ action: 'VAULT_UPDATED' });
-
-                setTimeout(() => {
-                    bridgeBtn.disabled = false;
-                    bridgeBtn.innerHTML = 'Save to My Account';
-                }, 2000);
-            } else {
-                throw new Error(result.error);
-            }
-        } catch (err) {
-            showCustomModal('Vault Sync Failed', err.message, 'error');
-            bridgeBtn.disabled = false;
-            bridgeBtn.textContent = 'Retry Save';
+    chrome.runtime.onMessage.addListener((request) => {
+        if (request.action === 'VAULT_UPDATED') {
+            if (userSession?.email) fetchQuota(userSession.email);
+            const dot = document.getElementById('hub-dot');
+            const status = document.getElementById('hub-status-text');
+            if (dot) dot.classList.add('pulse');
+            if (status) status.textContent = 'Relay Updated';
+            setTimeout(() => {
+                if (status) status.textContent = 'Hub Active';
+            }, 3000);
         }
     });
 });
