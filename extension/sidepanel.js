@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (h.includes('gemini') || h.includes('google')) return 'Gemini';
         if (h.includes('claude')) return 'Claude';
         if (h.includes('perplexity')) return 'Perplexity';
-        if (h.includes('bridge-ai-brown') || h.includes('localhost')) return 'Bridge Hub';
+        if (h.includes('bridgeai-realworld-problem') || h.includes('localhost')) return 'Bridge Hub';
         
         let name = host.replace('www.', '').split('.')[0];
         return name.charAt(0).toUpperCase() + name.slice(1);

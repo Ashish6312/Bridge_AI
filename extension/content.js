@@ -190,7 +190,7 @@ async function handleAutoPaste() {
 }
 
 /**
- * Handle Dashboard Communication (Running on bridge-ai-brown.vercel.app / dashboard)
+ * Handle Dashboard Communication (Running on bridgeai-realworld-problem.vercel.app / dashboard)
  */
 function handleDashboardEvents() {
   window.addEventListener('BRIDGE_SEND_TO_STORAGE', async (event) => {
