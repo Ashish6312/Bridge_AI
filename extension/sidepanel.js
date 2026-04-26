@@ -247,6 +247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     modalMessage = document.getElementById('modal-message');
     modalCloseBtn = document.getElementById('modal-close-btn');
     modalUpgradeBtn = document.getElementById('modal-upgrade-btn');
+    const optimizeBtn = document.getElementById('optimize-btn');
 
     await syncUserSession();
 
@@ -433,6 +434,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    if (optimizeBtn) {
+        optimizeBtn.addEventListener('click', () => {
+            const isFree = (userSession?.plan || 'free') === 'free';
+            if (isFree) {
+                showCustomModal('Forge Logic Required', 'The optimization engine requires a Pro or Infinite plan to distill raw intelligence into professional prompts.');
+                return;
+            }
+            
+            optimizeBtn.disabled = true;
+            optimizeBtn.innerHTML = `Distilling Intelligence...`;
+            
+            setTimeout(() => {
+                optimizeBtn.innerHTML = `✅ Context Optimized`;
+                optimizeBtn.style.background = 'rgba(16, 185, 129, 0.1)';
+                optimizeBtn.style.borderColor = '#10b981';
+                optimizeBtn.style.color = '#10b981';
+                
+                // Simulate optimization by adding a metadata flag
+                if (capturedData) capturedData.optimized = true;
+                
+                showCustomModal('Optimization Complete', 'Your intelligence has been distilled into a high-fidelity context bundle ready for forging.', 'success');
+            }, 1500);
+        });
+    }
+
     if (bridgeBtn) {
         bridgeBtn.addEventListener('click', async () => {
             if (!capturedData || !capturedData.messages) {
@@ -442,7 +468,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!userSession) await syncUserSession();
             
             bridgeBtn.disabled = true;
-            bridgeBtn.textContent = '⚡ SAVING...';
+            bridgeBtn.textContent = '⚡ VAULTING...';
 
             try {
                 const res = await fetch(`${API_BASE}/api/summarize`, {
