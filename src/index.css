@@ -30,11 +30,11 @@ body {
   font-family: var(--font-main);
   overflow-x: hidden;
   min-height: 100vh;
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(139, 92, 246, 0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="rgba(139, 92, 246, 0.4)"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>') 12 12, auto;
+  cursor: none;
 }
 
 a, button, [role="button"], .ext-pill, .nav-link-professional {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5" fill="rgba(139, 92, 246, 0.8)"/><path d="M12 6v2M12 16v2M6 12h2M16 12h2"/></svg>') 12 12, pointer;
+  cursor: none;
 }
 
 h1, h2, h3, h4, h5, h6 {

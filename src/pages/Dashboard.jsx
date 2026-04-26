@@ -169,7 +169,24 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
   const [mailSending, setMailSending] = useState(null);
   const [showUniversalModal, setShowUniversalModal] = useState(false);
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
-  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [showProjectMenu, setShowProjectMenu] = useState(false);
+
+  const handleMoveToProject = async (projectId) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/bridge/${ctx.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: projectId })
+      });
+      if (res.ok) {
+        triggerToast(`Intelligence moved to ${projectId || 'Universal Vault'}`);
+        setShowProjectMenu(false);
+        loadData();
+      }
+    } catch (err) {
+      triggerToast('Protocol failure: Could not move intelligence.');
+    }
+  };
 
   const handleRegenerate = async () => {
     setIsRegenerating(true);
@@ -320,6 +337,53 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast }) =
             <button onClick={handleRegenerate} disabled={isRegenerating} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '4px', opacity: 0.6 }} title="Regenerate Intelligence">
                <RefreshCw size={12} className={isRegenerating ? 'pulse' : ''} />
             </button>
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowProjectMenu(!showProjectMenu)} 
+                style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '4px', opacity: 0.6 }} 
+                title="Assign to Project Folder"
+              >
+                <Folder size={14} />
+              </button>
+              {showProjectMenu && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0,
+                  background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '16px', padding: '8px', zIndex: 100, minWidth: '180px',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+                }}>
+                  <div style={{ fontSize: '0.6rem', fontWeight: '900', color: 'rgba(255,255,255,0.3)', padding: '8px', letterSpacing: '1px' }}>MOVE TO FOLDER</div>
+                  <button 
+                    onClick={() => handleMoveToProject(null)}
+                    style={{ 
+                      display: 'flex', width: '100%', background: 'transparent', border: 'none',
+                      color: 'rgba(255,255,255,0.5)', padding: '10px 12px', textAlign: 'left', cursor: 'pointer',
+                      borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                  >
+                    — Universal Vault —
+                  </button>
+                  {projects.map(p => (
+                    <button 
+                      key={p.id}
+                      onClick={() => handleMoveToProject(p.id)}
+                      style={{ 
+                        display: 'flex', width: '100%', background: 'transparent', border: 'none',
+                        color: ctx.project_id === p.id ? 'var(--primary)' : 'white', padding: '10px 12px', textAlign: 'left', cursor: 'pointer',
+                        borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <button onClick={() => onDelete(ctx.id)} style={{ background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', opacity: 0.6, fontSize: '0.85rem', fontWeight: '900' }}>DELETE</button>
@@ -690,6 +754,15 @@ const Dashboard = () => {
 
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
   const [promptModal, setPromptModal] = useState({ isOpen: false });
+  const [localProjects, setLocalProjects] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('bridge_local_projects') || '[]');
+    } catch (e) { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('bridge_local_projects', JSON.stringify(localProjects));
+  }, [localProjects]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -795,8 +868,17 @@ const Dashboard = () => {
         const localBridges = bridgesData.data || [];
         setBridges(localBridges);
         
-        const uniqueProjects = [...new Set(localBridges.map(b => b.project_id).filter(Boolean))];
-        setProjects(uniqueProjects.map(id => ({ id, name: id })));
+        const uniqueProjectIds = [...new Set(localBridges.map(b => b.project_id).filter(Boolean))];
+        const serverProjects = uniqueProjectIds.map(id => ({ id, name: id }));
+        
+        // Merge with local projects, avoiding duplicates
+        const allProjects = [...serverProjects];
+        localProjects.forEach(lp => {
+          if (!allProjects.find(ap => ap.id === lp.id || ap.name === lp.name)) {
+            allProjects.push(lp);
+          }
+        });
+        setProjects(allProjects);
         
         const rawTokens = localBridges.reduce((acc, b) => {
           const match = String(b.tokens || '').match(/\d+/);
@@ -854,8 +936,12 @@ const Dashboard = () => {
 
   const handleCreateProject = (name) => {
     if (!name) return;
-    const newProject = { id: 'proj_' + Date.now(), name, created_at: new Date().toISOString() };
-    setProjects(prev => [...prev, newProject]);
+    const newProject = { id: name, name, created_at: new Date().toISOString() };
+    setLocalProjects(prev => [...prev, newProject]);
+    setProjects(prev => {
+      if (prev.find(p => p.name === name)) return prev;
+      return [...prev, newProject];
+    });
     triggerToast(`Vault "${name}" successfully initialized.`);
   };
 
