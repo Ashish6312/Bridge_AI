@@ -82,16 +82,17 @@
         .status-pill {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             padding: 6px 12px;
-            background: rgba(16, 185, 129, 0.08);
-            border: 1px solid rgba(16, 185, 129, 0.15);
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.12);
             border-radius: 100px;
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             font-weight: 800;
             color: var(--success);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.05);
         }
 
         /* ── Main Content ── */
@@ -409,16 +410,16 @@
         </div>
 
         <!-- Professional Alert Modal -->
-        <div id="custom-modal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.9); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
-            <div class="card" style="max-width: 280px; width: 100%; padding: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.1); position: relative;">
-                <div id="modal-icon" style="background: rgba(139, 92, 246, 0.1); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        <div id="custom-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px); z-index: 10000; align-items: center; justify-content: center; padding: 24px;">
+            <div class="card" style="max-width: 300px; width: 100%; padding: 32px 24px; text-align: center; border: 1px solid rgba(255,255,255,0.1); background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                <div id="modal-icon" style="background: rgba(139, 92, 246, 0.1); width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; border: 1px solid rgba(139, 92, 246, 0.2);">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                 </div>
-                <h3 id="modal-title" style="font-size: 1.1rem; font-weight: 800; color: white; margin-bottom: 12px;">Protocol Warning</h3>
-                <p id="modal-message" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px;">Your sovereign quota has been reached. Upgrade to continue.</p>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <button id="modal-upgrade-btn" class="action-button" style="width: 100%; font-size: 0.85rem; margin: 0;">Upgrade Capacity</button>
-                    <button id="modal-close-btn" style="width: 100%; background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); padding: 10px; border-radius: 10px; cursor: pointer; font-size: 0.8rem;">Dismiss</button>
+                <h3 id="modal-title" style="font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 12px; letter-spacing: -0.02em;">Protocol Warning</h3>
+                <p id="modal-message" style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px;">Your sovereign quota has been reached. Upgrade to continue.</p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="modal-upgrade-btn" class="action-button" style="width: 100%; font-size: 0.9rem; margin: 0;">Upgrade Capacity</button>
+                    <button id="modal-close-btn" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 12px; border-radius: 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;">Dismiss</button>
                 </div>
             </div>
         </div>
