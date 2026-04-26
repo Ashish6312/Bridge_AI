@@ -1,4 +1,4 @@
-const PRODUCTION_URL = 'https://bridge-ai-brown.vercel.app';
+const PRODUCTION_URL = 'https://bridgeai-realworld-problem.vercel.app';
 const LOCAL_URL      = 'http://localhost:5173';
 const LOCAL_API      = 'http://localhost:5001';
 let API_BASE = PRODUCTION_URL; 
