@@ -1014,13 +1014,20 @@ const Dashboard = () => {
                       {JSON.parse(localStorage.getItem('bridge_user') || '{}').name?.charAt(0) || 'A'}
                     </div>
                   </div>
+                  {String(stats.plan).toLowerCase() === 'infinite' && (
+                    <div style={{ position: 'absolute', top: '-6px', right: '-6px', width: '22px', height: '22px', background: '#f59e0b', borderRadius: '50%', border: '3px solid #020617', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 15px rgba(245, 158, 11, 0.4)' }}>
+                      <Zap size={12} color="white" fill="white" />
+                    </div>
+                  )}
                   <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '16px', height: '16px', borderRadius: '50%', background: '#10b981', border: '3px solid #020617', boxShadow: '0 0 10px #10b981' }} />
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
                   <div style={{ fontSize: '1rem', color: 'white', fontWeight: '800', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {JSON.parse(localStorage.getItem('bridge_user') || '{}').name || 'Anonymous Analyst'}
                   </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600' }}>{JSON.parse(localStorage.getItem('bridge_user') || '{}').email}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>{JSON.parse(localStorage.getItem('bridge_user') || '{}').email}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1063,12 +1070,12 @@ const Dashboard = () => {
                     <Plus size={14} />
                   </button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', paddingRight: '4px' }}>
                   {projects.map(p => (
                     <NavItem 
                       key={p.id}
                       active={activeProject === p.id} 
-                      icon={<div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeProject === p.id ? 'var(--primary)' : 'rgba(255,255,255,0.2)' }} />} 
+                      icon={<div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeProject === p.id ? 'var(--primary)' : 'rgba(255,255,255,0.2)', boxShadow: activeProject === p.id ? '0 0 8px var(--primary)' : 'none' }} />} 
                       label={p.name} 
                       count={bridges.filter(b => b.project_id === p.id).length}
                       onClick={() => { setActiveTab('saved'); setActiveProject(p.id); }} 
@@ -1086,22 +1093,33 @@ const Dashboard = () => {
                   <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '900', letterSpacing: '2px' }}>CAPACITY</div>
                   <span style={{ fontSize: '0.65rem', fontWeight: '900', color: 'var(--primary)' }}>{(stats.plan || 'FREE').toUpperCase()}</span>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: '800', color: 'white', marginBottom: '8px' }}>
-                    <span>Extraction Usage</span>
-                    <span>{Math.round((stats.usageCount / (stats.plan === 'pro' ? 100 : 3)) * 100)}%</span>
-                  </div>
-                  <div style={{ height: '6px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
-                    <motion.div 
-                      initial={{ width: 0 }} 
-                      animate={{ width: `${Math.min(100, (stats.usageCount / (stats.plan === 'pro' ? 100 : 3)) * 100)}%` }}
-                      transition={{ duration: 1 }}
-                      style={{ height: '100%', background: 'var(--gradient-1)', boxShadow: '0 0 15px var(--primary)' }} 
-                    />
-                  </div>
-                  <Link to="/services" style={{ display: 'block', textAlign: 'center', marginTop: '16px', fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', textDecoration: 'none', background: 'rgba(139, 92, 246, 0.1)', padding: '8px', borderRadius: '10px' }}>
-                    UPGRADE HUB
-                  </Link>
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
+                  {String(stats.plan).toLowerCase() === 'infinite' ? (
+                    <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: '900', color: '#f59e0b', letterSpacing: '1px', marginBottom: '4px' }}>SOVEREIGN STATUS</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '800', color: 'white' }}>UNLIMITED RELAY</div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: '800', color: 'white', marginBottom: '8px' }}>
+                        <span>Extraction Usage</span>
+                        <span>{Math.round((stats.usageCount / (String(stats.plan).toLowerCase() === 'pro' ? 100 : 3)) * 100)}%</span>
+                      </div>
+                      <div style={{ height: '6px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
+                        <motion.div 
+                          initial={{ width: 0 }} 
+                          animate={{ width: `${Math.min(100, (stats.usageCount / (String(stats.plan).toLowerCase() === 'pro' ? 100 : 3)) * 100)}%` }}
+                          transition={{ duration: 1 }}
+                          style={{ height: '100%', background: 'var(--gradient-1)', boxShadow: '0 0 15px var(--primary)' }} 
+                        />
+                      </div>
+                    </>
+                  )}
+                  {String(stats.plan).toLowerCase() !== 'infinite' && (
+                    <Link to="/services" style={{ display: 'block', textAlign: 'center', marginTop: '16px', fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', textDecoration: 'none', background: 'rgba(139, 92, 246, 0.1)', padding: '8px', borderRadius: '10px' }}>
+                      UPGRADE HUB
+                    </Link>
+                  )}
                 </div>
               </div>
 
@@ -1165,10 +1183,17 @@ const Dashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '40px', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, maxWidth: '650px' }}>
                       <h1 className="premium-gradient-text" style={{ fontSize: '3.8rem', fontWeight: '900', letterSpacing: '-0.04em', marginBottom: '16px', lineHeight: '1.05' }}>
-                        {activeProject ? projects.find(p => p.id === activeProject)?.name : `Hello, ${JSON.parse(localStorage.getItem('bridge_user') || '{}').name || 'Analyst'}`}
+                        {(() => {
+                          const hour = new Date().getHours();
+                          const user = JSON.parse(localStorage.getItem('bridge_user') || '{}');
+                          const name = user.name?.split(' ')[0] || 'Analyst';
+                          if (hour < 12) return `Good Morning, ${name}`;
+                          if (hour < 18) return `Good Afternoon, ${name}`;
+                          return `Good Evening, ${name}`;
+                        })()}
                       </h1>
                       <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', fontWeight: '500', lineHeight: '1.5' }}>
-                        Your Sovereign Hub is currently presiding over <strong>{filteredBridges.length}</strong> active intelligence bridges.
+                        Your Sovereign Hub is currently presiding over <strong>{filteredBridges.length}</strong> active intelligence bridges in the {activeProject ? `"${projects.find(p => p.id === activeProject)?.name}"` : 'Universal'} sector.
                       </p>
                     </div>
                     
@@ -1200,9 +1225,28 @@ const Dashboard = () => {
               <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
                 {[
                   { label: 'Total Bridges', val: stats.totalBridges || 0, icon: <Layers size={22} />, color: '#8b5cf6' },
-                  { label: 'Intelligence Ratio', val: '99.4%', icon: <Zap size={22} />, color: '#f59e0b' },
+                  { 
+                    label: 'Distillation Ratio', 
+                    val: (() => {
+                      const totalSource = bridges.reduce((acc, b) => acc + (b.source_text?.length || 0), 0);
+                      const totalSum = bridges.reduce((acc, b) => acc + (b.summary?.length || 0), 0);
+                      if (!totalSource) return '99.4%';
+                      return ((totalSum / totalSource) * 100).toFixed(1) + '%';
+                    })(), 
+                    icon: <Zap size={22} />, 
+                    color: '#f59e0b' 
+                  },
                   { label: 'Context Tokens', val: Math.round(stats.totalTokens || 0).toLocaleString(), icon: <Database size={22} />, color: '#06b6d4' },
-                  { label: 'Active Vaults', val: projects.length, icon: <Folder size={22} />, color: '#10b981' }
+                  { 
+                    label: 'Intelligence Density', 
+                    val: (() => {
+                      if (bridges.length === 0) return '0.00';
+                      const sumLen = bridges.reduce((acc, b) => acc + (b.summary?.length || 0), 0);
+                      return (sumLen / (bridges.length * 1000)).toFixed(2);
+                    })(), 
+                    icon: <Activity size={22} />, 
+                    color: '#10b981' 
+                  }
                 ].map((s, i) => (
                   <motion.div 
                     key={i} 
@@ -1217,6 +1261,16 @@ const Dashboard = () => {
                       cursor: 'default'
                     }}
                   >
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '40px', opacity: 0.1 }}>
+                      <svg width="100%" height="100%" viewBox="0 0 100 40" preserveAspectRatio="none">
+                        <motion.path
+                          d="M0 20 Q 25 10, 50 20 T 100 20 V 40 H 0 Z"
+                          fill={s.color}
+                          animate={{ d: ["M0 20 Q 25 10, 50 20 T 100 20 V 40 H 0 Z", "M0 20 Q 25 30, 50 20 T 100 20 V 40 H 0 Z", "M0 20 Q 25 10, 50 20 T 100 20 V 40 H 0 Z"] }}
+                          transition={{ repeat: Infinity, duration: 4, delay: i * 0.5 }}
+                        />
+                      </svg>
+                    </div>
                     <div style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.05, transform: 'rotate(-15deg)' }}>
                       {React.cloneElement(s.icon, { size: 80, color: s.color })}
                     </div>
@@ -1280,20 +1334,25 @@ const Dashboard = () => {
                     <Target size={40} style={{ color: 'var(--primary)', opacity: 0.8 }} />
                   </div>
                   <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '12px', color: 'white', letterSpacing: '-0.02em' }}>
-                    {loading ? 'Consulting the Hub...' : 'Sovereign Vault is Empty'}
+                    {loading ? 'Consulting the Hub...' : activeProject ? `Vault "${projects.find(p => p.id === activeProject)?.name}" is Empty` : 'Sovereign Vault is Empty'}
                   </h3>
                   <p style={{ marginBottom: '32px', maxWidth: '440px', margin: '0 auto 32px auto', color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: '1.6' }}>
                     {searchTerm 
                       ? "No intelligence matches your current search criteria. Refine your query to locate specific context bridges."
+                      : activeProject 
+                      ? "This specific vault folder has no intelligence. Go to 'All Intelligence' to assign items here."
                       : "Welcome, Bridge Analyst. Your private vault is currently empty. Extract intelligence from Gemini, Claude, or ChatGPT to begin building your professional knowledge base."
                     }
                   </p>
-                  {!searchTerm && (
-                    <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                    {!searchTerm && !activeProject && (
                        <button onClick={() => setActiveTab('manual')} className="btn-primary" style={{ padding: '14px 28px' }}><Plus size={18} /> New Bridge</button>
-                       <button onClick={refreshVault} className="btn-secondary" style={{ padding: '14px 28px' }}><RefreshCw size={18} /> Refresh Vault</button>
-                    </div>
-                  )}
+                    )}
+                    {activeProject && (
+                       <button onClick={() => setActiveProject(null)} className="btn-primary" style={{ padding: '14px 28px' }}><MessageSquare size={18} /> Show All Intelligence</button>
+                    )}
+                    <button onClick={refreshVault} className="btn-secondary" style={{ padding: '14px 28px' }}><RefreshCw size={18} /> Refresh Vault</button>
+                  </div>
                 </div>
               )}
             </motion.div>
