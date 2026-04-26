@@ -19,7 +19,7 @@ async function syncUserSession() {
     // 2. Fallback to scraping active tabs (Legacy / Initial Sync)
     const tabs = await chrome.tabs.query({});
     const targetTabs = tabs.filter(t => 
-        t.url?.includes('bridge-ai-brown.vercel.app') || 
+        t.url?.includes('bridgeai-realworld-problem.vercel.app') || 
         t.url?.includes('bridgeai.com') ||
         t.url?.includes('localhost:5173')
     );
@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Improved Tab Targeting: Use lastFocusedWindow to avoid capturing the sidepanel/dashboard context incorrectly
         const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
         
-        if (!activeTab || !activeTab.id || activeTab.url.includes('bridge-ai-brown.vercel.app')) {
+        if (!activeTab || !activeTab.id || activeTab.url.includes('bridgeai-realworld-problem.vercel.app')) {
             // If active tab is the dashboard, try to find the actual chat tab
             const allTabs = await chrome.tabs.query({ lastFocusedWindow: true });
             const chatTab = allTabs.find(t => t.url && (t.url.includes('chatgpt.com') || t.url.includes('gemini.google') || t.url.includes('claude.ai')));
