@@ -693,9 +693,15 @@ const Dashboard = () => {
     window.open(url, '_blank');
   };
 
+  const isFetchingRef = React.useRef(false);
+
   const loadData = async (isSilent = false) => {
+    if (isFetchingRef.current) return;
     try {
-      if (!isSilent) setLoading(true);
+      isFetchingRef.current = true;
+      // Only show full loading UI if we have no bridges yet to prevent flickering on scroll/refresh
+      if (!isSilent && bridges.length === 0) setLoading(true);
+      
       const userStr = localStorage.getItem('bridge_user');
       const user = userStr ? JSON.parse(userStr) : null;
       const email = user?.email || '';
@@ -775,7 +781,9 @@ const Dashboard = () => {
     } catch (err) {
       console.error('Core Hub Fetch Failed:', err);
       setHubStatus('offline');
+    } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
