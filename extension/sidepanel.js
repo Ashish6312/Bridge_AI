@@ -382,7 +382,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 extractBtn.innerHTML = `Capture Chat`;
 
                 if (chrome.runtime.lastError || !response?.data) {
-                    showCustomModal('Connection Error', 'Failed to communicate with the chat tab. Please refresh the page (ChatGPT/Gemini) and try again.', 'error');
+                    console.error('BridgeAI Sync Error:', chrome.runtime.lastError);
+                    showCustomModal(
+                        'Link Interrupted', 
+                        'Failed to communicate with the Chat Hub. If you just updated the extension, please REFRESH your ChatGPT/Gemini page to re-establish the intelligence relay.', 
+                        'error'
+                    );
                     return;
                 }
 
