@@ -700,19 +700,29 @@ const Dashboard = () => {
       const user = userStr ? JSON.parse(userStr) : null;
       const email = user?.email || '';
 
-      const res = await fetch(`${API_BASE}/api/bridges?email=${email}`, {
-        headers: { 'Cache-Control': 'no-cache' }
-      });
-      const data = await res.json();
+      if (!email) {
+        setLoading(false);
+        return;
+      }
+
+      // Parallel Intelligence Fetching
+      const [bridgesRes, statusRes] = await Promise.all([
+        fetch(`${API_BASE}/api/bridges?email=${email}`, { headers: { 'Cache-Control': 'no-cache' } }),
+        fetch(`${API_BASE}/api/user/status?email=${email}`).catch(() => null)
+      ]);
+
+      const bridgesData = await bridgesRes.json();
       
-      if (data.success) {
+      if (bridgesData.success) {
         setHubStatus('online');
-        const localBridges = data.data;
+        const localBridges = bridgesData.data;
         setBridges(localBridges);
         
+        // Extract project segments
         const uniqueProjects = [...new Set(localBridges.map(b => b.project_id).filter(Boolean))];
         setProjects(uniqueProjects.map(id => ({ id, name: id })));
         
+        // Distill telemetry
         const rawTokens = localBridges.reduce((acc, b) => {
           const match = b.tokens?.match(/\d+/);
           return acc + (match ? parseInt(match[0]) : 0);
@@ -726,20 +736,21 @@ const Dashboard = () => {
       } else {
         setHubStatus('offline');
       }
-      const statusRes = await fetch(`${API_BASE}/api/user/status?email=${email}`);
-      const statusData = await statusRes.json();
-      if (statusData.success) {
-        setStats(prev => ({ 
-          ...prev, 
-          plan: statusData.plan, 
-          usageCount: statusData.usage 
-        }));
+
+      if (statusRes) {
+        const statusData = await statusRes.json();
+        if (statusData.success) {
+          setStats(prev => ({ 
+            ...prev, 
+            plan: statusData.plan, 
+            usageCount: statusData.usage 
+          }));
+        }
       }
 
     } catch (err) {
       console.error('Core Hub Fetch Failed:', err);
       setHubStatus('offline');
-      setBridges([]);
     } finally {
       setLoading(false);
     }
