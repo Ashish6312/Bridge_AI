@@ -1,0 +1,26 @@
+[
+  {
+    "id": "context-loss",
+    "name": "Solving Context Loss",
+    "slug": "solving-context-loss",
+    "description": "Stop losing your flow when switching between LLMs. BridgeAI ensures your context follows you everywhere.",
+    "keywords": ["context loss AI", "fixing LLM memory", "AI flow preservation"],
+    "solution": "By extracting the logical core of your conversation and forging it into a platform-agnostic bundle, BridgeAI eliminates the 'cold start' problem when switching AI models."
+  },
+  {
+    "id": "fragmented-workflows",
+    "name": "Fixing Fragmented Workflows",
+    "slug": "fragmented-workflows",
+    "description": "Your intelligence shouldn't be trapped in silos. Bridge the gap between ChatGPT, Gemini, and Claude.",
+    "keywords": ["fragmented AI workflow", "unified AI interface", "cross-platform AI relay"],
+    "solution": "The Sovereign Vault acts as a centralized command center, unifying your intelligence streams into a single, high-fidelity source of truth."
+  },
+  {
+    "id": "logic-decay",
+    "name": "Preventing Logic Decay",
+    "slug": "preventing-logic-decay",
+    "description": "Ensure your complex instructions don't lose their edge. Maintain precision across multi-stage AI reasoning.",
+    "keywords": ["AI logic decay", "instruction precision", "complex AI reasoning"],
+    "solution": "Intelligence Forge protocol re-distills raw logs into highly optimized prompt bundles, preserving the precision of your logical constraints."
+  }
+]

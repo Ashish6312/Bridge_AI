@@ -1,0 +1,38 @@
+[
+  {
+    "id": "software-development",
+    "name": "Software Development",
+    "slug": "software-development",
+    "description": "Bridge context between coding assistants and documentation LLMs. Preserve complex implementation details across sessions.",
+    "keywords": ["AI for developers", "coding context relay", "LLM development workflow"],
+    "benefits": [
+      "Zero logic decay in complex refactoring tasks",
+      "Seamless relay between Claude and GitHub Copilot",
+      "Automated technical documentation from chat logs"
+    ]
+  },
+  {
+    "id": "legal-research",
+    "name": "Legal & Compliance",
+    "slug": "legal-compliance",
+    "description": "Maintain rigorous logical consistency across extensive legal analysis and multi-platform research sessions.",
+    "keywords": ["AI for legal", "legal research context", "compliance AI workflows"],
+    "benefits": [
+      "Trace context provenance across multiple AI models",
+      "Secure archival of intelligence bundles",
+      "Accelerated case law analysis with cross-platform relay"
+    ]
+  },
+  {
+    "id": "academic-research",
+    "name": "Academic Research",
+    "slug": "academic-research",
+    "description": "Synthesize findings from various AI models without losing the thread of your thesis. Perfect for high-density information processing.",
+    "keywords": ["AI for research", "academic context management", "research intelligence vault"],
+    "benefits": [
+      "Consolidate research notes into high-fidelity bundles",
+      "Automated summary generation for complex papers",
+      "Efficient context relay for iterative hypothesis testing"
+    ]
+  }
+]
