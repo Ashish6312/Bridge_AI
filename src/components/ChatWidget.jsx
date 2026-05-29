@@ -44,7 +44,7 @@ export default function ChatWidget() {
         responseText = "For an in-depth look at our architecture and features, check out our blog or detailed features section!";
         responseLink = { url: "#features", label: "View Features" };
       } else if (lowerText.includes('what is') || lowerText.includes('about') || lowerText.includes('what do you do')) {
-        responseText = "BridgeAI is a cross-LLM context bridge. We allow you to extract intelligence from Gemini, Claude, and ChatGPT and resume instantly without losing context.";
+        responseText = "Bridge AI is a universal chat and prompt sync engine. We allow you to instantly bridge, summarize, and sync conversation contexts across ChatGPT, Claude, Gemini, and DeepSeek without context loss.";
       } else if (lowerText.includes('price') || lowerText.includes('cost') || lowerText.includes('pricing')) {
         responseText = "BridgeAI is currently in a free beta phase for early adopters! Keep an eye on our pricing page for future updates.";
         responseLink = { url: "#pricing", label: "View Pricing" };

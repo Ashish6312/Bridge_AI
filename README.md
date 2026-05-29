@@ -1,4 +1,4 @@
-# BridgeAI — Cross-LLM Context Bridge 📡
+# Bridge AI — Universal Chat & Prompt Sync 📡
 
 **Sovereign intelligence orchestration for multi-LLM workflows. Extract, clean, and relay context across ChatGPT, Claude, Gemini, DeepSeek, and more with zero logic decay.**
 

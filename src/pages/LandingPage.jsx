@@ -99,7 +99,7 @@ const LandingPage = () => {
 
   /* ── Page setup ── */
   useEffect(() => {
-    document.title = 'BridgeAI — Cross-LLM Context Bridge';
+    document.title = 'Bridge AI — Universal Chat & Prompt Sync';
   }, []);
 
   /* ── active section on scroll ── */

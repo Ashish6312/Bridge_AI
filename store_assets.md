@@ -1,19 +1,19 @@
 # Chrome Web Store Listing & Submission Metadata
 
-This file contains the complete, production-ready, and reviewer-safe listings, disclosures, and justifications for **BridgeAI - Cross-LLM Context Bridge**. Use these texts to fill out the Google Chrome Web Store developer dashboard submission forms.
+This file contains the complete, production-ready, and reviewer-safe listings, disclosures, and justifications for **Bridge AI - Universal Chat & Prompt Sync**. Use these texts to fill out the Google Chrome Web Store developer dashboard submission forms.
 
 ---
 
 ## 1. Short Description (Max 132 Characters)
-> Transfer conversation context between ChatGPT, Claude, and Gemini. Clean, local-first context bridge with zero background tracking.
+> Instantly bridge, summarize, and sync conversation contexts across ChatGPT, Claude, Gemini, and DeepSeek without context loss.
 
-*(Length check: 128 characters - meets the maximum 132-character requirement).*
+*(Length check: 126 characters - meets the maximum 132-character requirement).*
 
 ---
 
 ## 2. Full Description
 
-### BridgeAI: Cross-LLM Context Bridge
+### Bridge AI: Universal Chat & Prompt Sync
 
 BridgeAI is a developer utility designed to simplify conversation context transfers between popular artificial intelligence portals. If you frequently toggle between Claude, ChatGPT, Gemini, Perplexity, DeepSeek, and Mistral, BridgeAI helps you maintain your active workspace state by extracting chat contexts on-demand and loading them into target prompt boxes without losing code logs or discussion history.
 

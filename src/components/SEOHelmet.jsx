@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 const SEOHelmet = ({ title, description, keywords }) => {
   useEffect(() => {
     // Update title
-    document.title = title ? `${title} | BridgeAI` : 'BridgeAI — Cross-LLM Context Bridge';
+    document.title = title ? `${title} | Bridge AI` : 'Bridge AI — Universal Chat & Prompt Sync';
 
     // Update meta description
     let metaDescription = document.querySelector('meta[name="description"]');
@@ -12,7 +12,7 @@ const SEOHelmet = ({ title, description, keywords }) => {
       metaDescription.name = 'description';
       document.head.appendChild(metaDescription);
     }
-    metaDescription.content = description || 'Bridge your intelligence between ChatGPT, Gemini, and Claude with zero logic decay.';
+    metaDescription.content = description || 'Instantly bridge, summarize, and sync conversation contexts across ChatGPT, Claude, Gemini, and DeepSeek without context loss.';
 
     // Update meta keywords
     let metaKeywords = document.querySelector('meta[name="keywords"]');
