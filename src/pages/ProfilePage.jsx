@@ -172,6 +172,7 @@ const ProfilePage = () => {
   const [viewAllVault, setViewAllVault] = useState(false);
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [cancelling, setCancelling] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const showToast = (message, type = 'success') => {
@@ -415,98 +416,140 @@ Thank you for using Bridge AI!`;
   };
 
   /* ── API calls (parallel, silent on refresh) ───────────── */
-  useEffect(() => {
-    const load = async () => {
-      const s = localStorage.getItem('bridge_user');
-      if (!s) return;
-      const u = JSON.parse(s);
-      try {
-        const [statusRes, invoiceRes, settingsRes, bridgesRes, meRes] = await Promise.all([
-          fetch(`${API_BASE}/api/user/status?email=${u.email}`).catch(() => null),
-          fetch(`${API_BASE}/api/user/invoices?email=${u.email}`).catch(() => null),
-          fetch(`${API_BASE}/api/user/settings?email=${u.email}`).catch(() => null),
-          fetch(`${API_BASE}/api/bridges?email=${u.email}`, { headers: { 'Cache-Control': 'no-cache' } }).catch(() => null),
-          fetch(`${API_BASE}/api/auth/me?email=${u.email}`).catch(() => null),
-        ]);
-        if (meRes?.ok) {
-          const dbUser = await meRes.json();
-          setUser(dbUser);
-          localStorage.setItem('bridge_user', JSON.stringify(dbUser));
-        }
-        if (statusRes?.ok) {
-          const d = await statusRes.json();
-          if (d.success) {
-            setStats({ usage: d.usage, total: d.total });
-            if (u.plan !== d.plan) {
-              const upd = { ...u, plan: d.plan };
-              localStorage.setItem('bridge_user', JSON.stringify(upd));
-              setUser(upd);
-            }
+  const loadProfileData = async () => {
+    const s = localStorage.getItem('bridge_user');
+    if (!s) return;
+    const u = JSON.parse(s);
+    try {
+      const [statusRes, invoiceRes, settingsRes, bridgesRes, meRes] = await Promise.all([
+        fetch(`${API_BASE}/api/user/status?email=${u.email}`).catch(() => null),
+        fetch(`${API_BASE}/api/user/invoices?email=${u.email}`).catch(() => null),
+        fetch(`${API_BASE}/api/user/settings?email=${u.email}`).catch(() => null),
+        fetch(`${API_BASE}/api/bridges?email=${u.email}`, { headers: { 'Cache-Control': 'no-cache' } }).catch(() => null),
+        fetch(`${API_BASE}/api/auth/me?email=${u.email}`).catch(() => null),
+      ]);
+      if (meRes?.ok) {
+        const dbUser = await meRes.json();
+        setUser(dbUser);
+        localStorage.setItem('bridge_user', JSON.stringify(dbUser));
+      }
+      if (statusRes?.ok) {
+        const d = await statusRes.json();
+        if (d.success) {
+          setStats({ usage: d.usage, total: d.total });
+          if (u.plan !== d.plan) {
+            const upd = { ...u, plan: d.plan };
+            localStorage.setItem('bridge_user', JSON.stringify(upd));
+            setUser(upd);
           }
         }
-        if (invoiceRes?.ok) {
-          const d = await invoiceRes.json();
-          if (d.success) setInvoices(d.invoices || []);
-        }
-        if (settingsRes?.ok) {
-          const d = await settingsRes.json();
-          if (d.success && d.settings) setSettingsForm(d.settings);
-        }
-        if (bridgesRes?.ok) {
-          const d = await bridgesRes.json();
-          const bridges = Array.isArray(d) ? d : (d.data || d.bridges || []);
-          setBridgesList(bridges);
-          if (bridges.length > 0) {
-            // Build recent transfers
-            const transfers = bridges.slice(0, 5).map(b => {
-              const date = b.created_at || b.createdAt;
-              const now = new Date();
-              const created = new Date(date);
-              const diffMs = now - created;
-              const diffDays = Math.floor(diffMs / 86400000);
-              let dateLabel;
-              if (diffDays === 0) dateLabel = `Today, ${created.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
-              else if (diffDays === 1) dateLabel = `Yesterday, ${created.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
-              else dateLabel = `${diffDays} days ago`;
-              return {
-                source: b.source_platform || b.platform || b.source || 'AI Platform',
-                dest: b.destination_platform || b.target || 'Target',
-                date: dateLabel,
-                status: 'success'
-              };
-            });
-            setRealTransfers(transfers);
+      }
+      if (invoiceRes?.ok) {
+        const d = await invoiceRes.json();
+        if (d.success) setInvoices(d.invoices || []);
+      }
+      if (settingsRes?.ok) {
+        const d = await settingsRes.json();
+        if (d.success && d.settings) setSettingsForm(d.settings);
+      }
+      if (bridgesRes?.ok) {
+        const d = await bridgesRes.json();
+        const bridges = Array.isArray(d) ? d : (d.data || d.bridges || []);
+        setBridgesList(bridges);
+        if (bridges.length > 0) {
+          // Build recent transfers
+          const transfers = bridges.slice(0, 5).map(b => {
+            const date = b.created_at || b.createdAt;
+            const now = new Date();
+            const created = new Date(date);
+            const diffMs = now - created;
+            const diffDays = Math.floor(diffMs / 86400000);
+            let dateLabel;
+            if (diffDays === 0) dateLabel = `Today, ${created.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+            else if (diffDays === 1) dateLabel = `Yesterday, ${created.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+            else dateLabel = `${diffDays} days ago`;
+            return {
+              source: b.source_platform || b.platform || b.source || 'AI Platform',
+              dest: b.destination_platform || b.target || 'Target',
+              date: dateLabel,
+              status: 'success'
+            };
+          });
+          setRealTransfers(transfers);
 
-            // Build activity from bridges
-            const activity = bridges.slice(0, 6).map(b => {
-              const date = b.created_at || b.createdAt;
-              const now = new Date();
-              const created = new Date(date);
-              const diffMs = now - created;
-              const diffDays = Math.floor(diffMs / 86400000);
-              const diffHrs = Math.floor(diffMs / 3600000);
-              let day, time;
-              if (diffDays === 0) { day = 'Today'; time = `${diffHrs || 1} hour${diffHrs !== 1 ? 's' : ''} ago`; }
-              else if (diffDays === 1) { day = 'Yesterday'; time = '~18 hours ago'; }
-              else { day = `${diffDays} days ago`; time = `${diffDays} days ago`; }
-              const src = b.source_platform || b.platform || b.source || 'Platform';
-              const dst = b.destination_platform || b.target || '';
-              return { day, text: dst ? `Context transferred ${src} → ${dst}` : `Context extracted from ${src}`, time, ok: true };
-            });
-            setRealActivity(activity);
-          } else {
-            setRealTransfers([]);
-            setRealActivity([]);
-          }
+          // Build activity from bridges
+          const activity = bridges.slice(0, 6).map(b => {
+            const date = b.created_at || b.createdAt;
+            const now = new Date();
+            const created = new Date(date);
+            const diffMs = now - created;
+            const diffDays = Math.floor(diffMs / 86400000);
+            const diffHrs = Math.floor(diffMs / 3600000);
+            let day, time;
+            if (diffDays === 0) { day = 'Today'; time = `${diffHrs || 1} hour${diffHrs !== 1 ? 's' : ''} ago`; }
+            else if (diffDays === 1) { day = 'Yesterday'; time = '~18 hours ago'; }
+            else { day = `${diffDays} days ago`; time = `${diffDays} days ago`; }
+            const src = b.source_platform || b.platform || b.source || 'Platform';
+            const dst = b.destination_platform || b.target || '';
+            return { day, text: dst ? `Context transferred ${src} → ${dst}` : `Context extracted from ${src}`, time, ok: true };
+          });
+          setRealActivity(activity);
+        } else {
+          setRealTransfers([]);
+          setRealActivity([]);
         }
-      } catch (e) { console.error(e); }
-    };
-    load();
-    const interval = setInterval(load, 30000);
-    const onVisible = () => { if (document.visibilityState === 'visible') load(); };
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  useEffect(() => {
+    loadProfileData();
+    const interval = setInterval(loadProfileData, 30000);
+    const onVisible = () => { if (document.visibilityState === 'visible') loadProfileData(); };
     window.addEventListener('visibilitychange', onVisible);
     return () => { clearInterval(interval); window.removeEventListener('visibilitychange', onVisible); };
   }, []);
+
+  const handleCancelSubscription = async () => {
+    if (!window.confirm("Are you sure you want to cancel your Pro trial/subscription? Your limits will immediately revert to the Free plan.")) {
+      return;
+    }
+    setCancelling(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/user/purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: user.email, 
+          plan: 'free',
+          amount: 0
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        const updatedUser = { ...user, plan: 'free' };
+        localStorage.setItem('bridge_user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        
+        // Immediate Extension and Auth sync
+        try {
+          const authEvent = new CustomEvent('BRIDGE_AUTH_UPDATE', { detail: { user: updatedUser } });
+          window.dispatchEvent(authEvent);
+          const reloadEvent = new CustomEvent('RELOAD_EXTENSION');
+          window.dispatchEvent(reloadEvent);
+        } catch (e) {}
+        
+        showToast('Sovereign Plan Reverted: Trial subscription cancelled successfully.', 'success');
+        loadProfileData();
+      } else {
+        showToast(`Cancellation error: ${data.error}`, 'error');
+      }
+    } catch (err) {
+      showToast("Cancellation connection error. Please try again.", "error");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (!user) return (
     <div style={{ padding: '100px 24px', textAlign: 'center', color: '#f2f2f2' }}>
@@ -1196,6 +1239,34 @@ Thank you for using Bridge AI!`;
                     <div style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.35)', marginBottom:20 }}>
                       {stats.usage || 0} / {planLimit === Infinity ? '∞' : planLimit} Transfers Used
                     </div>
+                    {user.plan === 'pro' && (
+                      <div style={{ 
+                        marginTop: '16px', padding: '12px 14px', borderRadius: '12px', 
+                        background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)',
+                        fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', textAlign: 'left'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f59e0b', fontWeight: '700', marginBottom: '4px' }}>
+                          <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b' }}></span>
+                          7-Day Free Trial (Active)
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '10px' }}>
+                          Renews at $5.00/month. Cancel anytime.
+                        </div>
+                        <button 
+                          onClick={handleCancelSubscription}
+                          disabled={cancelling}
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.08)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.15)',
+                            padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer',
+                            width: '100%', transition: 'all 0.2s', fontFamily: 'inherit'
+                          }}
+                          onMouseEnter={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.15)'; }}
+                          onMouseLeave={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.08)'; }}
+                        >
+                          {cancelling ? 'Cancelling...' : 'Cancel Subscription'}
+                        </button>
+                      </div>
+                    )}
                     {user.plan !== 'pro' && user.plan !== 'infinite' && (
                       <div>
                         <div style={{ fontSize:'0.75rem', color:'rgba(255,255,255,0.3)', marginBottom:12 }}>Upgrade benefits:</div>
