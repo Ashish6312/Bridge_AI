@@ -147,6 +147,7 @@ const ProfilePage = () => {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [settingsForm, setSettingsForm] = useState({ notifications: true, autoBridge: false, secureMode: true });
   const fileInputRef = useRef(null);
+  const [viewAllVault, setViewAllVault] = useState(false);
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -201,20 +202,47 @@ const ProfilePage = () => {
   };
 
   const handleDownloadTransferHistory = () => {
-    const headers = ['Source', 'Destination', 'Date', 'Status'].join(',');
-    const rows = displayTransfers.map(t => `${t.source},${t.dest},"${t.date}",${t.status}`).join('\n');
+    if (bridgesList.length === 0) {
+      showToast('No transfers to download.', 'warning');
+      return;
+    }
+    const headers = ['ID', 'Source Platform', 'Destination Platform', 'Mode', 'Tokens', 'Timestamp', 'Title'].join(',');
+    const rows = bridgesList.map(b => {
+      const date = b.created_at || b.createdAt;
+      const timeStr = new Date(date).toISOString();
+      const cleanTitle = (b.title || '').replace(/"/g, '""');
+      return `${b.id},"${b.source || b.source_platform || ''}","${b.target || b.destination_platform || ''}","${b.mode || ''}",${b.tokens || 0},"${timeStr}","${cleanTitle}"`;
+    }).join('\n');
     const csv = `${headers}\n${rows}`;
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `bridgeai-transfer-history-${Date.now()}.csv`;
     a.click();
-    showToast('Transfer history exported to CSV.', 'success');
+    showToast('Full transfer history exported to CSV.', 'success');
   };
 
   const handleExportContextVault = () => {
-    const dataToExport = bridgesList;
+    if (bridgesList.length === 0) {
+      showToast('No vault data to export.', 'warning');
+      return;
+    }
+    const dataToExport = {
+      exportType: "BridgeAI Context Vault Export",
+      exportedAt: new Date().toISOString(),
+      totalItems: bridgesList.length,
+      owner: user.email,
+      vault: bridgesList.map(b => ({
+        id: b.id,
+        title: b.title,
+        source: b.source || b.source_platform,
+        target: b.target || b.destination_platform,
+        mode: b.mode,
+        tokens: b.tokens,
+        timestamp: b.created_at || b.createdAt
+      }))
+    };
     const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -980,7 +1008,7 @@ Thank you for using Bridge AI!`;
                 </div>
               ) : (
                 <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                  {displayBridges.map((v, i) => (
+                  {displayBridges.slice(0, viewAllVault ? displayBridges.length : 3).map((v, i) => (
                     <motion.div key={v.id} className="pp-card pp-vault-item" initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:i*0.06 }}
                       style={{ padding:'18px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, cursor:'pointer', transition:'all 0.2s' }}
                       onMouseEnter={e=>{ e.currentTarget.style.borderColor='rgba(255,107,44,0.25)'; e.currentTarget.style.transform='translateY(-2px)'; }}
@@ -1008,6 +1036,15 @@ Thank you for using Bridge AI!`;
                       </div>
                     </motion.div>
                   ))}
+                  {displayBridges.length > 3 && (
+                    <button
+                      onClick={() => setViewAllVault(!viewAllVault)}
+                      className="pp-ghost-btn"
+                      style={{ marginTop: 8, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                    >
+                      {viewAllVault ? 'Show Less' : `View All (${displayBridges.length})`}
+                    </button>
+                  )}
                 </div>
               )}
               <div style={{ marginTop:20, padding:'14px 20px', borderRadius:14, background:'rgba(255,255,255,0.01)', border:'1px dashed rgba(255,255,255,0.08)', textAlign:'center', color:'rgba(255,255,255,0.25)', fontSize:'0.82rem' }}>
