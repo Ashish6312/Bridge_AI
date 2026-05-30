@@ -174,6 +174,7 @@ const ProfilePage = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [cancelling, setCancelling] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -511,9 +512,6 @@ Thank you for using Bridge AI!`;
   }, []);
 
   const handleCancelSubscription = async () => {
-    if (!window.confirm("Are you sure you want to cancel your Pro trial/subscription? Your limits will immediately revert to the Free plan.")) {
-      return;
-    }
     setCancelling(true);
     try {
       const response = await fetch(`${API_BASE}/api/user/purchase`, {
@@ -1253,7 +1251,7 @@ Thank you for using Bridge AI!`;
                           Renews at $5.00/month. Cancel anytime.
                         </div>
                         <button 
-                          onClick={handleCancelSubscription}
+                          onClick={() => setShowCancelConfirm(true)}
                           disabled={cancelling}
                           style={{
                             background: 'rgba(239, 68, 68, 0.08)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.15)',
@@ -1428,6 +1426,33 @@ Thank you for using Bridge AI!`;
               <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
                 <button onClick={()=>setShowDeleteConfirm(false)} className="pp-ghost-btn">Cancel</button>
                 <button onClick={handleDeleteAccountData} className="pp-danger-btn">Purge All Data</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═════════ CANCEL SUBSCRIPTION MODAL ═════════ */}
+      <AnimatePresence>
+        {showCancelConfirm && (
+          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+            onClick={()=>setShowCancelConfirm(false)}
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', backdropFilter:'blur(10px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+          >
+            <motion.div initial={{ scale:0.94, y:20 }} animate={{ scale:1, y:0 }} exit={{ scale:0.94, y:20 }}
+              onClick={e=>e.stopPropagation()}
+              style={{ background:'#111', borderRadius:22, border:'1px solid rgba(255, 107, 44, 0.2)', width:420, padding:32, boxShadow:'0 20px 60px rgba(0,0,0,0.5)' }}
+            >
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+                <h3 style={{ margin:0, fontWeight:800, fontSize:'1.1rem', color:'#f87171', display:'flex', alignItems:'center', gap:8 }}><AlertTriangle size={18}/> Cancel Subscription</h3>
+                <button onClick={()=>setShowCancelConfirm(false)} style={{ background:'transparent', border:'none', color:'rgba(255,255,255,0.4)', cursor:'pointer', padding:4, borderRadius:8 }}><X size={18}/></button>
+              </div>
+              <p style={{ fontSize:'0.88rem', color:'rgba(255,255,255,0.6)', lineHeight:1.6, margin:'0 0 24px' }}>
+                Are you sure you want to cancel your Pro trial/subscription? Your limits will immediately revert to the Free plan (10 context transfers per month).
+              </p>
+              <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                <button onClick={()=>setShowCancelConfirm(false)} className="pp-ghost-btn">Cancel</button>
+                <button onClick={() => { setShowCancelConfirm(false); handleCancelSubscription(); }} className="pp-danger-btn">Cancel Subscription</button>
               </div>
             </motion.div>
           </motion.div>
