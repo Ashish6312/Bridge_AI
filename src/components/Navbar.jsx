@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, LogOut, LayoutDashboard, Menu, X, Puzzle, Sun, Moon, Monitor } from 'lucide-react';
+import { Layers, LogOut, LayoutDashboard, Menu, X, Puzzle } from 'lucide-react';
 import ExtensionModal from './ExtensionModal';
 
 const Navbar = () => {
@@ -17,7 +17,6 @@ const Navbar = () => {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('bridge_theme') || 'system';
   });
-  const [showThemeDropdown, setShowThemeDropdown] = useState(false);
 
   useEffect(() => {
     const applyTheme = (t) => {
@@ -52,13 +51,7 @@ const Navbar = () => {
     }
   }, [theme]);
 
-  // Click outside to close theme dropdown
-  useEffect(() => {
-    if (!showThemeDropdown) return;
-    const clickHandler = () => setShowThemeDropdown(false);
-    window.addEventListener('click', clickHandler);
-    return () => window.removeEventListener('click', clickHandler);
-  }, [showThemeDropdown]);
+
 
   const isLanding = location.pathname === '/';
 
@@ -219,96 +212,6 @@ const Navbar = () => {
 
         {/* Authentication & Theme Actions (Right side) */}
         <div className="nav-actions-desktop" style={{ display: 'flex', alignItems: 'center', gap: 20, position: 'relative', zIndex: 2 }}>
-          {/* Theme Toggler Dropdown */}
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowThemeDropdown(!showThemeDropdown);
-              }}
-              style={{
-                width: 32, height: 32,
-                borderRadius: '50%',
-                border: '1px solid var(--nav-capsule-border)',
-                background: 'var(--nav-capsule-active-bg)',
-                color: 'var(--nav-text-hover)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.25s',
-              }}
-              title="Toggle Theme"
-            >
-              {theme === 'light' && <Sun size={14} />}
-              {theme === 'dark' && <Moon size={14} />}
-              {theme === 'system' && <Monitor size={14} />}
-            </button>
-            <AnimatePresence>
-              {showThemeDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  style={{
-                    position: 'absolute', top: '40px', right: 0,
-                    width: '120px',
-                    background: 'var(--nav-capsule-bg)',
-                    border: '1px solid var(--nav-capsule-border)',
-                    borderRadius: '10px',
-                    padding: '6px',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.25)',
-                    display: 'flex', flexDirection: 'column', gap: '4px',
-                    zIndex: 110,
-                    backdropFilter: 'blur(30px)',
-                    WebkitBackdropFilter: 'blur(30px)'
-                  }}
-                >
-                  {[
-                    { val: 'light', label: 'Light', icon: <Sun size={13} /> },
-                    { val: 'dark', label: 'Dark', icon: <Moon size={13} /> },
-                    { val: 'system', label: 'System', icon: <Monitor size={13} /> }
-                  ].map(opt => (
-                    <button
-                      key={opt.val}
-                      onClick={() => {
-                        setTheme(opt.val);
-                        setShowThemeDropdown(false);
-                      }}
-                      style={{
-                        padding: '6px 10px',
-                        borderRadius: '6px',
-                        background: theme === opt.val ? 'var(--nav-capsule-active-bg)' : 'transparent',
-                        border: 'none',
-                        color: theme === opt.val ? 'var(--primary)' : 'var(--nav-text)',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        fontFamily: 'inherit'
-                      }}
-                      onMouseEnter={e => {
-                        if (theme !== opt.val) {
-                          e.currentTarget.style.color = 'var(--nav-text-hover)';
-                          e.currentTarget.style.background = 'var(--nav-capsule-active-bg)';
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        if (theme !== opt.val) {
-                          e.currentTarget.style.color = 'var(--nav-text)';
-                          e.currentTarget.style.background = 'transparent';
-                        }
-                      }}
-                    >
-                      {opt.icon}
-                      {opt.label}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
           <button
             onClick={() => setShowExtModal(true)}
             style={{
@@ -398,35 +301,6 @@ const Navbar = () => {
               }}>{item.label}</Link>
             ))}
             <div style={{ height: 1, background: 'var(--border-light)', margin: '12px 0' }} />
-            
-            {/* Mobile Theme Toggle Selection */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px', marginBottom: 12 }}>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)' }}>Theme</span>
-              <div style={{ display: 'flex', gap: '4px', background: 'var(--nav-capsule-bg)', border: '1px solid var(--nav-capsule-border)', borderRadius: '12px', padding: '4px' }}>
-                {[
-                  { val: 'light', icon: <Sun size={15} /> },
-                  { val: 'dark', icon: <Moon size={15} /> },
-                  { val: 'system', icon: <Monitor size={15} /> }
-                ].map(opt => (
-                  <button
-                    key={opt.val}
-                    onClick={() => setTheme(opt.val)}
-                    style={{
-                      width: '32px', height: '32px',
-                      borderRadius: '8px',
-                      background: theme === opt.val ? 'var(--primary)' : 'transparent',
-                      border: 'none',
-                      color: theme === opt.val ? '#050505' : 'var(--nav-text)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {opt.icon}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <button onClick={() => { setShowExtModal(true); setMenuOpen(false); }}
               style={{ padding: '14px', borderRadius: 10, background: 'transparent', border: '1px solid var(--border-light)', color: '#FF6B2C', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
