@@ -8,10 +8,10 @@ const P = '#DE6A39';       // Primary Soft Copper
 const SEC_P = '#C55627';   // Secondary Soft Copper
 const ACC_RED = '#CD6B6B'; // Accent Red (muted brick-red)
 const PURP = '#7C3AED';    // Purple Accent
-const BG = '#050505';
-const TEXT = '#F5F5F5';
-const MUTED = '#A1A1AA';
-const DIM = '#52525B';
+const BG = 'var(--bg-main)';
+const TEXT = 'var(--text-main)';
+const MUTED = 'var(--text-secondary)';
+const DIM = 'var(--text-muted)';
 
 /* ── Section IDs ── */
 const SECTIONS = [
@@ -183,24 +183,24 @@ const LandingPage = () => {
         <div style={{ position:'absolute', top:'10%', left:'30%', width:450, height:450, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,107,44,0.1) 0%, transparent 70%)', filter: 'blur(100px)', pointerEvents:'none', zIndex: 0 }} />
 
         {/* LEFT */}
-        <motion.div initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7 }} style={{ padding:'6rem 0 4rem', position:'relative', zIndex:1 }}>
+        <motion.div initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7 }} style={{ padding:'2.5rem 0 1.5rem', position:'relative', zIndex:1 }}>
           <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
-            style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:99, border:`1px solid rgba(255,107,44,0.35)`, background:'rgba(255,107,44,0.08)', fontSize:12, fontWeight:600, color:P, letterSpacing:'0.05em', marginBottom:'2rem', boxShadow:'0 0 20px rgba(255,107,44,0.15)' }}>
+            style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:99, border:`1px solid rgba(255,107,44,0.35)`, background:'rgba(255,107,44,0.08)', fontSize:12, fontWeight:600, color:P, letterSpacing:'0.05em', marginBottom:'1rem', boxShadow:'0 0 20px rgba(255,107,44,0.15)' }}>
             <span style={{ width:6, height:6, borderRadius:'50%', background:ACC_RED, animation:'ldBlink 1.5s infinite', boxShadow:`0 0 6px ${ACC_RED}` }} />
             Now in v2.0 · Enterprise Edition
           </motion.div>
 
-          <h1 style={{ fontSize:'clamp(42px,5vw,72px)', fontWeight:800, lineHeight:0.95, letterSpacing:'-0.04em', marginBottom:'1.5rem', color:TEXT }}>
+          <h1 style={{ fontSize:'clamp(42px,5vw,72px)', fontWeight:800, lineHeight:0.95, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
             Use All the AIs.<br />
             <span style={{ background:`linear-gradient(135deg,#FF6B2C 0%,#FF5C5C 50%,#7C3AED 100%)`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Lose None of</span><br />
             the Context.
           </h1>
 
-          <p style={{ fontSize:15, color:MUTED, lineHeight:1.85, fontWeight:500, opacity:0.85, maxWidth:420, marginBottom:'2.5rem' }}>
+          <p style={{ fontSize:15, color:MUTED, lineHeight:1.85, fontWeight:500, opacity:0.85, maxWidth:420, marginBottom:'1.5rem' }}>
             The AI you use depends on the job. Move your conversations between ChatGPT, Claude, Gemini, and more without starting from scratch.
           </p>
 
-          <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:'2.5rem' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:'1.5rem' }}>
             <Link to="/dashboard"
               style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'14px 28px', borderRadius:10, background:'rgba(255,107,44,0.08)', color:P, border:'1px solid rgba(255,107,44,0.3)', fontWeight:700, textDecoration:'none', fontSize:14, boxShadow:`0 0 20px rgba(255,107,44,0.2)`, transition:'all 0.25s' }}
               onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.background=P; e.currentTarget.style.color='#050505'; e.currentTarget.style.boxShadow='0 0 35px rgba(255,107,44,0.5)'; }}
@@ -231,7 +231,7 @@ const LandingPage = () => {
         </motion.div>
 
         {/* RIGHT: NETWORK VIZ */}
-        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.4, duration:1 }} style={{ display:'flex', alignItems:'center', justifyContent: 'center', padding:'5rem 0 4rem', position:'relative', zIndex:1, width:'100%' }}>
+        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.4, duration:1 }} style={{ display:'flex', alignItems:'center', justifyContent: 'center', padding:'2.5rem 0 1.5rem', position:'relative', zIndex:1, width:'100%' }}>
           <div className="hero-viz-wrapper">
             <div className="hero-viz-container">
               {[{ s:300, d:30, c:'rgba(255,107,44,0.2)' },{ s:400, d:45, c:'rgba(124,58,237,0.12)', rev:true }].map((r,i) => (

@@ -12,17 +12,21 @@ const LogoutPage = () => {
   }, []);
 
   return (
-    <div style={{ 
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-      padding: '20px', background: 'var(--bg-main)' 
-    }}>
+    <div 
+      onClick={() => navigate('/')}
+      style={{ 
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+        padding: '20px', background: 'var(--bg-main)', cursor: 'pointer'
+      }}
+    >
       <motion.div 
+        onClick={(e) => e.stopPropagation()}
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         style={{ 
           maxWidth: '440px', width: '100%', padding: '48px 32px', textAlign: 'center',
           background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-          borderRadius: '32px', boxShadow: 'var(--shadow)'
+          borderRadius: '32px', boxShadow: 'var(--shadow)', cursor: 'default'
         }}
       >
         <div style={{ 

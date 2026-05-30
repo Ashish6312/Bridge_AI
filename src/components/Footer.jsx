@@ -91,9 +91,9 @@ const Footer = () => {
         position: 'relative',
         overflow: 'hidden',
         marginTop: 0,
-        background: '#050505',
+        background: 'var(--footer-bg)',
         fontFamily: "'Satoshi', 'General Sans', sans-serif",
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+        borderTop: '1px solid var(--footer-border)'
       }}>
 
         {/* ── TOP RADIAL GLOW ─────────────────────────────── */}
