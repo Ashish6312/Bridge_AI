@@ -109,11 +109,26 @@ const MOCK_INVOICES = [
   { id: 'inv_U95L', created_at: '2026-04-25T12:00:00Z', plan: 'pro', amount: '499.00' },
 ];
 
-const MOCK_DEVICES = [
-  { name: 'Chrome — Windows',  icon: <Monitor size={14}/>, last: 'Active now',    current: true  },
-  { name: 'Firefox — macOS',   icon: <Monitor size={14}/>, last: '2 days ago',   current: false },
-  { name: 'Mobile — Android',  icon: <Smartphone size={14}/>, last: '5 days ago',current: false },
-];
+const getCurrentDeviceName = () => {
+  if (typeof window === 'undefined') return 'Chrome — Windows';
+  const ua = window.navigator.userAgent;
+  let os = "Windows";
+  let isMobile = false;
+
+  if (ua.includes("Macintosh") || ua.includes("Mac OS X")) os = "macOS";
+  else if (ua.includes("Linux")) os = "Linux";
+  else if (ua.includes("Android")) { os = "Android"; isMobile = true; }
+  else if (ua.includes("iPhone") || ua.includes("iPad")) { os = "iOS"; isMobile = true; }
+
+  let browser = "Chrome";
+  if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+  else if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Edge")) browser = "Edge";
+
+  return `${browser} — ${os}`;
+};
+
+const MOCK_DEVICES = []; // Keeps reference compatibility if needed
 
 const TABS = ['Overview', 'Context Vault', 'Security', 'Billing', 'Support'];
 const P = '#FF6B2C';
@@ -140,7 +155,14 @@ const ProfilePage = () => {
   const [realTransfers, setRealTransfers] = useState([]);
   const [realActivity, setRealActivity]   = useState([]);
   const [bridgesList, setBridgesList]     = useState([]);
-  const [devices, setDevices]             = useState(MOCK_DEVICES);
+  const [devices, setDevices]             = useState(() => {
+    const currentName = getCurrentDeviceName();
+    return [
+      { name: currentName,  icon: currentName.includes('iOS') || currentName.includes('Android') ? <Smartphone size={14}/> : <Monitor size={14}/>, last: 'Active now',    current: true  },
+      { name: currentName.includes('macOS') ? 'Chrome — Windows' : 'Firefox — macOS',   icon: <Monitor size={14}/>, last: '2 days ago',   current: false },
+      { name: currentName.includes('Android') ? 'Mobile — iOS' : 'Mobile — Android',  icon: <Smartphone size={14}/>, last: '5 days ago',current: false },
+    ];
+  });
   const [activeTab, setActiveTab] = useState('Overview');
   const [showSettings, setShowSettings] = useState(false);
   const [editName, setEditName] = useState('');
@@ -186,7 +208,7 @@ const ProfilePage = () => {
   const handleDownloadSecurityReport = () => {
     const data = {
       report: "BridgeAI Client Security Audit",
-      generatedAt: "2026-05-30T03:55:35.134Z",
+      generatedAt: new Date().toISOString(),
       encryption: "AES-256-GCM Active",
       sessionProtection: "JWT + Refresh Token",
       keys: "RSA-4096, Verified",
