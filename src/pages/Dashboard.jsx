@@ -1146,7 +1146,12 @@ const Dashboard = () => {
     const summary = (b.summary || '').toLowerCase();
     const source  = (b.source  || '').toLowerCase();
     const term    = searchTerm.toLowerCase();
-    const matchesSearch  = !term || title.includes(term) || summary.includes(term) || source.includes(term);
+    
+    // Free plan users only get Title search (Basic), Pro get Title + Summary + Source (Advanced)
+    const isFree = stats.plan === 'free';
+    const matchesSearch = !term || (isFree 
+      ? title.includes(term) 
+      : (title.includes(term) || summary.includes(term) || source.includes(term)));
     
     // Improved project filtering logic
     const matchesProject = activeProject 
