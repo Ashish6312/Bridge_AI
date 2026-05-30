@@ -196,6 +196,11 @@ const showCustomModal = (title, message, type = 'warning') => {
     modalMessage.textContent = message;
     modal.style.display = 'flex';
     
+    if (modalUpgradeBtn) {
+        const isUpgrade = type === 'upgrade' || title.toLowerCase().includes('forge') || title.toLowerCase().includes('lock') || message.toLowerCase().includes('upgrade');
+        modalUpgradeBtn.style.display = isUpgrade ? 'block' : 'none';
+    }
+    
     const iconContainer = document.getElementById('modal-icon');
     if (!iconContainer) return;
     const iconSvg = iconContainer.querySelector('svg');
@@ -364,6 +369,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             await chrome.storage.local.remove(['bridge_user', 'bridge_token']);
             updateUIWithSession(null);
             showCustomModal('System Logout', 'Sovereign session terminated successfully.', 'success');
+        });
+    }
+
+    if (document.getElementById('dashboard-ext-btn')) {
+        document.getElementById('dashboard-ext-btn').addEventListener('click', () => {
+            chrome.tabs.create({ url: `${WEB_BASE}/dashboard` });
         });
     }
 

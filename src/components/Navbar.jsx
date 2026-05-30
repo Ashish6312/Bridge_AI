@@ -268,7 +268,8 @@ const Navbar = () => {
             </button>
             {user ? (
               <>
-                <Link to="/dashboard" style={{ padding: '14px', borderRadius: 10, textAlign: 'center', background: '#FF6B2C', color: '#050505', fontWeight: 700, textDecoration: 'none' }}>Dashboard</Link>
+                <Link to="/dashboard" style={{ padding: '14px', borderRadius: 10, textAlign: 'center', background: '#FF6B2C', color: '#050505', fontWeight: 700, textDecoration: 'none', marginBottom: 8 }}>Dashboard</Link>
+                <Link to="/profile" style={{ padding: '14px', borderRadius: 10, textAlign: 'center', background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#f2f2f2', fontWeight: 700, textDecoration: 'none', display: 'block', marginBottom: 8 }}>Profile Settings</Link>
                 <button onClick={handleLogout} style={{ padding: '14px', background: 'none', border: 'none', color: '#ef4444', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Sign Out</button>
               </>
             ) : (

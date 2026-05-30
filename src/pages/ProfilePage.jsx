@@ -214,7 +214,7 @@ const ProfilePage = () => {
   };
 
   const handleExportContextVault = () => {
-    const dataToExport = bridgesList.length > 0 ? bridgesList : MOCK_VAULT;
+    const dataToExport = bridgesList;
     const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -225,7 +225,19 @@ const ProfilePage = () => {
   };
 
   const handleBackupSettings = () => {
-    showToast('Local preferences backed up to cloud vault.', 'success');
+    const data = {
+      backupType: "BridgeAI User Preferences Backup",
+      generatedAt: new Date().toISOString(),
+      email: user.email,
+      settings: settingsForm
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bridgeai-settings-backup-${Date.now()}.json`;
+    a.click();
+    showToast('Local preferences backed up and downloaded successfully.', 'success');
   };
 
   const handleDeleteAccountData = async () => {
@@ -236,6 +248,8 @@ const ProfilePage = () => {
       if (response.ok) {
         localStorage.removeItem('bridge_user');
         window.dispatchEvent(new Event('storage'));
+        setUser(null);
+        setShowDeleteConfirm(false);
         showToast('All local and cloud account data deleted. Session terminated.', 'success');
         setTimeout(() => {
           navigate('/logout');
@@ -631,7 +645,44 @@ Thank you for using Bridge AI!`;
         @media(max-width:768px) {
           .pp-hero-inner { flex-direction: column; align-items: flex-start !important; }
           .pp-stats-grid { grid-template-columns: 1fr 1fr !important; }
+          .pp-two-col-grid { grid-template-columns: 1fr !important; }
+          .pp-monthly-grid { grid-template-columns: 1fr !important; }
+          .pp-insights-grid { grid-template-columns: 1fr 1fr !important; }
+          .pp-recent-grid { grid-template-columns: 1fr !important; }
+          .pp-billing-grid { grid-template-columns: 1fr !important; }
+          .pp-hero-right { align-items: flex-start !important; width: 100%; }
+          .pp-hero-right > div { text-align: left !important; }
+          .pp-hero-buttons { width: 100%; flex-wrap: wrap; }
           .pp-tabs { overflow-x: auto; }
+        }
+        @media(max-width:600px) {
+          .pp-vault-item {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+            padding: 16px !important;
+          }
+          .pp-vault-meta {
+            text-align: left !important;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            padding-top: 8px;
+            margin-top: 4px;
+          }
+          .pp-vault-actions {
+            width: 100%;
+          }
+          .pp-vault-actions button {
+            flex: 1;
+            text-align: center;
+          }
+        }
+        @media(max-width:480px) {
+          .pp-stats-grid { grid-template-columns: 1fr !important; }
+          .pp-insights-grid { grid-template-columns: 1fr !important; }
+          .pp-hero-buttons { flex-direction: column !important; align-items: stretch; }
+          .pp-hero-buttons button { width: 100% !important; text-align: center; justify-content: center; }
         }
       `}</style>
 
@@ -680,12 +731,12 @@ Thank you for using Bridge AI!`;
               </div>
 
               {/* Right: meta info + actions */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'flex-end' }}>
+              <div className="pp-hero-right" style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'flex-end' }}>
                 <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', lineHeight: 1.8 }}>
                   <div>Account ID: <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontFamily: 'monospace' }}>{accountId}</span></div>
                   <div>Last Login: <span style={{ color: 'rgba(255,255,255,0.6)' }}>{lastLogin}</span></div>
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
+                <div className="pp-hero-buttons" style={{ display: 'flex', gap: 10 }}>
                   <button onClick={() => { setEditName(user.name); setShowEditProfile(true); }} className="pp-ghost-btn">Edit Profile</button>
                   <button onClick={() => setShowSettings(true)} className="pp-ghost-btn"><Settings size={14} style={{ display: 'inline', marginRight: 6 }} />Settings</button>
                   <button onClick={handleSignOut} className="pp-orange-btn"><LogOut size={14} style={{ display: 'inline', marginRight: 6 }} />Sign Out</button>
@@ -750,7 +801,7 @@ Thank you for using Bridge AI!`;
               </div>
 
               {/* Monthly Usage + Quick Actions */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
+              <div className="pp-monthly-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
                 {/* Monthly Usage */}
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">Monthly Usage</div>
@@ -794,7 +845,7 @@ Thank you for using Bridge AI!`;
               </div>
 
               {/* AI Platforms + Achievements */}
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:28 }}>
+              <div className="pp-two-col-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:28 }}>
                 {/* AI Platforms */}
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">AI Platforms Used</div>
@@ -838,7 +889,7 @@ Thank you for using Bridge AI!`;
               {/* Insights row */}
               <div className="pp-card pp-card-pad" style={{ marginBottom:28 }}>
                 <div className="pp-section-label">Insights</div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
+                <div className="pp-insights-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
                   {displayInsights.map(i => (
                     <div key={i.label} style={{ padding:'16px', borderRadius:14, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)', textAlign:'center' }}>
                       <div style={{ display:'flex', justifyContent:'center', alignItems:'center', width:40, height:40, borderRadius:12, background:`${i.color}18`, margin:'0 auto 10px' }}>{i.logo}</div>
@@ -850,30 +901,32 @@ Thank you for using Bridge AI!`;
               </div>
 
               {/* Recent Transfers + Activity Timeline */}
-              <div style={{ display:'grid', gridTemplateColumns:'1.3fr 1fr', gap:20 }}>
+              <div className="pp-recent-grid" style={{ display:'grid', gridTemplateColumns:'1.3fr 1fr', gap:20 }}>
                 {/* Recent Transfers */}
                 <div className="pp-card">
                   <div style={{ padding:'20px 24px', borderBottom:'1px solid rgba(255,255,255,0.05)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                     <h4 style={{ margin:0, fontSize:'0.95rem', fontWeight:800, display:'flex', alignItems:'center', gap:8 }}><RefreshCw size={15} color={P} /> Recent Transfers</h4>
                     <Link to="/dashboard" style={{ fontSize:'0.78rem', color:P, textDecoration:'none', fontWeight:700 }}>View All <ArrowUpRight size={12} style={{ display:'inline' }}/></Link>
                   </div>
-                  <div>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', padding:'10px 24px', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-                      {['Source','Destination','Date'].map(h=><span key={h} style={{ fontSize:'0.65rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgba(255,255,255,0.25)' }}>{h}</span>)}
-                    </div>
-                    {displayTransfers.length === 0 ? (
-                      <div style={{ padding:'40px 24px', textAlign:'center', color:'rgba(255,255,255,0.3)', fontSize:'0.85rem' }}>
-                        No transfers recorded yet.
+                  <div style={{ overflowX: 'auto', width: '100%' }}>
+                    <div style={{ minWidth: 400 }}>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', padding:'10px 24px', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+                        {['Source','Destination','Date'].map(h=><span key={h} style={{ fontSize:'0.65rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgba(255,255,255,0.25)' }}>{h}</span>)}
                       </div>
-                    ) : (
-                      displayTransfers.map((t,i) => (
-                        <div key={i} className="transfer-row" style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', padding:'13px 24px', borderBottom:'1px solid rgba(255,255,255,0.03)', transition:'background 0.2s' }}>
-                          <span style={{ fontWeight:700, fontSize:'0.85rem' }}>{t.source}</span>
-                          <span style={{ fontWeight:600, fontSize:'0.85rem', color:'rgba(255,255,255,0.5)' }}>{t.dest}</span>
-                          <span style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.35)' }}>{t.date}</span>
+                      {displayTransfers.length === 0 ? (
+                        <div style={{ padding:'40px 24px', textAlign:'center', color:'rgba(255,255,255,0.3)', fontSize:'0.85rem' }}>
+                          No transfers recorded yet.
                         </div>
-                      ))
-                    )}
+                      ) : (
+                        displayTransfers.map((t,i) => (
+                          <div key={i} className="transfer-row" style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', padding:'13px 24px', borderBottom:'1px solid rgba(255,255,255,0.03)', transition:'background 0.2s' }}>
+                            <span style={{ fontWeight:700, fontSize:'0.85rem' }}>{t.source}</span>
+                            <span style={{ fontWeight:600, fontSize:'0.85rem', color:'rgba(255,255,255,0.5)' }}>{t.dest}</span>
+                            <span style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.35)' }}>{t.date}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -928,7 +981,7 @@ Thank you for using Bridge AI!`;
               ) : (
                 <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                   {displayBridges.map((v, i) => (
-                    <motion.div key={v.id} className="pp-card" initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:i*0.06 }}
+                    <motion.div key={v.id} className="pp-card pp-vault-item" initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:i*0.06 }}
                       style={{ padding:'18px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, cursor:'pointer', transition:'all 0.2s' }}
                       onMouseEnter={e=>{ e.currentTarget.style.borderColor='rgba(255,107,44,0.25)'; e.currentTarget.style.transform='translateY(-2px)'; }}
                       onMouseLeave={e=>{ e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.transform=''; }}
@@ -945,11 +998,11 @@ Thank you for using Bridge AI!`;
                           </div>
                         </div>
                       </div>
-                      <div style={{ textAlign:'right', flexShrink:0 }}>
+                      <div className="pp-vault-meta" style={{ textAlign:'right', flexShrink:0 }}>
                         <div style={{ fontSize:'0.75rem', color:'rgba(255,255,255,0.3)', marginBottom:4 }}>{v.updated}</div>
                         <div style={{ fontSize:'0.72rem', color:'rgba(255,255,255,0.25)' }}>{v.size}</div>
                       </div>
-                      <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+                      <div className="pp-vault-actions" style={{ display:'flex', gap:8, flexShrink:0 }}>
                         <button onClick={(e) => { e.stopPropagation(); handleOpenContext(v.title); }} className="pp-ghost-btn" style={{ padding:'7px 14px', fontSize:'0.78rem' }}>Open</button>
                         <button onClick={(e) => { e.stopPropagation(); handleRestoreContext(v.title); }} className="pp-orange-btn" style={{ padding:'7px 14px', fontSize:'0.78rem' }}>Restore</button>
                       </div>
@@ -966,7 +1019,7 @@ Thank you for using Bridge AI!`;
           {/* ═════════ SECURITY TAB ═════════ */}
           {activeTab === 'Security' && (
             <motion.div key="security" initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+              <div className="pp-two-col-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
                 {/* Status Overview */}
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">Security Center</div>
@@ -1041,7 +1094,7 @@ Thank you for using Bridge AI!`;
           {/* ═════════ BILLING TAB ═════════ */}
           {activeTab === 'Billing' && (
             <motion.div key="billing" initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1.4fr', gap:20 }}>
+              <div className="pp-billing-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1.4fr', gap:20 }}>
                 {/* Plan Details */}
                 <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
                   <div className="pp-card pp-card-pad">
@@ -1088,26 +1141,28 @@ Thank you for using Bridge AI!`;
                       <div style={{ color:'rgba(255,255,255,0.25)', fontSize:'0.9rem' }}>No invoices yet.</div>
                     </div>
                   ) : (
-                    <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                      <thead>
-                        <tr>
-                          {['Invoice ID','Date','Plan','Amount',''].map(h=>(
-                            <th key={h} style={{ padding:'12px 24px', textAlign:'left', fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'rgba(255,255,255,0.25)', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {displayInvoices.map((inv,i)=>(
-                          <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.03)' }}>
-                            <td style={{ padding:'14px 24px', fontSize:'0.8rem', fontFamily:'monospace' }}>#{inv.id?.slice(0,8)}</td>
-                            <td style={{ padding:'14px 24px', fontSize:'0.82rem', color:'rgba(255,255,255,0.5)' }}>{new Date(inv.created_at).toLocaleDateString()}</td>
-                            <td style={{ padding:'14px 24px' }}><span style={{ padding:'3px 10px', borderRadius:6, background:'rgba(255,107,44,0.1)', color:P, fontSize:'0.65rem', fontWeight:800 }}>{inv.plan?.toUpperCase()}</span></td>
-                            <td style={{ padding:'14px 24px', fontWeight:800 }}>₹{inv.amount}</td>
-                            <td style={{ padding:'14px 24px' }}><button onClick={()=>handleDownloadInvoice(inv)} style={{ padding:'5px 10px', borderRadius:8, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)', cursor:'pointer', transition:'all 0.2s' }}><Download size={13}/></button></td>
+                    <div style={{ overflowX: 'auto', width: '100%' }}>
+                      <table style={{ width:'100%', borderCollapse:'collapse', minWidth: 500 }}>
+                        <thead>
+                          <tr>
+                            {['Invoice ID','Date','Plan','Amount',''].map(h=>(
+                              <th key={h} style={{ padding:'12px 24px', textAlign:'left', fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'rgba(255,255,255,0.25)', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>{h}</th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {displayInvoices.map((inv,i)=>(
+                            <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.03)' }}>
+                              <td style={{ padding:'14px 24px', fontSize:'0.8rem', fontFamily:'monospace' }}>#{inv.id?.slice(0,8)}</td>
+                              <td style={{ padding:'14px 24px', fontSize:'0.82rem', color:'rgba(255,255,255,0.5)' }}>{new Date(inv.created_at).toLocaleDateString()}</td>
+                              <td style={{ padding:'14px 24px' }}><span style={{ padding:'3px 10px', borderRadius:6, background:'rgba(255,107,44,0.1)', color:P, fontSize:'0.65rem', fontWeight:800 }}>{inv.plan?.toUpperCase()}</span></td>
+                              <td style={{ padding:'14px 24px', fontWeight:800 }}>₹{inv.amount}</td>
+                              <td style={{ padding:'14px 24px' }}><button onClick={()=>handleDownloadInvoice(inv)} style={{ padding:'5px 10px', borderRadius:8, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)', cursor:'pointer', transition:'all 0.2s' }}><Download size={13}/></button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1117,7 +1172,7 @@ Thank you for using Bridge AI!`;
           {/* ═════════ SUPPORT & EXPORT TAB ═════════ */}
           {activeTab === 'Support' && (
             <motion.div key="support" initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+              <div className="pp-two-col-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
                 {/* Support Section */}
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">Support</div>
