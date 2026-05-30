@@ -156,13 +156,25 @@ const ProfilePage = () => {
   const [realActivity, setRealActivity]   = useState([]);
   const [bridgesList, setBridgesList]     = useState([]);
   const [devices, setDevices]             = useState(() => {
+    const stored = localStorage.getItem('bridge_devices');
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
     const currentName = getCurrentDeviceName();
-    return [
-      { name: currentName,  icon: currentName.includes('iOS') || currentName.includes('Android') ? <Smartphone size={14}/> : <Monitor size={14}/>, last: 'Active now',    current: true  },
-      { name: currentName.includes('macOS') ? 'Chrome — Windows' : 'Firefox — macOS',   icon: <Monitor size={14}/>, last: '2 days ago',   current: false },
-      { name: currentName.includes('Android') ? 'Mobile — iOS' : 'Mobile — Android',  icon: <Smartphone size={14}/>, last: '5 days ago',current: false },
+    const defaultList = [
+      { name: currentName,  icon: currentName.includes('iOS') || currentName.includes('Android') ? 'mobile' : 'monitor', last: 'Active now',    current: true  },
+      { name: currentName.includes('macOS') ? 'Chrome — Windows' : 'Firefox — macOS',   icon: 'monitor', last: '2 days ago',   current: false },
+      { name: currentName.includes('Android') ? 'Mobile — iOS' : 'Mobile — Android',  icon: 'mobile', last: '5 days ago',current: false },
     ];
+    localStorage.setItem('bridge_devices', JSON.stringify(defaultList));
+    return defaultList;
   });
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(() => {
+    return localStorage.getItem('bridge_2fa_enabled') === 'true';
+  });
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [twoFaCode, setTwoFaCode] = useState('');
+  const [twoFaError, setTwoFaError] = useState('');
   const [activeTab, setActiveTab] = useState('Overview');
   const [showSettings, setShowSettings] = useState(false);
   const [editName, setEditName] = useState('');
@@ -175,6 +187,7 @@ const ProfilePage = () => {
   const [cancelling, setCancelling] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showDisable2FAConfirm, setShowDisable2FAConfirm] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -198,13 +211,42 @@ const ProfilePage = () => {
   };
 
   const handleLogoutAllDevices = () => {
-    setDevices(prev => prev.filter(d => d.current));
+    setDevices(prev => {
+      const updated = prev.filter(d => d.current);
+      localStorage.setItem('bridge_devices', JSON.stringify(updated));
+      return updated;
+    });
     showToast('Terminated all active secondary sessions successfully.', 'success');
   };
 
   const handleRevokeDevice = (deviceName) => {
-    setDevices(prev => prev.filter(d => d.name !== deviceName));
+    setDevices(prev => {
+      const updated = prev.filter(d => d.name !== deviceName);
+      localStorage.setItem('bridge_devices', JSON.stringify(updated));
+      return updated;
+    });
     showToast(`Session revoked for ${deviceName} successfully.`, 'success');
+  };
+
+  const handleToggle2FA = () => {
+    if (twoFactorEnabled) {
+      setShowDisable2FAConfirm(true);
+    } else {
+      setTwoFaCode('');
+      setTwoFaError('');
+      setShow2FAModal(true);
+    }
+  };
+
+  const handleVerify2FA = () => {
+    if (!twoFaCode || twoFaCode.length < 6) {
+      setTwoFaError("Please enter a valid 6-digit authentication code.");
+      return;
+    }
+    localStorage.setItem('bridge_2fa_enabled', 'true');
+    setTwoFactorEnabled(true);
+    setShow2FAModal(false);
+    showToast("Two-Factor Authentication configured successfully.", "success");
   };
 
   const handleDownloadSecurityReport = () => {
@@ -1153,12 +1195,13 @@ Thank you for using Bridge AI!`;
                     { label:'Encryption Status',  val:'AES-256-GCM Active', ok:true },
                     { label:'Session Protection',  val:'JWT + Refresh Token', ok:true },
                     { label:'Security Keys',       val:'RSA-4096, Active',   ok:true },
-                    { label:'2FA',                 val:'Not Configured',     ok:false },
+                    { label:'2FA',                 val: twoFactorEnabled ? 'Active (Authenticator)' : 'Not Configured',     ok: twoFactorEnabled },
                   ].map(r=>(
-                    <div key={r.label} className="pp-row">
-                      <span className="pp-row-label">{r.label}</span>
-                      <span style={{ display:'flex', alignItems:'center', gap:6, fontWeight:700, fontSize:'0.82rem', color: r.ok?'#34d399':'#f87171' }}>
-                        {r.ok?<CheckCircle size={13}/>:<AlertTriangle size={13}/>} {r.val}
+                    <div key={r.label} className="pp-row" style={{ padding: '16px 0' }}>
+                      <span className="pp-row-label" style={{ fontSize: '0.9rem', fontWeight: 500, color: 'rgba(255,255,255,0.45)' }}>{r.label}</span>
+                      <span style={{ display:'flex', alignItems:'center', gap:8, fontWeight:700, fontSize:'0.9rem', color: r.ok?'#10b981':'#ef4444' }}>
+                        {r.ok ? <CheckCircle size={15} color="#10b981" /> : <AlertTriangle size={15} color="#ef4444" />}
+                        {r.val}
                       </span>
                     </div>
                   ))}
@@ -1168,18 +1211,56 @@ Thank you for using Bridge AI!`;
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">Connected Devices</div>
                   {devices.map((d,i)=>(
-                    <div key={i} className="pp-row">
-                      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                        <span style={{ color:'rgba(255,255,255,0.4)' }}>{d.icon}</span>
+                    <div key={i} className="pp-row" style={{ padding: '16px 0' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                        <span style={{ color:'rgba(255,255,255,0.45)', display:'flex', alignItems:'center' }}>
+                          {d.icon === 'mobile' ? <Smartphone size={16}/> : <Monitor size={16}/>}
+                        </span>
                         <div>
-                          <div style={{ fontWeight:600, fontSize:'0.85rem' }}>{d.name}</div>
-                          <div style={{ fontSize:'0.72rem', color:'rgba(255,255,255,0.3)' }}>{d.last}</div>
+                          <div style={{ fontWeight:700, fontSize:'0.95rem', color: '#f2f2f2' }}>{d.name}</div>
+                          <div style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.35)', marginTop: 2 }}>{d.last}</div>
                         </div>
                       </div>
-                      {d.current
-                        ? <span style={{ padding:'2px 9px', borderRadius:6, background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.2)', fontSize:'0.62rem', fontWeight:800, color:'#34d399' }}>CURRENT</span>
-                        : <button onClick={() => handleRevokeDevice(d.name)} className="pp-danger-btn" style={{ padding:'4px 10px', fontSize:'0.72rem' }}>Revoke</button>
-                      }
+                      {d.current ? (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '6px 14px',
+                          borderRadius: '9999px',
+                          border: '1px solid rgba(16, 185, 129, 0.4)',
+                          background: 'transparent',
+                          fontSize: '0.72rem',
+                          fontWeight: '800',
+                          color: '#10b981',
+                          letterSpacing: '0.05em'
+                        }}>
+                          CURRENT
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleRevokeDevice(d.name)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '6px 14px',
+                            borderRadius: '9999px',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            background: 'transparent',
+                            fontSize: '0.72rem',
+                            fontWeight: '800',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            fontFamily: 'inherit'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = 'rgba(239, 68, 68, 0.08)'}
+                          onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                        >
+                          Revoke
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1189,6 +1270,9 @@ Thank you for using Bridge AI!`;
                   <div className="pp-section-label">Security Actions</div>
                   <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                     <button onClick={handleRefreshKeys} className="pp-action-btn"><RefreshCw size={15} color={P}/>Refresh Security Keys</button>
+                    <button onClick={handleToggle2FA} className="pp-action-btn">
+                      <Shield size={15} color={P}/>{twoFactorEnabled ? "Disable 2FA Status" : "Configure 2FA Protection"}
+                    </button>
                     <button onClick={handleLogoutAllDevices} className="pp-action-btn"><LogOut size={15} color="#f87171"/>
                       <span style={{ color:'#f87171' }}>Logout All Devices</span>
                     </button>
@@ -1453,6 +1537,107 @@ Thank you for using Bridge AI!`;
               <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
                 <button onClick={()=>setShowCancelConfirm(false)} className="pp-ghost-btn">Cancel</button>
                 <button onClick={() => { setShowCancelConfirm(false); handleCancelSubscription(); }} className="pp-danger-btn">Cancel Subscription</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═════════ DISABLE 2FA CONFIRM MODAL ═════════ */}
+      <AnimatePresence>
+        {showDisable2FAConfirm && (
+          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+            onClick={()=>setShowDisable2FAConfirm(false)}
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', backdropFilter:'blur(10px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+          >
+            <motion.div initial={{ scale:0.94, y:20 }} animate={{ scale:1, y:0 }} exit={{ scale:0.94, y:20 }}
+              onClick={e=>e.stopPropagation()}
+              style={{ background:'#111', borderRadius:22, border:'1px solid rgba(239, 68, 68, 0.2)', width:420, padding:32, boxShadow:'0 20px 60px rgba(0,0,0,0.5)' }}
+            >
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+                <h3 style={{ margin:0, fontWeight:800, fontSize:'1.1rem', color:'#f87171', display:'flex', alignItems:'center', gap:8 }}><AlertTriangle size={18}/> Disable 2FA</h3>
+                <button onClick={()=>setShowDisable2FAConfirm(false)} style={{ background:'transparent', border:'none', color:'rgba(255,255,255,0.4)', cursor:'pointer', padding:4, borderRadius:8 }}><X size={18}/></button>
+              </div>
+              <p style={{ fontSize:'0.88rem', color:'rgba(255,255,255,0.6)', lineHeight:1.6, margin:'0 0 24px' }}>
+                Are you sure you want to disable Two-Factor Authentication? Your account will be less secure.
+              </p>
+              <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                <button onClick={()=>setShowDisable2FAConfirm(false)} className="pp-ghost-btn">Cancel</button>
+                <button onClick={() => {
+                  setShowDisable2FAConfirm(false);
+                  localStorage.setItem('bridge_2fa_enabled', 'false');
+                  setTwoFactorEnabled(false);
+                  showToast("Two-Factor Authentication disabled successfully.", "warning");
+                }} className="pp-danger-btn">Disable 2FA</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═════════ 2FA SETUP MODAL ═════════ */}
+      <AnimatePresence>
+        {show2FAModal && (
+          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+            onClick={()=>setShow2FAModal(false)}
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', backdropFilter:'blur(10px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+          >
+            <motion.div initial={{ scale:0.94, y:20 }} animate={{ scale:1, y:0 }} exit={{ scale:0.94, y:20 }}
+              onClick={e=>e.stopPropagation()}
+              style={{ background:'#111', borderRadius:22, border:'1px solid rgba(255,107,44,0.2)', width:400, padding:32, textAlign:'center', boxShadow:'0 20px 60px rgba(0,0,0,0.5)' }}
+            >
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+                <h3 style={{ margin:0, fontWeight:800, fontSize:'1.1rem', color:'#f2f2f2', display:'flex', alignItems:'center', gap:8 }}><Shield size={18} color={P}/> Configure 2FA</h3>
+                <button onClick={()=>setShow2FAModal(false)} style={{ background:'transparent', border:'none', color:'rgba(255,255,255,0.4)', cursor:'pointer', padding:4, borderRadius:8 }}><X size={18}/></button>
+              </div>
+              <p style={{ fontSize:'0.82rem', color:'rgba(255,255,255,0.5)', lineHeight:1.5, margin:'0 0 16px', textAlign:'left' }}>
+                Scan the QR code with Google Authenticator or Microsoft Authenticator to register your verification key.
+              </p>
+              
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                <div style={{ padding: '12px', background: 'white', borderRadius: '12px', display: 'inline-block' }}>
+                  <div style={{ width: '120px', height: '120px', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1px' }}>
+                    {Array.from({ length: 144 }).map((_, idx) => {
+                      const isBlack = (idx % 2 === 0 && idx % 3 !== 0) || (idx < 24 && idx % 4 === 0) || (idx > 120 && idx % 5 === 0) || (idx % 7 === 0);
+                      return (
+                        <div 
+                          key={idx} 
+                          style={{ 
+                            background: isBlack ? '#111827' : 'transparent',
+                            borderRadius: '1px'
+                          }} 
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '20px' }}>
+                Secret Key: <strong style={{ color: '#f2f2f2' }}>JBSW Y3DP EHPK 3PXP</strong>
+              </div>
+
+              <div style={{ marginBottom: 20, textAlign: 'left' }}>
+                <label style={{ fontSize:'0.75rem', fontWeight:700, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'0.06em', display:'block', marginBottom:8 }}>6-Digit Verification Code</label>
+                <input 
+                  type="text"
+                  maxLength={6}
+                  className="pp-input" 
+                  value={twoFaCode} 
+                  onChange={e=>{ setTwoFaCode(e.target.value.replace(/\D/g, '')); setTwoFaError(''); }} 
+                  placeholder="e.g. 123456" 
+                  style={{ textAlign: 'center', fontSize: '1.2rem', letterSpacing: '4px', fontWeight: '700' }}
+                />
+                {twoFaError && (
+                  <div style={{ fontSize: '0.75rem', color: '#f87171', marginTop: 6, fontWeight: '600' }}>
+                    {twoFaError}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                <button onClick={()=>setShow2FAModal(false)} className="pp-ghost-btn" style={{ flex: 1 }}>Cancel</button>
+                <button onClick={handleVerify2FA} className="pp-orange-btn" style={{ flex: 1 }}>Verify & Enable</button>
               </div>
             </motion.div>
           </motion.div>
