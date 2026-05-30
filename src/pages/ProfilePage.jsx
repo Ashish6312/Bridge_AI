@@ -314,7 +314,7 @@ const ProfilePage = () => {
 
   const handleExportBilling = () => {
     const headers = ['Invoice ID', 'Date', 'Plan', 'Amount'].join(',');
-    const rows = displayInvoices.map(inv => `${inv.id},${new Date(inv.created_at).toLocaleDateString()},${inv.plan},₹${inv.amount}`).join('\n');
+    const rows = displayInvoices.map(inv => `${inv.id},${new Date(inv.created_at).toLocaleDateString()},${inv.plan},$${inv.amount}`).join('\n');
     const csv = `${headers}\n${rows}`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -332,7 +332,7 @@ INVOICE - BRIDGE AI
 Invoice ID: #${inv.id}
 Date: ${new Date(inv.created_at).toLocaleDateString()}
 Plan: ${inv.plan?.toUpperCase()}
-Amount: ₹${inv.amount}
+Amount: $${inv.amount}
 Status: PAID
 =========================================
 Thank you for using Bridge AI!`;
@@ -1162,7 +1162,7 @@ Thank you for using Bridge AI!`;
                       {user.plan==='pro'?'Pro':'Free'}
                     </div>
                     <div style={{ fontSize:'0.82rem', color:'rgba(255,255,255,0.35)', marginBottom:18 }}>
-                      {user.plan==='pro'?'₹299/month · Unlimited Features':'₹0 · Limited Access'}
+                      {user.plan==='pro'?'$5/month · Unlimited Features':'$0 · Limited Access'}
                     </div>
                     <div className="pp-progress-track" style={{ marginBottom:10 }}>
                       <motion.div initial={{width:0}} animate={{width:`${usagePct||66}%`}} transition={{duration:1.2}} style={{height:'100%',background:`linear-gradient(90deg,${P},#e85d1a)`,borderRadius:100}}/>
@@ -1215,7 +1215,7 @@ Thank you for using Bridge AI!`;
                               <td style={{ padding:'14px 24px', fontSize:'0.8rem', fontFamily:'monospace' }}>#{inv.id?.slice(0,8)}</td>
                               <td style={{ padding:'14px 24px', fontSize:'0.82rem', color:'rgba(255,255,255,0.5)' }}>{new Date(inv.created_at).toLocaleDateString()}</td>
                               <td style={{ padding:'14px 24px' }}><span style={{ padding:'3px 10px', borderRadius:6, background:'rgba(255,107,44,0.1)', color:P, fontSize:'0.65rem', fontWeight:800 }}>{inv.plan?.toUpperCase()}</span></td>
-                              <td style={{ padding:'14px 24px', fontWeight:800 }}>₹{inv.amount}</td>
+                              <td style={{ padding:'14px 24px', fontWeight:800 }}>${inv.amount}</td>
                               <td style={{ padding:'14px 24px' }}><button onClick={()=>handleDownloadInvoice(inv)} style={{ padding:'5px 10px', borderRadius:8, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)', cursor:'pointer', transition:'all 0.2s' }}><Download size={13}/></button></td>
                             </tr>
                           ))}

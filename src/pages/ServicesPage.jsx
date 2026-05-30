@@ -181,14 +181,12 @@ const ServicesPage = () => {
             }}>
               <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '24px' }}>Free</span>
               <div style={{ marginBottom: '32px' }}>
-                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-main)' }}>₹0</span>
+                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-main)' }}>$0</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> 7-Day Pro Trial</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> 100 Context Transfers / Month</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> ChatGPT, Claude, Gemini Support</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Basic Context Transfer</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Community Support</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> 3 Context Transfers / Day</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Basic Extraction</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Basic Sync</li>
               </ul>
               <button 
                 onClick={() => navigate('/signup')}
@@ -207,23 +205,21 @@ const ServicesPage = () => {
               <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: 'white', padding: '4px 16px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>MOST POPULAR</div>
               <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '24px' }}>Pro (Recommended)</span>
               <div style={{ marginBottom: '32px' }}>
-                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-main)' }}>₹299</span>
+                <span style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-main)' }}>$5</span>
                 <span style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>/month</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
                 <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Unlimited Transfers</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Unlimited Projects</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Context Vault</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Smart Context Optimization</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Context History</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Saved Prompt Vault</li>
                 <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Priority Support</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Early Access Features</li>
               </ul>
               <button 
-                onClick={() => handlePurchaseClick('premium', 299)}
-                disabled={upgrading === 'premium' || user?.plan === 'premium'}
+                onClick={() => handlePurchaseClick('pro', 5)}
+                disabled={upgrading === 'pro' || user?.plan === 'pro'}
                 className="btn-primary" style={{ width: '100%', padding: '14px', borderRadius: '12px', fontWeight: '700' }}
               >
-                {upgrading === 'premium' ? "Processing..." : (user?.plan === 'premium') ? "Current Plan" : "Upgrade to Pro"}
+                {upgrading === 'pro' ? "Processing..." : (user?.plan === 'pro') ? "Current Plan" : "Upgrade to Pro"}
               </button>
             </div>
 
