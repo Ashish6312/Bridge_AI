@@ -5,8 +5,8 @@ import { Zap, Share2, Layers, GitMerge, Database, Shield, Check, X, ArrowRight, 
 import { API_BASE } from '../apiConfig';
 
 const CheckIcon = ({ color = "var(--primary)" }) => (
-  <div style={{ background: 'rgba(79, 70, 229, 0.1)', padding: '4px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <Check size={14} color={color} strokeWidth={3} />
+  <div style={{ background: 'rgba(255, 107, 44, 0.1)', padding: '3px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <Check size={11} color={color} strokeWidth={3.5} />
   </div>
 );
 
@@ -184,26 +184,26 @@ const ServicesPage = () => {
             
             {/* Free Tier */}
             <div style={{ 
-              background: 'var(--bg-secondary)', padding: '48px 40px', borderRadius: '24px', 
+              background: 'var(--bg-secondary)', padding: '32px 28px', borderRadius: '24px', 
               border: '1px solid var(--border)', position: 'relative', width: '100%',
               boxShadow: 'var(--shadow)', display: 'flex', flexDirection: 'column'
             }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '24px' }}>Free</span>
-              <div style={{ marginBottom: '24px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Free</span>
+              <div style={{ marginBottom: '16px' }}>
                 <span style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-main)' }}>$0</span>
                 <span style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>/month</span>
               </div>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: '1.5' }}>
                 Perfect for exploring BridgeAI and testing cross-AI workflows.
               </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> 10 Context Transfers / Month</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Basic Context Extraction</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Transfer Between Supported AI Platforms</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Last 7 Days of Context History</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Save Up To 5 Prompt Templates</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Basic Context Search</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Community Support</li>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px 16px', flex: 1 }}>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> 10 Context Transfers / Month</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Basic Context Extraction</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Transfer Between Supported AI Platforms</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Last 7 Days of Context History</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Save Up To 5 Prompt Templates</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Basic Context Search</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Community Support</li>
               </ul>
               <button 
                 onClick={() => {
@@ -229,35 +229,35 @@ const ServicesPage = () => {
 
             {/* Pro Tier */}
             <div style={{ 
-              background: 'var(--bg-secondary)', padding: '48px 40px', borderRadius: '24px', 
+              background: 'var(--bg-secondary)', padding: '32px 28px', borderRadius: '24px', 
               border: '2px solid var(--primary)', position: 'relative', width: '100%',
               boxShadow: 'var(--shadow-hover)', display: 'flex', flexDirection: 'column', zIndex: 2
             }}>
               <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: 'white', padding: '4px 16px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>MOST POPULAR</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Pro</span>
                 <span style={{ fontSize: '0.75rem', fontWeight: '800', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '4px 10px', borderRadius: '100px' }}>🎁 7-Day Free Trial</span>
               </div>
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: '16px' }}>
                 <span style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-main)' }}>$5</span>
                 <span style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>/month</span>
               </div>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: '1.5' }}>
                 Everything you need to work seamlessly across AI platforms.
               </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Unlimited Context Transfers</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Unlimited Context Storage</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Full Conversation History</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Saved Prompt Vault</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Project Workspaces</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Cross-Platform Sync</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Smart Context Compression</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Advanced Context Search</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Custom Transfer Templates</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> One-Click Export</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Early Access Features</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Priority Support</li>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px 16px', flex: 1 }}>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Unlimited Context Transfers</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Unlimited Context Storage</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Full Conversation History</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Saved Prompt Vault</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Project Workspaces</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Cross-Platform Sync</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Smart Context Compression</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Advanced Context Search</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Custom Transfer Templates</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> One-Click Export</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Early Access Features</li>
+                <li style={{ display: 'flex', gap: '8px', fontSize: '0.82rem', color: 'var(--text-main)', alignItems: 'flex-start', lineHeight: '1.3' }}><CheckIcon /> Priority Support</li>
               </ul>
               <button 
                 onClick={() => handlePurchaseClick('pro', 5)}
