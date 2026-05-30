@@ -234,8 +234,8 @@ app.post('/api/summarize', async (req, res) => {
     );
     const extractionCount = parseInt(countRes.rows[0].count);
 
-    const LIMITS = { 'free': 3, 'pro': 100, 'infinite': 999999 };
-    const limit = LIMITS[userPlan] || 3;
+    const LIMITS = { 'free': 10, 'pro': 999999, 'infinite': 999999 };
+    const limit = LIMITS[userPlan] || 10;
 
     if (extractionCount >= limit) {
       return res.status(403).json({ 

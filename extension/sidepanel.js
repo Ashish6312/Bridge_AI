@@ -176,7 +176,8 @@ async function fetchQuota(email) {
                 }
             }
 
-            const limit = data.plan === 'pro' ? 100 : (data.plan === 'infinite' ? Infinity : 3);
+            const isUnlimited = data.plan === 'pro' || data.plan === 'infinite';
+            const limit = isUnlimited ? Infinity : 10;
             const used = data.usage || 0;
             const remaining = limit === Infinity ? 'Unlimited' : Math.max(0, limit - used);
             

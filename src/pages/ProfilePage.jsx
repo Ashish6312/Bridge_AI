@@ -224,6 +224,10 @@ const ProfilePage = () => {
   };
 
   const handleDownloadTransferHistory = () => {
+    if (user.plan === 'free') {
+      showToast('Upgrade to Pro to export your transfer history archive.', 'warning');
+      return;
+    }
     if (bridgesList.length === 0) {
       showToast('No transfers to download.', 'warning');
       return;
@@ -246,6 +250,10 @@ const ProfilePage = () => {
   };
 
   const handleExportContextVault = () => {
+    if (user.plan === 'free') {
+      showToast('Upgrade to Pro to export your Context Vault.', 'warning');
+      return;
+    }
     if (bridgesList.length === 0) {
       showToast('No vault data to export.', 'warning');
       return;
@@ -506,8 +514,8 @@ Thank you for using Bridge AI!`;
     </div>
   );
 
-  const planLimit    = user.plan === 'pro' ? 100 : user.plan === 'infinite' ? Infinity : 3;
-  const usagePct     = user.plan === 'infinite' ? 100 : Math.min(100, (stats.usage / planLimit) * 100);
+  const planLimit    = (user.plan === 'pro' || user.plan === 'infinite') ? Infinity : 10;
+  const usagePct     = planLimit === Infinity ? 100 : Math.min(100, ((stats.usage || 0) / planLimit) * 100);
   const memberSince  = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : 'May 2026';
   const accountId    = user.id || user._id || ('BRG-' + user.email?.slice(0,4).toUpperCase() + '-7291');
   const lastLogin    = 'Just now';
@@ -856,15 +864,15 @@ Thank you for using Bridge AI!`;
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">Monthly Usage</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
-                    <span style={{ fontSize: '2rem', fontWeight: 800 }}>{stats.usage || 0}<span style={{ fontSize: '1rem', fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/{user.plan === 'infinite' ? '∞' : planLimit}</span></span>
-                    <span style={{ fontSize: '0.8rem', color: P, fontWeight: 700 }}>{Math.round(usagePct || 0)}% used</span>
+                    <span style={{ fontSize: '2rem', fontWeight: 800 }}>{stats.usage || 0}<span style={{ fontSize: '1rem', fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/{planLimit === Infinity ? '∞' : planLimit}</span></span>
+                    <span style={{ fontSize: '0.8rem', color: P, fontWeight: 700 }}>{planLimit === Infinity ? '0% used' : `${Math.round(usagePct || 0)}% used`}</span>
                   </div>
                   <div className="pp-progress-track">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${usagePct || 0}%` }} transition={{ duration: 1.2, ease: 'easeOut' }} style={{ height: '100%', background: `linear-gradient(90deg,${P},#e85d1a)`, borderRadius: 100 }} />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${planLimit === Infinity ? 0 : (usagePct || 0)}%` }} transition={{ duration: 1.2, ease: 'easeOut' }} style={{ height: '100%', background: `linear-gradient(90deg,${P},#e85d1a)`, borderRadius: 100 }} />
                   </div>
                   <div style={{ marginTop:14, display:'flex', gap:10 }}>
                     <div style={{ flex:1, padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)', fontSize:'0.78rem', color:'rgba(255,255,255,0.4)' }}>
-                      Remaining <span style={{ display:'block', fontSize:'1rem', fontWeight:800, color:'#f2f2f2', marginTop:2 }}>{user.plan==='infinite'?'∞':Math.max(0,planLimit-(stats.usage||0))}</span>
+                      Remaining <span style={{ display:'block', fontSize:'1rem', fontWeight:800, color:'#f2f2f2', marginTop:2 }}>{planLimit === Infinity ? '∞' : Math.max(0, planLimit - (stats.usage || 0))}</span>
                     </div>
                     <div style={{ flex:1, padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)', fontSize:'0.78rem', color:'rgba(255,255,255,0.4)' }}>
                       Avg Time <span style={{ display:'block', fontSize:'1rem', fontWeight:800, color:'#f2f2f2', marginTop:2 }}>0.4s</span>
@@ -1015,9 +1023,27 @@ Thank you for using Bridge AI!`;
           {/* ═════════ CONTEXT VAULT TAB ═════════ */}
           {activeTab === 'Context Vault' && (
             <motion.div key="vault" initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-                <h3 style={{ margin:0, fontSize:'1.1rem', fontWeight:800, display:'flex', alignItems:'center', gap:10 }}><Archive size={18} color={P} /> My Context Vault</h3>
-                <button className="pp-orange-btn">+ New Context</button>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20, flexWrap:'wrap', gap:10 }}>
+                <div>
+                  <h3 style={{ margin:0, fontSize:'1.1rem', fontWeight:800, display:'flex', alignItems:'center', gap:10 }}><Archive size={18} color={P} /> My Context Vault</h3>
+                  {user.plan === 'free' && (
+                    <div style={{ fontSize:'0.75rem', color:'rgba(255,255,255,0.4)', marginTop:4, fontWeight:600 }}>
+                      Template Vault Usage: <span style={{ color:P, fontWeight:700 }}>{displayBridges.length} / 5</span> Templates
+                    </div>
+                  )}
+                </div>
+                <button 
+                  onClick={() => {
+                    if (user.plan === 'free' && displayBridges.length >= 5) {
+                      showToast('Prompt template limit reached (5/5). Upgrade to Pro for unlimited templates.', 'warning');
+                      return;
+                    }
+                    showToast('New Context Template creation protocol initialized.', 'success');
+                  }} 
+                  className="pp-orange-btn"
+                >
+                  + New Context
+                </button>
               </div>
               {displayBridges.length === 0 ? (
                 <div style={{ padding:'60px 24px', textAlign:'center', border:'1px dashed rgba(255,255,255,0.08)', borderRadius:20, background:'rgba(255,255,255,0.01)' }}>
@@ -1158,19 +1184,19 @@ Thank you for using Bridge AI!`;
                 <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
                   <div className="pp-card pp-card-pad">
                     <div className="pp-section-label">Current Plan</div>
-                    <div style={{ fontSize:'2.5rem', fontWeight:900, color: user.plan==='pro'?P:'rgba(255,255,255,0.8)', marginBottom:4 }}>
-                      {user.plan==='pro'?'Pro':'Free'}
+                    <div style={{ fontSize:'2.5rem', fontWeight:900, color: (user.plan==='pro'||user.plan==='infinite')?P:'rgba(255,255,255,0.8)', marginBottom:4 }}>
+                      {user.plan==='infinite'?'Infinite':user.plan==='pro'?'Pro':'Free'}
                     </div>
                     <div style={{ fontSize:'0.82rem', color:'rgba(255,255,255,0.35)', marginBottom:18 }}>
-                      {user.plan==='pro'?'$5/month · Unlimited Features':'$0 · Limited Access'}
+                      {(user.plan==='pro'||user.plan==='infinite')?'Unlimited Features':'$0 · Limited Access'}
                     </div>
                     <div className="pp-progress-track" style={{ marginBottom:10 }}>
-                      <motion.div initial={{width:0}} animate={{width:`${usagePct||66}%`}} transition={{duration:1.2}} style={{height:'100%',background:`linear-gradient(90deg,${P},#e85d1a)`,borderRadius:100}}/>
+                      <motion.div initial={{width:0}} animate={{width:`${planLimit === Infinity ? 0 : (usagePct||66)}%`}} transition={{duration:1.2}} style={{height:'100%',background:`linear-gradient(90deg,${P},#e85d1a)`,borderRadius:100}}/>
                     </div>
                     <div style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.35)', marginBottom:20 }}>
-                      {stats.usage || 2} / {user.plan==='infinite'?'∞':planLimit} Transfers Used
+                      {stats.usage || 0} / {planLimit === Infinity ? '∞' : planLimit} Transfers Used
                     </div>
-                    {user.plan !== 'pro' && (
+                    {user.plan !== 'pro' && user.plan !== 'infinite' && (
                       <div>
                         <div style={{ fontSize:'0.75rem', color:'rgba(255,255,255,0.3)', marginBottom:12 }}>Upgrade benefits:</div>
                         {['Unlimited Transfers','Context Vault','Priority Support','Early Access'].map(b=>(

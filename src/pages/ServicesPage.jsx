@@ -88,6 +88,15 @@ const ServicesPage = () => {
         const updatedUser = { ...user, plan: planKey };
         localStorage.setItem('bridge_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
+        
+        // Immediate Extension and Auth sync
+        try {
+          const authEvent = new CustomEvent('BRIDGE_AUTH_UPDATE', { detail: { user: updatedUser } });
+          window.dispatchEvent(authEvent);
+          const reloadEvent = new CustomEvent('RELOAD_EXTENSION');
+          window.dispatchEvent(reloadEvent);
+        } catch (e) {}
+        
         setMessage(`Success! Upgraded to ${planKey.toUpperCase()} tier.`);
         setTimeout(() => navigate('/profile'), 2000);
       } else {
@@ -180,20 +189,42 @@ const ServicesPage = () => {
               boxShadow: 'var(--shadow)', display: 'flex', flexDirection: 'column'
             }}>
               <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '24px' }}>Free</span>
-              <div style={{ marginBottom: '32px' }}>
+              <div style={{ marginBottom: '24px' }}>
                 <span style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-main)' }}>$0</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>/month</span>
               </div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: '1.5' }}>
+                Perfect for exploring BridgeAI and testing cross-AI workflows.
+              </p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> 3 Context Transfers / Day</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Basic Extraction</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Basic Sync</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> 10 Context Transfers / Month</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Basic Context Extraction</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Transfer Between Supported AI Platforms</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Last 7 Days of Context History</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Save Up To 5 Prompt Templates</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Basic Context Search</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Community Support</li>
               </ul>
               <button 
-                onClick={() => navigate('/signup')}
+                onClick={() => {
+                  if (user) {
+                    if (user.plan === 'free') {
+                      // Already free
+                    } else {
+                      handlePurchaseClick('free', 0);
+                    }
+                  } else {
+                    navigate('/signup');
+                  }
+                }}
+                disabled={user?.plan === 'free'}
                 className="btn-secondary" style={{ width: '100%', padding: '14px', borderRadius: '12px', fontWeight: '700' }}
               >
-                Start Free
+                {user?.plan === 'free' ? 'Current Plan' : 'Start Free'}
               </button>
+              <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                No credit card required.
+              </div>
             </div>
 
             {/* Pro Tier */}
@@ -203,24 +234,41 @@ const ServicesPage = () => {
               boxShadow: 'var(--shadow-hover)', display: 'flex', flexDirection: 'column', zIndex: 2
             }}>
               <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: 'white', padding: '4px 16px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>MOST POPULAR</div>
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '24px' }}>Pro (Recommended)</span>
-              <div style={{ marginBottom: '32px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '10px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Pro</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: '800', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '4px 10px', borderRadius: '100px' }}>🎁 7-Day Free Trial</span>
+              </div>
+              <div style={{ marginBottom: '24px' }}>
                 <span style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-main)' }}>$5</span>
                 <span style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>/month</span>
               </div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: '1.5' }}>
+                Everything you need to work seamlessly across AI platforms.
+              </p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Unlimited Transfers</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Context History</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Saved Prompt Vault</li>
-                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)' }}><CheckIcon /> Priority Support</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Unlimited Context Transfers</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Unlimited Context Storage</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Full Conversation History</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Saved Prompt Vault</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Project Workspaces</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Cross-Platform Sync</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Smart Context Compression</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Advanced Context Search</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Custom Transfer Templates</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> One-Click Export</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Early Access Features</li>
+                <li style={{ display: 'flex', gap: '12px', fontSize: '0.95rem', color: 'var(--text-main)', alignItems: 'center' }}><CheckIcon /> Priority Support</li>
               </ul>
               <button 
                 onClick={() => handlePurchaseClick('pro', 5)}
                 disabled={upgrading === 'pro' || user?.plan === 'pro'}
                 className="btn-primary" style={{ width: '100%', padding: '14px', borderRadius: '12px', fontWeight: '700' }}
               >
-                {upgrading === 'pro' ? "Processing..." : (user?.plan === 'pro') ? "Current Plan" : "Upgrade to Pro"}
+                {upgrading === 'pro' ? "Processing..." : (user?.plan === 'pro') ? "Current Plan" : "Start 7-Day Free Trial"}
               </button>
+              <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Cancel anytime.
+              </div>
             </div>
 
           </div>

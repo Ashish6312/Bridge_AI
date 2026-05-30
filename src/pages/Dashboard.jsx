@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Plus, Search, MessageSquare, Clock, Code, Target, Layers, Activity,
-  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw, FileText, X, Trash2
+  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw, FileText, X, Trash2, Lock
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
 import IntelligenceBridge from '../components/IntelligenceBridge';
@@ -12,6 +12,12 @@ const isRecent = (dateString) => {
   if (!dateString) return false;
   const diffTime = Date.now() - new Date(dateString).getTime();
   return diffTime < (24 * 60 * 60 * 1000); 
+};
+
+const isOlderThan7Days = (dateString) => {
+  if (!dateString) return false;
+  const diffTime = Date.now() - new Date(dateString).getTime();
+  return diffTime > (7 * 24 * 60 * 60 * 1000);
 };
 
 const formatTime = (dateString) => {
@@ -1151,8 +1157,9 @@ const Dashboard = () => {
   });
 
   const recentBridges  = filteredBridges.filter(b =>  isRecent(b.created_at));
-  const olderBridges   = filteredBridges.filter(b => !isRecent(b.created_at));
+  const olderBridges   = filteredBridges.filter(b => !isRecent(b.created_at) && (stats.plan !== 'free' || !isOlderThan7Days(b.created_at)));
   const historyBridges = olderBridges;
+  const archivedCount  = filteredBridges.filter(b => stats.plan === 'free' && isOlderThan7Days(b.created_at)).length;
 
   const handleDelete = async () => {
     const id = confirmModal.id;
@@ -1265,26 +1272,45 @@ const Dashboard = () => {
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingLeft: '4px' }}>
                   <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px' }}>PROJECTS</div>
-                  <button onClick={() => setPromptModal({ isOpen: true })} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}>
+                  <button 
+                    onClick={() => {
+                      if (stats.plan === 'free') {
+                        triggerToast('Upgrade to Pro to unlock Saved Prompt Vault & Project folders.');
+                        return;
+                      }
+                      setPromptModal({ isOpen: true });
+                    }} 
+                    style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                  >
                     <Plus size={14} />
                   </button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
-                  {projects.length === 0 && (
-                    <div style={{ padding: '12px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.06)' }}>
-                      <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>No folders initialized</p>
+                  {stats.plan === 'free' ? (
+                    <div style={{ padding: '12px', textAlign: 'center', background: 'rgba(222, 106, 57, 0.02)', borderRadius: '8px', border: '1px dashed rgba(222, 106, 57, 0.12)' }}>
+                      <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', margin: 0 }}>
+                        <Lock size={10} /> Saved Prompt Vault (Pro)
+                      </p>
                     </div>
+                  ) : (
+                    <>
+                      {projects.length === 0 && (
+                        <div style={{ padding: '12px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.06)' }}>
+                          <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>No folders initialized</p>
+                        </div>
+                      )}
+                      {projects.map(p => (
+                        <NavItem 
+                          key={p.id}
+                          active={activeProject === p.id} 
+                          icon={<div style={{ width: '6px', height: '6px', borderRadius: '50%', background: activeProject === p.id ? 'var(--primary)' : 'rgba(255,255,255,0.2)' }} />} 
+                          label={p.name} 
+                          count={bridges.filter(b => String(b.project_id) === String(p.id)).length}
+                          onClick={() => { setActiveTab('saved'); setActiveProject(p.id); }} 
+                        />
+                      ))}
+                    </>
                   )}
-                  {projects.map(p => (
-                    <NavItem 
-                      key={p.id}
-                      active={activeProject === p.id} 
-                      icon={<div style={{ width: '6px', height: '6px', borderRadius: '50%', background: activeProject === p.id ? 'var(--primary)' : 'rgba(255,255,255,0.2)' }} />} 
-                      label={p.name} 
-                      count={bridges.filter(b => String(b.project_id) === String(p.id)).length}
-                      onClick={() => { setActiveTab('saved'); setActiveProject(p.id); }} 
-                    />
-                  ))}
                 </div>
               </div>
 
@@ -1295,7 +1321,7 @@ const Dashboard = () => {
                   <span style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--primary)' }}>{(stats.plan || 'FREE').toUpperCase()}</span>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                  {String(stats.plan).toLowerCase() === 'infinite' ? (
+                  {String(stats.plan).toLowerCase() === 'infinite' || String(stats.plan).toLowerCase() === 'pro' ? (
                     <div style={{ textAlign: 'center', padding: '4px 0' }}>
                       <div style={{ fontSize: '0.65rem', fontWeight: '700', color: '#f59e0b', letterSpacing: '0.5px', marginBottom: '2px' }}>STATUS</div>
                       <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'white' }}>UNLIMITED RELAY</div>
@@ -1304,19 +1330,19 @@ const Dashboard = () => {
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
                         <span>Usage</span>
-                        <span>{Math.round((stats.usageCount / (String(stats.plan).toLowerCase() === 'pro' ? 100 : 3)) * 100)}%</span>
+                        <span>{stats.usageCount} / 10</span>
                       </div>
                       <div style={{ height: '5px', width: '100%', background: 'rgba(255,255,255,0.04)', borderRadius: '100px', overflow: 'hidden' }}>
                         <motion.div 
                           initial={{ width: 0 }} 
-                          animate={{ width: `${Math.min(100, (stats.usageCount / (String(stats.plan).toLowerCase() === 'pro' ? 100 : 3)) * 100)}%` }}
+                          animate={{ width: `${Math.min(100, (stats.usageCount / 10) * 100)}%` }}
                           transition={{ duration: 0.8 }}
                           style={{ height: '100%', background: 'var(--primary)' }} 
                         />
                       </div>
                     </>
                   )}
-                  {String(stats.plan).toLowerCase() !== 'infinite' && (
+                  {String(stats.plan).toLowerCase() !== 'infinite' && String(stats.plan).toLowerCase() !== 'pro' && (
                     <Link to="/services" style={{ display: 'block', textAlign: 'center', marginTop: '12px', fontSize: '0.7rem', fontWeight: '600', color: 'var(--primary)', textDecoration: 'none', background: 'rgba(222, 106, 57, 0.08)', padding: '6px', borderRadius: '8px', border: '1px solid rgba(222, 106, 57, 0.12)', transition: 'all 0.2s' }}>
                       Upgrade Storage
                     </Link>
@@ -1506,22 +1532,42 @@ const Dashboard = () => {
                     />
                   ))}
                   {olderBridges.length > 0 && (
-                    <div style={{ fontSize: '0.72rem', fontWeight: '700', letterSpacing: '1.5px', color: 'var(--text-muted)', paddingLeft: '4px', marginTop: '8px' }}>
-                      EARLIER
+                    <>
+                      <div style={{ fontSize: '0.72rem', fontWeight: '700', letterSpacing: '1.5px', color: 'var(--text-muted)', paddingLeft: '4px', marginTop: '8px' }}>
+                        EARLIER
+                      </div>
+                      {olderBridges.map(ctx => (
+                        <BridgeCard 
+                          key={ctx.id} 
+                          ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} 
+                          onDelete={(id) => setConfirmModal({ isOpen: true, id })} 
+                          onForge={handleForge} 
+                          loadData={loadData}
+                          stats={stats}
+                          triggerToast={triggerToast}
+                          projects={projects}
+                        />
+                      ))}
+                    </>
+                  )}
+                  {stats.plan === 'free' && archivedCount > 0 && (
+                    <div className="glass-card" style={{ 
+                      padding: '24px', textAlign: 'center', background: 'rgba(222, 106, 57, 0.02)', 
+                      border: '1px dashed rgba(222, 106, 57, 0.15)', borderRadius: '16px', 
+                      marginTop: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)' }}>
+                        <Lock size={14} />
+                        <span style={{ fontSize: '0.8rem', fontWeight: '700', letterSpacing: '0.5px' }}>7-DAY HISTORY LIMIT REACHED</span>
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                        {archivedCount} older context bridges (older than 7 days) are archived. Upgrade to Pro to unlock full history access.
+                      </p>
+                      <Link to="/services" style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: '700', textDecoration: 'none', marginTop: '4px' }}>
+                        Upgrade Plan &rarr;
+                      </Link>
                     </div>
                   )}
-                  {olderBridges.map(ctx => (
-                    <BridgeCard 
-                      key={ctx.id} 
-                      ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} 
-                      onDelete={(id) => setConfirmModal({ isOpen: true, id })} 
-                      onForge={handleForge} 
-                      loadData={loadData}
-                      stats={stats}
-                      triggerToast={triggerToast}
-                      projects={projects}
-                    />
-                  ))}
                 </div>
               ) : (
                 <div className="glass-card" style={{ padding: '80px 24px', textAlign: 'center', background: 'var(--gray-50)', border: '1px dashed var(--gray-200)' }}>
@@ -1669,35 +1715,52 @@ const Dashboard = () => {
           )}
 
           {activeTab === 'history' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <h1 className="premium-gradient-text" style={{ fontSize: '2.5rem', marginBottom: '8px' }}>History Log</h1>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Review your past bridge transfers across all platforms.</p>
-              
-              {loading ? (
-                <p style={{ color: 'var(--text-muted)' }}>Fetching deep history from cloud...</p>
-              ) : historyBridges.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {historyBridges.map(ctx => (
-                    <BridgeCard 
-                      key={ctx.id} 
-                      ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Historical context bridged to clipboard!') }} 
-                      onDelete={handleDelete} 
-                      onForge={handleForge} 
-                      loadData={loadData} 
-                      stats={stats} 
-                      triggerToast={triggerToast} 
-                      projects={projects}
-                    />
-                  ))}
+            stats.plan === 'free' ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <h1 className="premium-gradient-text" style={{ fontSize: '2.5rem', marginBottom: '8px' }}>History Log</h1>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Review your past bridge transfers across all platforms.</p>
+                <div className="glass-card" style={{ padding: '80px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(222, 106, 57, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: 'var(--primary)' }}>
+                    <Lock size={28} />
+                  </div>
+                  <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', color: 'white' }}>Deep Context History is Locked</h3>
+                  <p style={{ maxWidth: 440, margin: '0 auto 24px', lineHeight: 1.6 }}>
+                    Free accounts only have access to active context within a 24-hour window. Upgrade to Pro to store, search, and recall your full history of conversation context across all LLM platforms.
+                  </p>
+                  <Link to="/services"><button className="btn-primary" style={{ padding: '12px 28px', fontSize: '0.9rem' }}>Upgrade to Pro ($5/mo)</button></Link>
                 </div>
-              ) : (
-                <div className="glass-card" style={{ padding: '64px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <Clock size={48} style={{ margin: '0 auto 16px auto', opacity: 0.5 }} />
-                  <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', color: 'white' }}>No History Available</h3>
-                  <p>Bridges older than 24 hours will automatically move into this archive.</p>
-                </div>
-              )}
-            </motion.div>
+              </motion.div>
+            ) : (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <h1 className="premium-gradient-text" style={{ fontSize: '2.5rem', marginBottom: '8px' }}>History Log</h1>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Review your past bridge transfers across all platforms.</p>
+                
+                {loading ? (
+                  <p style={{ color: 'var(--text-muted)' }}>Fetching deep history from cloud...</p>
+                ) : historyBridges.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {historyBridges.map(ctx => (
+                      <BridgeCard 
+                        key={ctx.id} 
+                        ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Historical context bridged to clipboard!') }} 
+                        onDelete={handleDelete} 
+                        onForge={handleForge} 
+                        loadData={loadData} 
+                        stats={stats} 
+                        triggerToast={triggerToast} 
+                        projects={projects}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="glass-card" style={{ padding: '64px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <Clock size={48} style={{ margin: '0 auto 16px auto', opacity: 0.5 }} />
+                    <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', color: 'white' }}>No History Available</h3>
+                    <p>Bridges older than 24 hours will automatically move into this archive.</p>
+                  </div>
+                )}
+              </motion.div>
+            )
           )}
 
           {activeTab === 'manual' && (
@@ -1718,9 +1781,14 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <label style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '8px', fontSize: '0.875rem' }}>Assign to Project</label>
-                  <select id="manual-project" className="input-premium" style={{ width: '100%', background: 'var(--bg)' }}>
-                    <option value="">— No Project —</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  <select 
+                    id="manual-project" 
+                    className="input-premium" 
+                    style={{ width: '100%', background: 'var(--bg)', cursor: stats.plan === 'free' ? 'not-allowed' : 'pointer' }}
+                    disabled={stats.plan === 'free'}
+                  >
+                    <option value="">{stats.plan === 'free' ? '— Projects Locked (Pro Feature) —' : '— No Project —'}</option>
+                    {stats.plan !== 'free' && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
               </div>

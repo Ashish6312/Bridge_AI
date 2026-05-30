@@ -116,9 +116,10 @@ async function updateQuota() {
         if (data.success) {
             const plan = data.plan || 'free';
             const used = data.usage || 0;
-            const limit = plan === 'pro' ? 100 : plan === 'infinite' ? Infinity : 3;
-            const pct = plan === 'infinite' ? 100 : Math.min(100, Math.round((used / limit) * 100));
-            quotaText.textContent = plan === 'infinite' ? `${used} used (∞)` : `${used} / ${limit} used`;
+            const isUnlimited = plan === 'pro' || plan === 'infinite';
+            const limit = isUnlimited ? Infinity : 10;
+            const pct = isUnlimited ? 100 : Math.min(100, Math.round((used / limit) * 100));
+            quotaText.textContent = isUnlimited ? `${used} used (∞)` : `${used} / ${limit} used`;
             quotaBar.style.width = `${pct}%`;
             if (pct > 85) quotaBar.style.background = 'linear-gradient(90deg, #f87171, #ef4444)';
             document.getElementById('intel-density').textContent = used;

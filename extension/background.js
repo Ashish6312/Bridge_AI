@@ -28,6 +28,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       });
     });
   }
+
+  if (request.action === 'RELOAD_EXTENSION') {
+    chrome.runtime.reload();
+  }
 });
 
 // Real-Time External Sync (Direct Link from Website)
