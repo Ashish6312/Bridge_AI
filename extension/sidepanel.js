@@ -22,14 +22,20 @@ const PLATFORM_LOGOS = {
 // DOM Elements (Initialized on Load)
 let extractBtn, platformName, siteEmoji, dashboardView, analysisView, dataContainer, cancelBtn, bridgeBtn, modal, modalTitle, modalMessage, modalCloseBtn, modalUpgradeBtn;
 
-async function syncUserSession() {
+async function syncUserSession(force = false) {
     // 1. Try persistent storage first (Standalone Mode)
     const stored = await chrome.storage.local.get(['bridge_token', 'bridge_user', 'api_base', 'web_base']);
     if (stored.bridge_user) {
+        const isEmailChanged = !userSession || userSession.email !== stored.bridge_user.email;
+        const isPlanChanged = !userSession || userSession.plan !== stored.bridge_user.plan;
+        
         userSession = stored.bridge_user;
         if (stored.api_base) API_BASE = stored.api_base;
         if (stored.web_base) WEB_BASE = stored.web_base;
-        updateUIWithSession(userSession);
+        
+        if (force || isEmailChanged || isPlanChanged) {
+            updateUIWithSession(userSession);
+        }
         return true;
     }
 
@@ -58,7 +64,11 @@ async function syncUserSession() {
             });
             
             if (results?.[0]?.result) {
-                userSession = JSON.parse(results[0].result);
+                const scrapedUser = JSON.parse(results[0].result);
+                const isEmailChanged = !userSession || userSession.email !== scrapedUser.email;
+                const isPlanChanged = !userSession || userSession.plan !== scrapedUser.plan;
+
+                userSession = scrapedUser;
                 // Intelligent Environment Detection
                 if (t.url.includes('localhost')) {
                     API_BASE = LOCAL_API;
@@ -70,7 +80,10 @@ async function syncUserSession() {
                 
                 // Persist it for standalone use
                 chrome.storage.local.set({ bridge_user: userSession, api_base: API_BASE, web_base: WEB_BASE });
-                updateUIWithSession(userSession);
+                
+                if (force || isEmailChanged || isPlanChanged) {
+                    updateUIWithSession(userSession);
+                }
                 return true;
             }
         } catch (e) {}
@@ -158,6 +171,7 @@ async function fetchQuota(email) {
                 const planChanged = userSession.plan !== data.plan;
                 userSession.plan = data.plan;
                 if (planChanged) {
+                    chrome.storage.local.set({ bridge_user: userSession });
                     updateUIWithSession(userSession);
                 }
             }
@@ -269,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     modalUpgradeBtn = document.getElementById('modal-upgrade-btn');
     const optimizeBtn = document.getElementById('optimize-btn');
 
-    await syncUserSession();
+    await syncUserSession(true);
 
     function formatPlatformName(host) {
         if (!host) return 'Universal Bridge';
@@ -380,7 +394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (document.getElementById('refresh-ext-btn')) {
         document.getElementById('refresh-ext-btn').addEventListener('click', async () => {
-            const synced = await syncUserSession();
+            const synced = await syncUserSession(true);
             if (synced) {
                 showCustomModal('Sync Complete', 'Intelligence relay re-established.', 'success');
             } else {

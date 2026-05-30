@@ -122,6 +122,12 @@ async function updateQuota() {
             quotaBar.style.width = `${pct}%`;
             if (pct > 85) quotaBar.style.background = 'linear-gradient(90deg, #f87171, #ef4444)';
             document.getElementById('intel-density').textContent = used;
+
+            if (userSession) {
+                userSession.plan = plan;
+                updateSessionUI();
+                enforcePlanLimits(plan);
+            }
         }
     } catch(e) {
         quotaText.textContent = 'Offline';
