@@ -196,6 +196,29 @@ const getTOTP = async (secret, timeOffset = 0) => {
   return otp.toString().padStart(6, '0');
 };
 
+const getUser2FASecret = (email) => {
+  if (!email) return "JBSWY3DPEHPK3PXP";
+  const key = `bridge_2fa_secret_${email}`;
+  let secret = localStorage.getItem(key);
+  if (!secret) {
+    const base32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    secret = "";
+    for (let i = 0; i < 16; i++) {
+      const randomIndex = Math.floor(Math.random() * 32);
+      secret += base32chars.charAt(randomIndex);
+    }
+    localStorage.setItem(key, secret);
+  }
+  return secret;
+};
+
+const formatSecret = (secret) => {
+  if (!secret) return "";
+  const cleaned = secret.replace(/\s/g, '').toUpperCase();
+  const matched = cleaned.match(/.{1,4}/g);
+  return matched ? matched.join(' ') : cleaned;
+};
+
 const TABS = ['Overview', 'Context Vault', 'Security', 'Billing', 'Support'];
 const P = '#FF6B2C';
 
@@ -242,6 +265,11 @@ const ProfilePage = () => {
   const [twoFaCode, setTwoFaCode] = useState('');
   const [twoFaError, setTwoFaError] = useState('');
   const [activeTab, setActiveTab] = useState('Overview');
+  const [twoFaSecret, setTwoFaSecret] = useState(() => {
+    const s = localStorage.getItem('bridge_user');
+    const u = s ? JSON.parse(s) : null;
+    return u ? getUser2FASecret(u.email) : '';
+  });
   const [showSettings, setShowSettings] = useState(false);
   const [editName, setEditName] = useState('');
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -298,6 +326,8 @@ const ProfilePage = () => {
     if (twoFactorEnabled) {
       setShowDisable2FAConfirm(true);
     } else {
+      const secret = getUser2FASecret(user?.email);
+      setTwoFaSecret(secret);
       setTwoFaCode('');
       setTwoFaError('');
       setShow2FAModal(true);
@@ -310,14 +340,13 @@ const ProfilePage = () => {
       return;
     }
 
-    const secret = "JBSWY3DPEHPK3PXP";
     let verified = false;
 
     try {
       // Check current, previous, and next windows to allow 30-sec clock drift
-      const code0 = await getTOTP(secret, 0);
-      const codeMinus = await getTOTP(secret, -1);
-      const codePlus = await getTOTP(secret, 1);
+      const code0 = await getTOTP(twoFaSecret, 0);
+      const codeMinus = await getTOTP(twoFaSecret, -1);
+      const codePlus = await getTOTP(twoFaSecret, 1);
 
       if (twoFaCode === code0 || twoFaCode === codeMinus || twoFaCode === codePlus) {
         verified = true;
@@ -1653,6 +1682,7 @@ Thank you for using Bridge AI!`;
                 <button onClick={() => {
                   setShowDisable2FAConfirm(false);
                   localStorage.setItem('bridge_2fa_enabled', 'false');
+                  localStorage.removeItem(`bridge_2fa_secret_${user?.email}`);
                   setTwoFactorEnabled(false);
                   showToast("Two-Factor Authentication disabled successfully.", "warning");
                 }} className="pp-danger-btn">Disable 2FA</button>
@@ -1685,7 +1715,7 @@ Thank you for using Bridge AI!`;
                 <div style={{ padding: '16px', background: 'white', borderRadius: '16px', display: 'inline-block', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
                   <div style={{ width: '130px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=otpauth%3A%2F%2Ftotp%2FBridgeAI%3A${encodeURIComponent(user?.email || 'user')}%3Fsecret%3DJBSWY3DPEHPK3PXP%26issuer%3DBridgeAI`} 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=otpauth%3A%2F%2Ftotp%2FBridgeAI%3A${encodeURIComponent(user?.email || 'user')}%3Fsecret%3D${twoFaSecret}%26issuer%3DBridgeAI`} 
                       alt="2FA QR Code" 
                       style={{ width: '130px', height: '130px', display: 'block' }}
                       onError={(e) => {
@@ -1742,7 +1772,7 @@ Thank you for using Bridge AI!`;
               </div>
               
               <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '24px' }}>
-                SECRET KEY: <strong style={{ color: '#f2f2f2' }}>JBSW Y3DP EHPK 3PXP</strong>
+                SECRET KEY: <strong style={{ color: '#f2f2f2' }}>{formatSecret(twoFaSecret)}</strong>
               </div>
 
               <div style={{ marginBottom: 24, textAlign: 'left' }}>
