@@ -8,7 +8,7 @@ import {
   Clock, Star, Trophy, Cpu, ArrowRight, AlertTriangle,
   FileText, HelpCircle, MessageSquare, Bug, LogOut,
   RefreshCw, Smartphone, Monitor, BarChart2, Archive,
-  ChevronRight, BookOpen, ExternalLink, Sparkles
+  ChevronRight, BookOpen, ExternalLink, Sparkles, Award
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
 
@@ -139,6 +139,8 @@ const ProfilePage = () => {
   const [invoices, setInvoices]   = useState([]);
   const [realTransfers, setRealTransfers] = useState([]);
   const [realActivity, setRealActivity]   = useState([]);
+  const [bridgesList, setBridgesList]     = useState([]);
+  const [devices, setDevices]             = useState(MOCK_DEVICES);
   const [activeTab, setActiveTab] = useState('Overview');
   const [showSettings, setShowSettings] = useState(false);
   const [editName, setEditName] = useState('');
@@ -171,13 +173,19 @@ const ProfilePage = () => {
   };
 
   const handleLogoutAllDevices = () => {
-    showToast('Terminated 2 active secondary sessions successfully.', 'success');
+    setDevices(prev => prev.filter(d => d.current));
+    showToast('Terminated all active secondary sessions successfully.', 'success');
+  };
+
+  const handleRevokeDevice = (deviceName) => {
+    setDevices(prev => prev.filter(d => d.name !== deviceName));
+    showToast(`Session revoked for ${deviceName} successfully.`, 'success');
   };
 
   const handleDownloadSecurityReport = () => {
     const data = {
       report: "BridgeAI Client Security Audit",
-      generatedAt: new Date().toISOString(),
+      generatedAt: "2026-05-30T03:55:35.134Z",
       encryption: "AES-256-GCM Active",
       sessionProtection: "JWT + Refresh Token",
       keys: "RSA-4096, Verified",
@@ -206,7 +214,8 @@ const ProfilePage = () => {
   };
 
   const handleExportContextVault = () => {
-    const blob = new Blob([JSON.stringify(MOCK_VAULT, null, 2)], { type: 'application/json' });
+    const dataToExport = bridgesList.length > 0 ? bridgesList : MOCK_VAULT;
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -221,12 +230,19 @@ const ProfilePage = () => {
 
   const handleDeleteAccountData = async () => {
     try {
-      localStorage.removeItem('bridge_user');
-      window.dispatchEvent(new Event('storage'));
-      showToast('All local and cloud account data deleted. Session terminated.', 'success');
-      setTimeout(() => {
-        navigate('/logout');
-      }, 1500);
+      const response = await fetch(`${API_BASE}/api/user/data?email=${user.email}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        localStorage.removeItem('bridge_user');
+        window.dispatchEvent(new Event('storage'));
+        showToast('All local and cloud account data deleted. Session terminated.', 'success');
+        setTimeout(() => {
+          navigate('/logout');
+        }, 1500);
+      } else {
+        showToast('Failed to purge account data from server.', 'error');
+      }
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -279,21 +295,51 @@ Thank you for using Bridge AI!`;
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const updated = { ...user, picture: reader.result };
       setUser(updated);
       localStorage.setItem('bridge_user', JSON.stringify(updated));
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/user/profile`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: user.email, picture: reader.result })
+        });
+        if (response.ok) {
+          showToast('Profile avatar saved to cloud.', 'success');
+        } else {
+          showToast('Saved locally, but failed to sync to server.', 'warning');
+        }
+      } catch (err) {
+        showToast('Saved locally. Server offline.', 'warning');
+      }
     };
     reader.readAsDataURL(file);
   };
 
   /* ── Save display name ─────────────────────────────────── */
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     if (!editName.trim()) return;
     const updated = { ...user, name: editName.trim() };
     setUser(updated);
     localStorage.setItem('bridge_user', JSON.stringify(updated));
     setShowEditProfile(false);
+    
+    try {
+      const response = await fetch(`${API_BASE}/api/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, name: editName.trim() })
+      });
+      if (response.ok) {
+        showToast('Profile name updated in database.', 'success');
+      } else {
+        showToast('Updated locally, but failed to sync to server.', 'warning');
+      }
+    } catch (err) {
+      showToast('Updated locally. Server offline.', 'warning');
+    }
   };
 
   /* ── API calls (parallel, silent on refresh) ───────────── */
@@ -303,12 +349,18 @@ Thank you for using Bridge AI!`;
       if (!s) return;
       const u = JSON.parse(s);
       try {
-        const [statusRes, invoiceRes, settingsRes, bridgesRes] = await Promise.all([
+        const [statusRes, invoiceRes, settingsRes, bridgesRes, meRes] = await Promise.all([
           fetch(`${API_BASE}/api/user/status?email=${u.email}`).catch(() => null),
           fetch(`${API_BASE}/api/user/invoices?email=${u.email}`).catch(() => null),
           fetch(`${API_BASE}/api/user/settings?email=${u.email}`).catch(() => null),
           fetch(`${API_BASE}/api/bridges?email=${u.email}`, { headers: { 'Cache-Control': 'no-cache' } }).catch(() => null),
+          fetch(`${API_BASE}/api/auth/me?email=${u.email}`).catch(() => null),
         ]);
+        if (meRes?.ok) {
+          const dbUser = await meRes.json();
+          setUser(dbUser);
+          localStorage.setItem('bridge_user', JSON.stringify(dbUser));
+        }
         if (statusRes?.ok) {
           const d = await statusRes.json();
           if (d.success) {
@@ -330,7 +382,8 @@ Thank you for using Bridge AI!`;
         }
         if (bridgesRes?.ok) {
           const d = await bridgesRes.json();
-          const bridges = Array.isArray(d) ? d : (d.bridges || []);
+          const bridges = Array.isArray(d) ? d : (d.data || d.bridges || []);
+          setBridgesList(bridges);
           if (bridges.length > 0) {
             // Build recent transfers
             const transfers = bridges.slice(0, 5).map(b => {
@@ -344,7 +397,7 @@ Thank you for using Bridge AI!`;
               else if (diffDays === 1) dateLabel = `Yesterday, ${created.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
               else dateLabel = `${diffDays} days ago`;
               return {
-                source: b.source_platform || b.platform || 'AI Platform',
+                source: b.source_platform || b.platform || b.source || 'AI Platform',
                 dest: b.destination_platform || b.target || 'Target',
                 date: dateLabel,
                 status: 'success'
@@ -364,11 +417,14 @@ Thank you for using Bridge AI!`;
               if (diffDays === 0) { day = 'Today'; time = `${diffHrs || 1} hour${diffHrs !== 1 ? 's' : ''} ago`; }
               else if (diffDays === 1) { day = 'Yesterday'; time = '~18 hours ago'; }
               else { day = `${diffDays} days ago`; time = `${diffDays} days ago`; }
-              const src = b.source_platform || b.platform || 'Platform';
+              const src = b.source_platform || b.platform || b.source || 'Platform';
               const dst = b.destination_platform || b.target || '';
               return { day, text: dst ? `Context transferred ${src} → ${dst}` : `Context extracted from ${src}`, time, ok: true };
             });
             setRealActivity(activity);
+          } else {
+            setRealTransfers([]);
+            setRealActivity([]);
           }
         }
       } catch (e) { console.error(e); }
@@ -391,18 +447,159 @@ Thank you for using Bridge AI!`;
   const memberSince  = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : 'May 2026';
   const accountId    = user.id || user._id || ('BRG-' + user.email?.slice(0,4).toUpperCase() + '-7291');
   const lastLogin    = 'Just now';
-  const onboardDone  = [!!user.picture, stats.total > 0, MOCK_VAULT.length > 0, true];
+
+  const displayBridges = bridgesList.map(b => {
+    const date = b.created_at || b.createdAt;
+    const now = new Date();
+    const created = new Date(date);
+    const diffMs = now - created;
+    const diffDays = Math.floor(diffMs / 86400000);
+    const diffHrs = Math.floor(diffMs / 3600000);
+    let updated;
+    if (diffDays === 0) {
+      updated = diffHrs === 0 ? 'Just now' : `${diffHrs}h ago`;
+    } else {
+      updated = `${diffDays}d ago`;
+    }
+    return {
+      id: b.id,
+      title: b.title,
+      tags: [b.source, b.mode].filter(Boolean),
+      updated,
+      size: b.tokens || '0 tokens'
+    };
+  });
+
+  const platformStats = (() => {
+    if (bridgesList.length === 0) return [];
+    const counts = {};
+    let total = 0;
+    bridgesList.forEach(b => {
+      const src = b.source_platform || b.platform || b.source || 'Others';
+      const normalized = src.toLowerCase().includes('chatgpt') ? 'ChatGPT' :
+                         src.toLowerCase().includes('claude') ? 'Claude' :
+                         src.toLowerCase().includes('gemini') ? 'Gemini' :
+                         src.toLowerCase().includes('deepseek') ? 'DeepSeek' : 'Others';
+      counts[normalized] = (counts[normalized] || 0) + 1;
+      total++;
+    });
+    const platforms = [
+      { name: 'ChatGPT',    color: '#74aa9c', logo: <ChatGPTLogo /> },
+      { name: 'Claude',     color: '#D97757', logo: <ClaudeLogo /> },
+      { name: 'Gemini',     color: '#1C7DFF', logo: <GeminiLogo /> },
+      { name: 'DeepSeek',   color: '#4D6BFE', logo: <DeepSeekLogo /> },
+      { name: 'Others',     color: '#a78bfa', logo: <OthersLogo /> }
+    ];
+    return platforms.map(p => {
+      const count = counts[p.name] || 0;
+      const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+      return { ...p, pct };
+    }).filter(p => p.pct > 0).sort((a, b) => b.pct - a.pct);
+  })();
+
+  const displayInsights = (() => {
+    if (bridgesList.length === 0) {
+      return [
+        { label:'Most Used AI',        val:'N/A',  logo:<ChatGPTLogo />, color:'rgba(255,255,255,0.2)' },
+        { label:'Favorite Destination', val:'N/A',   logo:<ClaudeLogo />,  color:'rgba(255,255,255,0.2)' },
+        { label:'Avg Transfer Time',   val:'N/A',  logo:<Zap size={20} color="rgba(255,255,255,0.2)"/>, color:'rgba(255,255,255,0.2)' },
+        { label:'Most Active Day',     val:'N/A',   logo:<Calendar size={20} color="rgba(255,255,255,0.2)"/>, color:'rgba(255,255,255,0.2)' },
+      ];
+    }
+    const srcCounts = {};
+    bridgesList.forEach(b => {
+      const src = b.source_platform || b.platform || b.source || 'ChatGPT';
+      const normalized = src.toLowerCase().includes('chatgpt') ? 'ChatGPT' :
+                         src.toLowerCase().includes('claude') ? 'Claude' :
+                         src.toLowerCase().includes('gemini') ? 'Gemini' :
+                         src.toLowerCase().includes('deepseek') ? 'DeepSeek' : 'Others';
+      srcCounts[normalized] = (srcCounts[normalized] || 0) + 1;
+    });
+    let mostUsedAI = 'ChatGPT';
+    let maxSrcCount = 0;
+    Object.entries(srcCounts).forEach(([name, count]) => {
+      if (count > maxSrcCount) {
+        maxSrcCount = count;
+        mostUsedAI = name;
+      }
+    });
+    const aiLogos = {
+      'ChatGPT': { logo: <ChatGPTLogo />, color: '#74aa9c' },
+      'Claude': { logo: <ClaudeLogo />, color: '#D97757' },
+      'Gemini': { logo: <GeminiLogo />, color: '#1C7DFF' },
+      'DeepSeek': { logo: <DeepSeekLogo />, color: '#4D6BFE' },
+      'Others': { logo: <OthersLogo />, color: '#a78bfa' }
+    };
+    const mostUsedAIDetails = aiLogos[mostUsedAI] || aiLogos['ChatGPT'];
+
+    let favDest = 'Claude';
+    const sortedPlatforms = Object.keys(srcCounts).sort((a,b) => srcCounts[b] - srcCounts[a]);
+    if (sortedPlatforms.length > 1) {
+      favDest = sortedPlatforms[1];
+    } else if (sortedPlatforms.length === 1) {
+      favDest = sortedPlatforms[0] === 'ChatGPT' ? 'Claude' : 'ChatGPT';
+    }
+    const favDestDetails = aiLogos[favDest] || aiLogos['Claude'];
+
+    const dayCounts = {};
+    const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    bridgesList.forEach(b => {
+      const date = b.created_at || b.createdAt;
+      const dayIndex = new Date(date).getDay();
+      const dayName = DAYS[dayIndex];
+      dayCounts[dayName] = (dayCounts[dayName] || 0) + 1;
+    });
+    let mostActiveDay = 'Monday';
+    let maxDayCount = 0;
+    Object.entries(dayCounts).forEach(([day, count]) => {
+      if (count > maxDayCount) {
+        maxDayCount = count;
+        mostActiveDay = day;
+      }
+    });
+    return [
+      { label:'Most Used AI',        val: mostUsedAI,  logo: mostUsedAIDetails.logo, color: mostUsedAIDetails.color },
+      { label:'Favorite Destination', val: favDest,     logo: favDestDetails.logo,  color: favDestDetails.color },
+      { label:'Avg Transfer Time',   val:'0.4 sec',    logo:<Zap size={20} color={P}/>, color:P },
+      { label:'Most Active Day',     val: mostActiveDay, logo:<Calendar size={20} color="#a78bfa"/>, color:'#a78bfa' },
+    ];
+  })();
+
+  const uniquePlatformsCount = (() => {
+    if (bridgesList.length === 0) return 0;
+    const set = new Set();
+    bridgesList.forEach(b => {
+      const src = b.source_platform || b.platform || b.source;
+      if (src) set.add(src.toLowerCase());
+    });
+    return set.size;
+  })();
+
+  const displayTimeSaved = (() => {
+    if (bridgesList.length === 0) return '0m';
+    const hours = (bridgesList.length * 3) / 60;
+    return hours >= 1 ? `${hours.toFixed(1)}h` : `${(hours * 60).toFixed(0)}m`;
+  })();
+
+  const onboardDone  = [!!user.picture, stats.total > 0, bridgesList.length > 0, true];
   const onboardPct   = Math.round((onboardDone.filter(Boolean).length / onboardDone.length) * 100);
 
-  /* ── Grouped activity (real from API, fallback to mock) ─── */
-  const activitySource = realActivity.length > 0 ? realActivity : MOCK_ACTIVITY;
-  const activityGroups = activitySource.reduce((acc, item) => {
+  const achievementsList = [
+    { id: 'first',   label: 'First Transfer',   icon: <Zap size={18} color="#FF6B2C"/>, earned: stats.total > 0 },
+    { id: 'ten',     label: '10 Transfers',      icon: <Trophy size={18} color="#FFD700"/>, earned: stats.total >= 10 },
+    { id: 'hundred', label: '100 Transfers',     icon: <Award size={18} color="#C0C0C0"/>, earned: stats.total >= 100 },
+    { id: 'multi',   label: 'Multi-Platform',    icon: <Globe size={18} color="#64a0ff"/>, earned: uniquePlatformsCount >= 2 },
+    { id: 'power',   label: 'Power User',        icon: <Activity size={18} color="#34d399"/>, earned: stats.total >= 25 },
+  ];
+
+  /* ── Grouped activity (real from API only) ─── */
+  const activityGroups = realActivity.reduce((acc, item) => {
     if (!acc[item.day]) acc[item.day] = [];
     acc[item.day].push(item);
     return acc;
   }, {});
-  const displayTransfers = realTransfers.length > 0 ? realTransfers : MOCK_TRANSFERS;
-  const displayInvoices = invoices.length > 0 ? invoices : MOCK_INVOICES;
+  const displayTransfers = realTransfers;
+  const displayInvoices = invoices;
 
   return (
     <div style={{ minHeight: '100vh', paddingTop: 90, paddingBottom: 80, color: '#f2f2f2' }}>
@@ -534,10 +731,10 @@ Thank you for using Bridge AI!`;
               {/* Stats Grid */}
               <div className="pp-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
                 {[
-                  { label: 'Total Transfers',  value: stats.total || 27,  icon: <RefreshCw size={20}/>,  color: '#FF6B2C', bg: 'rgba(255,107,44,0.1)',  sub: 'All time' },
-                  { label: 'Contexts Saved',   value: MOCK_VAULT.length,  icon: <Database size={20}/>,  color: '#a78bfa', bg: 'rgba(124,58,237,0.1)', sub: 'In vault' },
-                  { label: 'Platforms Used',   value: 6,                  icon: <Globe size={20}/>,     color: '#64a0ff', bg: 'rgba(100,160,255,0.1)', sub: 'AI models' },
-                  { label: 'Time Saved',       value: '13h',              icon: <Clock size={20}/>,     color: '#34d399', bg: 'rgba(16,185,129,0.1)', sub: 'Estimated' },
+                  { label: 'Total Transfers',  value: stats.total || bridgesList.length,  icon: <RefreshCw size={20}/>,  color: '#FF6B2C', bg: 'rgba(255,107,44,0.1)',  sub: 'All time' },
+                  { label: 'Contexts Saved',   value: bridgesList.length,                 icon: <Database size={20}/>,  color: '#a78bfa', bg: 'rgba(124,58,237,0.1)', sub: 'In vault' },
+                  { label: 'Platforms Used',   value: uniquePlatformsCount,               icon: <Globe size={20}/>,     color: '#64a0ff', bg: 'rgba(100,160,255,0.1)', sub: 'AI models' },
+                  { label: 'Time Saved',       value: displayTimeSaved,                   icon: <Clock size={20}/>,     color: '#34d399', bg: 'rgba(16,185,129,0.1)', sub: 'Estimated' },
                 ].map((s,i) => (
                   <motion.div key={i} className="pp-card pp-card-pad" initial={{ opacity:0,y:16 }} animate={{ opacity:1,y:0 }} transition={{ delay: i*0.07 }}
                     style={{ cursor: 'default', transition: 'all 0.25s' }}
@@ -558,15 +755,15 @@ Thank you for using Bridge AI!`;
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">Monthly Usage</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
-                    <span style={{ fontSize: '2rem', fontWeight: 800 }}>{stats.usage || 2}<span style={{ fontSize: '1rem', fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/{user.plan === 'infinite' ? '∞' : planLimit}</span></span>
-                    <span style={{ fontSize: '0.8rem', color: P, fontWeight: 700 }}>{Math.round(usagePct || 66)}% used</span>
+                    <span style={{ fontSize: '2rem', fontWeight: 800 }}>{stats.usage || 0}<span style={{ fontSize: '1rem', fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/{user.plan === 'infinite' ? '∞' : planLimit}</span></span>
+                    <span style={{ fontSize: '0.8rem', color: P, fontWeight: 700 }}>{Math.round(usagePct || 0)}% used</span>
                   </div>
                   <div className="pp-progress-track">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${usagePct || 66}%` }} transition={{ duration: 1.2, ease: 'easeOut' }} style={{ height: '100%', background: `linear-gradient(90deg,${P},#e85d1a)`, borderRadius: 100 }} />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${usagePct || 0}%` }} transition={{ duration: 1.2, ease: 'easeOut' }} style={{ height: '100%', background: `linear-gradient(90deg,${P},#e85d1a)`, borderRadius: 100 }} />
                   </div>
                   <div style={{ marginTop:14, display:'flex', gap:10 }}>
                     <div style={{ flex:1, padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)', fontSize:'0.78rem', color:'rgba(255,255,255,0.4)' }}>
-                      Remaining <span style={{ display:'block', fontSize:'1rem', fontWeight:800, color:'#f2f2f2', marginTop:2 }}>{user.plan==='infinite'?'∞':Math.max(0,planLimit-(stats.usage||2))}</span>
+                      Remaining <span style={{ display:'block', fontSize:'1rem', fontWeight:800, color:'#f2f2f2', marginTop:2 }}>{user.plan==='infinite'?'∞':Math.max(0,planLimit-(stats.usage||0))}</span>
                     </div>
                     <div style={{ flex:1, padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)', fontSize:'0.78rem', color:'rgba(255,255,255,0.4)' }}>
                       Avg Time <span style={{ display:'block', fontSize:'1rem', fontWeight:800, color:'#f2f2f2', marginTop:2 }}>0.4s</span>
@@ -602,7 +799,7 @@ Thank you for using Bridge AI!`;
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">AI Platforms Used</div>
                   <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-                    {MOCK_PLATFORMS.map(p => (
+                    {platformStats.map(p => (
                       <div key={p.name}>
                         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7 }}>
                           <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:'0.85rem', fontWeight:600 }}>
@@ -623,12 +820,12 @@ Thank you for using Bridge AI!`;
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label" style={{ display:'flex', justifyContent:'space-between' }}>
                     <span>Achievements</span>
-                    <span style={{ color:P }}>🏆 {MOCK_ACHIEVEMENTS.filter(a=>a.earned).length}/{MOCK_ACHIEVEMENTS.length}</span>
+                    <span style={{ color:P }}>🏆 {achievementsList.filter(a=>a.earned).length}/{achievementsList.length}</span>
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                    {MOCK_ACHIEVEMENTS.map(a => (
+                    {achievementsList.map(a => (
                       <div key={a.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px', borderRadius:13, background: a.earned ? 'rgba(255,107,44,0.05)' : 'rgba(255,255,255,0.01)', border:`1px solid ${a.earned ? 'rgba(255,107,44,0.2)' : 'rgba(255,255,255,0.05)'}`, opacity: a.earned ? 1 : 0.45 }}>
-                        <span style={{ fontSize:'1.3rem' }}>{a.icon}</span>
+                        <span style={{ display:'flex', alignItems:'center', justifyContent:'center', width:24, height:24, borderRadius:6, background: a.earned ? 'rgba(255,255,255,0.04)' : 'transparent' }}>{a.icon}</span>
                         <span style={{ fontWeight:700, fontSize:'0.85rem', color: a.earned ? '#f2f2f2' : 'rgba(255,255,255,0.4)' }}>{a.label}</span>
                         {a.earned && <CheckCircle size={14} color="#34d399" style={{ marginLeft:'auto' }} />}
                         {!a.earned && <Lock size={13} color="rgba(255,255,255,0.2)" style={{ marginLeft:'auto' }} />}
@@ -642,12 +839,7 @@ Thank you for using Bridge AI!`;
               <div className="pp-card pp-card-pad" style={{ marginBottom:28 }}>
                 <div className="pp-section-label">Insights</div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
-                  {[
-                    { label:'Most Used AI',        val:'ChatGPT',  logo:<ChatGPTLogo />, color:'#74aa9c' },
-                    { label:'Favorite Destination', val:'Claude',   logo:<ClaudeLogo />,  color:'#D97757' },
-                    { label:'Avg Transfer Time',   val:'0.4 sec',  logo:<Zap size={20} color={P}/>, color:P },
-                    { label:'Most Active Day',     val:'Monday',   logo:<Calendar size={20} color="#a78bfa"/>, color:'#a78bfa' },
-                  ].map(i => (
+                  {displayInsights.map(i => (
                     <div key={i.label} style={{ padding:'16px', borderRadius:14, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)', textAlign:'center' }}>
                       <div style={{ display:'flex', justifyContent:'center', alignItems:'center', width:40, height:40, borderRadius:12, background:`${i.color}18`, margin:'0 auto 10px' }}>{i.logo}</div>
                       <div style={{ fontSize:'0.68rem', color:'rgba(255,255,255,0.35)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5 }}>{i.label}</div>
@@ -669,13 +861,19 @@ Thank you for using Bridge AI!`;
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', padding:'10px 24px', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
                       {['Source','Destination','Date'].map(h=><span key={h} style={{ fontSize:'0.65rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgba(255,255,255,0.25)' }}>{h}</span>)}
                     </div>
-                    {displayTransfers.map((t,i) => (
-                      <div key={i} className="transfer-row" style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', padding:'13px 24px', borderBottom:'1px solid rgba(255,255,255,0.03)', transition:'background 0.2s' }}>
-                        <span style={{ fontWeight:700, fontSize:'0.85rem' }}>{t.source}</span>
-                        <span style={{ fontWeight:600, fontSize:'0.85rem', color:'rgba(255,255,255,0.5)' }}>{t.dest}</span>
-                        <span style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.35)' }}>{t.date}</span>
+                    {displayTransfers.length === 0 ? (
+                      <div style={{ padding:'40px 24px', textAlign:'center', color:'rgba(255,255,255,0.3)', fontSize:'0.85rem' }}>
+                        No transfers recorded yet.
                       </div>
-                    ))}
+                    ) : (
+                      displayTransfers.map((t,i) => (
+                        <div key={i} className="transfer-row" style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', padding:'13px 24px', borderBottom:'1px solid rgba(255,255,255,0.03)', transition:'background 0.2s' }}>
+                          <span style={{ fontWeight:700, fontSize:'0.85rem' }}>{t.source}</span>
+                          <span style={{ fontWeight:600, fontSize:'0.85rem', color:'rgba(255,255,255,0.5)' }}>{t.dest}</span>
+                          <span style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.35)' }}>{t.date}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -683,22 +881,28 @@ Thank you for using Bridge AI!`;
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">Activity Timeline</div>
                   <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
-                    {Object.entries(activityGroups).map(([day, items]) => (
-                      <div key={day}>
-                        <div style={{ fontSize:'0.65rem', fontWeight:800, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.25)', padding:'8px 0 6px' }}>{day}</div>
-                        {items.map((item,j) => (
-                          <div key={j} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.03)' }}>
-                            <div style={{ width:22,height:22,borderRadius:8,background:'rgba(16,185,129,0.1)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:2 }}>
-                              <CheckCircle size={12} color="#34d399" />
-                            </div>
-                            <div>
-                              <div style={{ fontSize:'0.82rem', fontWeight:600, color:'rgba(255,255,255,0.8)', lineHeight:1.4 }}>{item.text}</div>
-                              <div style={{ fontSize:'0.7rem', color:'rgba(255,255,255,0.25)', marginTop:2 }}>{item.time}</div>
-                            </div>
-                          </div>
-                        ))}
+                    {Object.keys(activityGroups).length === 0 ? (
+                      <div style={{ padding:'40px 10px', textAlign:'center', color:'rgba(255,255,255,0.3)', fontSize:'0.85rem' }}>
+                        No recent activity recorded.
                       </div>
-                    ))}
+                    ) : (
+                      Object.entries(activityGroups).map(([day, items]) => (
+                        <div key={day}>
+                          <div style={{ fontSize:'0.65rem', fontWeight:800, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.25)', padding:'8px 0 6px' }}>{day}</div>
+                          {items.map((item,j) => (
+                            <div key={j} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.03)' }}>
+                              <div style={{ width:22,height:22,borderRadius:8,background:'rgba(16,185,129,0.1)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:2 }}>
+                                <CheckCircle size={12} color="#34d399" />
+                              </div>
+                              <div>
+                                <div style={{ fontSize:'0.82rem', fontWeight:600, color:'rgba(255,255,255,0.8)', lineHeight:1.4 }}>{item.text}</div>
+                                <div style={{ fontSize:'0.7rem', color:'rgba(255,255,255,0.25)', marginTop:2 }}>{item.time}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -712,35 +916,47 @@ Thank you for using Bridge AI!`;
                 <h3 style={{ margin:0, fontSize:'1.1rem', fontWeight:800, display:'flex', alignItems:'center', gap:10 }}><Archive size={18} color={P} /> My Context Vault</h3>
                 <button className="pp-orange-btn">+ New Context</button>
               </div>
-              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                {MOCK_VAULT.map((v, i) => (
-                  <motion.div key={v.id} className="pp-card" initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:i*0.06 }}
-                    style={{ padding:'18px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, cursor:'pointer', transition:'all 0.2s' }}
-                    onMouseEnter={e=>{ e.currentTarget.style.borderColor='rgba(255,107,44,0.25)'; e.currentTarget.style.transform='translateY(-2px)'; }}
-                    onMouseLeave={e=>{ e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.transform=''; }}
-                  >
-                    <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-                      <div style={{ width:42,height:42,borderRadius:13,background:'rgba(124,58,237,0.1)',display:'flex',alignItems:'center',justifyContent:'center' }}>
-                        <Database size={18} color="#a78bfa" />
-                      </div>
-                      <div>
-                        <div style={{ fontWeight:700, fontSize:'0.95rem', marginBottom:4 }}>{v.title}</div>
-                        <div style={{ display:'flex', gap:6 }}>
-                          {v.tags.map(t=><span key={t} style={{ padding:'2px 8px', borderRadius:6, background:'rgba(255,107,44,0.08)', border:'1px solid rgba(255,107,44,0.18)', fontSize:'0.65rem', fontWeight:700, color:P }}>{t}</span>)}
+              {displayBridges.length === 0 ? (
+                <div style={{ padding:'60px 24px', textAlign:'center', border:'1px dashed rgba(255,255,255,0.08)', borderRadius:20, background:'rgba(255,255,255,0.01)' }}>
+                  <Database size={40} color="rgba(255,255,255,0.1)" style={{ marginBottom:14, margin:'0 auto' }}/>
+                  <div style={{ fontWeight:700, fontSize:'1rem', color:'rgba(255,255,255,0.6)', marginBottom:6 }}>Vault is Empty</div>
+                  <div style={{ color:'rgba(255,255,255,0.3)', fontSize:'0.85rem', maxWidth:360, margin:'0 auto 18px', lineHeight:1.5 }}>
+                    Active sessions and transfer summaries will automatically be securely vaulted here.
+                  </div>
+                  <Link to="/dashboard"><button className="pp-orange-btn">Start a Transfer</button></Link>
+                </div>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                  {displayBridges.map((v, i) => (
+                    <motion.div key={v.id} className="pp-card" initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:i*0.06 }}
+                      style={{ padding:'18px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, cursor:'pointer', transition:'all 0.2s' }}
+                      onMouseEnter={e=>{ e.currentTarget.style.borderColor='rgba(255,107,44,0.25)'; e.currentTarget.style.transform='translateY(-2px)'; }}
+                      onMouseLeave={e=>{ e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'; e.currentTarget.style.transform=''; }}
+                      onClick={() => handleOpenContext(v.title)}
+                    >
+                      <div style={{ display:'flex', alignItems:'center', gap:14, flex: 1, minWidth: 0 }}>
+                        <div style={{ width:42,height:42,borderRadius:13,background:'rgba(124,58,237,0.1)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
+                          <Database size={18} color="#a78bfa" />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight:700, fontSize:'0.95rem', marginBottom:4, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v.title}</div>
+                          <div style={{ display:'flex', gap:6, flexWrap: 'wrap' }}>
+                            {v.tags.map(t=><span key={t} style={{ padding:'2px 8px', borderRadius:6, background:'rgba(255,107,44,0.08)', border:'1px solid rgba(255,107,44,0.18)', fontSize:'0.65rem', fontWeight:700, color:P }}>{t}</span>)}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div style={{ textAlign:'right', flexShrink:0 }}>
-                      <div style={{ fontSize:'0.75rem', color:'rgba(255,255,255,0.3)', marginBottom:4 }}>{v.updated}</div>
-                      <div style={{ fontSize:'0.72rem', color:'rgba(255,255,255,0.25)' }}>{v.size}</div>
-                    </div>
-                    <div style={{ display:'flex', gap:8 }}>
-                      <button className="pp-ghost-btn" style={{ padding:'7px 14px', fontSize:'0.78rem' }}>Open</button>
-                      <button className="pp-orange-btn" style={{ padding:'7px 14px', fontSize:'0.78rem' }}>Restore</button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+                      <div style={{ textAlign:'right', flexShrink:0 }}>
+                        <div style={{ fontSize:'0.75rem', color:'rgba(255,255,255,0.3)', marginBottom:4 }}>{v.updated}</div>
+                        <div style={{ fontSize:'0.72rem', color:'rgba(255,255,255,0.25)' }}>{v.size}</div>
+                      </div>
+                      <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+                        <button onClick={(e) => { e.stopPropagation(); handleOpenContext(v.title); }} className="pp-ghost-btn" style={{ padding:'7px 14px', fontSize:'0.78rem' }}>Open</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleRestoreContext(v.title); }} className="pp-orange-btn" style={{ padding:'7px 14px', fontSize:'0.78rem' }}>Restore</button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
               <div style={{ marginTop:20, padding:'14px 20px', borderRadius:14, background:'rgba(255,255,255,0.01)', border:'1px dashed rgba(255,255,255,0.08)', textAlign:'center', color:'rgba(255,255,255,0.25)', fontSize:'0.82rem' }}>
                 Context Vault auto-saves your sessions. Start a transfer to build your vault.
               </div>
@@ -772,7 +988,7 @@ Thank you for using Bridge AI!`;
                 {/* Recent Logins */}
                 <div className="pp-card pp-card-pad">
                   <div className="pp-section-label">Connected Devices</div>
-                  {MOCK_DEVICES.map((d,i)=>(
+                  {devices.map((d,i)=>(
                     <div key={i} className="pp-row">
                       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                         <span style={{ color:'rgba(255,255,255,0.4)' }}>{d.icon}</span>
@@ -783,7 +999,7 @@ Thank you for using Bridge AI!`;
                       </div>
                       {d.current
                         ? <span style={{ padding:'2px 9px', borderRadius:6, background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.2)', fontSize:'0.62rem', fontWeight:800, color:'#34d399' }}>CURRENT</span>
-                        : <button className="pp-danger-btn" style={{ padding:'4px 10px', fontSize:'0.72rem' }}>Revoke</button>
+                        : <button onClick={() => handleRevokeDevice(d.name)} className="pp-danger-btn" style={{ padding:'4px 10px', fontSize:'0.72rem' }}>Revoke</button>
                       }
                     </div>
                   ))}

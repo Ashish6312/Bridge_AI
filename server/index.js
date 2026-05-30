@@ -792,6 +792,62 @@ app.patch('/api/user/settings', async (req, res) => {
   }
 });
 
+app.patch('/api/user/profile', async (req, res) => {
+  try {
+    const { email, name, picture } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    
+    const params = [];
+    const setClauses = [];
+    
+    if (name !== undefined) {
+      params.push(name);
+      setClauses.push(`name = $${params.length}`);
+    }
+    if (picture !== undefined) {
+      params.push(picture);
+      setClauses.push(`picture = $${params.length}`);
+    }
+    
+    if (setClauses.length === 0) return res.status(400).json({ error: "No fields to update" });
+    
+    params.push(email);
+    const query = `UPDATE users SET ${setClauses.join(', ')} WHERE email = $${params.length} RETURNING *`;
+    
+    const result = await pool.query(query, params);
+    if (result.rowCount === 0) return res.status(404).json({ error: "User not found" });
+    
+    const updatedUser = result.rows[0];
+    delete updatedUser.password;
+    res.json({ success: true, user: updatedUser });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/user/data', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    
+    // Delete all bridges for the user
+    await pool.query('DELETE FROM bridges WHERE user_email = $1', [email]);
+    
+    // Reset settings
+    await pool.query(
+      `UPDATE users 
+       SET settings = '{"notifications":true,"autoBridge":false,"secureMode":true}' 
+       WHERE email = $1`,
+      [email]
+    );
+    
+    res.json({ success: true, message: "All user context and settings deleted successfully." });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
 // ─── 404 CATCH-ALL ─────────────────────────────────────────
 app.use((req, res, next) => {
   res.status(404).json({ success: false, error: `Invalid Hub Endpoint: ${req.method} ${req.url}` });
