@@ -13,7 +13,7 @@ const EXTRACTORS = {
     authorSelector: '.author-name'
   },
   claude: {
-    messageSelector: '.font-claude-message, .font-user-message, [data-testid="user-message"], [data-testid="assistant-message"]',
+    messageSelector: '.font-claude-message, .font-user-message, [data-testid*="message"], [data-testid*="turn"], [class*="Message__"], [class*="MessageRow"], [class*="MessageContainer"], [class*="message-row"], [class*="message-container"], [class*="message-content"], [class*="user-message"], [class*="assistant-message"], [class*="claude-message"]',
     authorSelector: '.nickname'
   },
   perplexity: {
@@ -134,6 +134,104 @@ function detectRole(msg, index, platform) {
 }
 
 /**
+ * Asynchronously extract full chat logs from page's React State if available.
+ * Bypasses DOM-based virtual scrolling limits.
+ */
+function extractReactState() {
+  return new Promise((resolve) => {
+    let resolved = false;
+    const handleResponse = (e) => {
+      if (resolved) return;
+      resolved = true;
+      window.removeEventListener('BRIDGE_REACT_EXTRACTED', handleResponse);
+      resolve(e.detail.messages);
+    };
+    
+    // Listen for custom event from main world
+    window.addEventListener('BRIDGE_REACT_EXTRACTED', handleResponse);
+    
+    // Safety timeout fallback (1.5 seconds)
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        window.removeEventListener('BRIDGE_REACT_EXTRACTED', handleResponse);
+        resolve(null);
+      }
+    }, 1500);
+
+    // Inject helper script into main world to access standard DOM element JS properties
+    const script = document.createElement('script');
+    script.textContent = `
+      (function() {
+        try {
+          const allElements = document.querySelectorAll('*');
+          let messages = null;
+          for (const el of allElements) {
+            const key = Object.keys(el).find(k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'));
+            if (!key) continue;
+            
+            let curr = el[key];
+            while (curr) {
+              const props = curr.memoizedProps;
+              const state = curr.memoizedState;
+              
+              const isMessagesList = (arr) => {
+                if (!Array.isArray(arr) || arr.length === 0) return false;
+                const sample = arr[0];
+                return sample && (
+                  (sample.sender !== undefined || sample.role !== undefined) && 
+                  (sample.text !== undefined || sample.content !== undefined || sample.parts !== undefined)
+                );
+              };
+
+              if (props) {
+                if (isMessagesList(props.messages)) { messages = props.messages; break; }
+                if (props.value && isMessagesList(props.value.messages)) { messages = props.value.messages; break; }
+                if (props.state && isMessagesList(props.state.messages)) { messages = props.state.messages; break; }
+              }
+              if (state && state.memoizedState) {
+                if (isMessagesList(state.memoizedState.messages)) { messages = state.memoizedState.messages; break; }
+                if (isMessagesList(state.memoizedState.history)) { messages = state.memoizedState.history; break; }
+              }
+              curr = curr.return;
+            }
+            if (messages) break;
+          }
+          
+          if (messages) {
+            const formatted = messages.map(m => {
+              let text = '';
+              if (typeof m.text === 'string') text = m.text;
+              else if (typeof m.content === 'string') text = m.content;
+              else if (Array.isArray(m.content)) {
+                text = m.content.map(c => {
+                  if (typeof c === 'string') return c;
+                  return c.text || c.val || '';
+                }).join('\\n');
+              } else if (Array.isArray(m.parts)) {
+                text = m.parts.map(p => typeof p === 'string' ? p : p.text || '').join('\\n');
+              }
+              
+              const roleVal = m.sender || m.role || 'user';
+              const role = (roleVal === 'human' || roleVal === 'user' || roleVal === 'USER') ? 'user' : 'assistant';
+              return { role, text: text.trim() };
+            }).filter(m => m.text.length > 0);
+            
+            if (formatted.length > 0) {
+              window.dispatchEvent(new CustomEvent('BRIDGE_REACT_EXTRACTED', { detail: { messages: formatted } }));
+              return;
+            }
+          }
+        } catch(e) {}
+        window.dispatchEvent(new CustomEvent('BRIDGE_REACT_EXTRACTED', { detail: { messages: null } }));
+      })();
+    `;
+    (document.head || document.documentElement).appendChild(script);
+    script.remove();
+  });
+}
+
+/**
  * Extract contents of active artifacts, Monaco editors, and Canvas documents.
  */
 function extractArtifacts() {
@@ -176,36 +274,51 @@ function extractArtifacts() {
   return artifacts;
 }
 
-function extractChat() {
+async function extractChat() {
   const platform = getPlatform();
   const config = EXTRACTORS[platform] || EXTRACTORS.universal;
   
   let messages = [];
 
-  // 1. Try Chat Extraction
-  let nodes = document.querySelectorAll(config.messageSelector);
-  const uniqueNodes = Array.from(new Set(Array.from(nodes)));
-  
-  // De-duplicate nested matched elements (keep outermost nodes to capture full message text and prevent turn-splitting)
-  const nonNestedNodes = uniqueNodes.filter(node => {
-    return !uniqueNodes.some(otherNode => otherNode !== node && otherNode.contains(node));
-  });
-
+  // Try React State Extraction first for known platforms
   const isKnownPlatform = platform !== 'universal' && platform !== 'dashboard';
-  const minLength = isKnownPlatform ? 1 : 20;
-  const validNodes = nonNestedNodes.filter(node => node.innerText && node.innerText.trim().length >= minLength);
-  
-  messages = validNodes.map((msg, index) => {
-    const role = detectRole(msg, index, platform);
-    let text = msg.innerText.trim();
+  if (isKnownPlatform) {
+    try {
+      const reactMessages = await extractReactState();
+      if (reactMessages && reactMessages.length > 0) {
+        messages = reactMessages;
+        console.log('BridgeAI: Successfully extracted ' + messages.length + ' messages from React State.');
+      }
+    } catch (e) {
+      console.warn('BridgeAI: React extraction skipped:', e);
+    }
+  }
+
+  // Fallback to DOM-based extraction if React state extraction did not yield messages
+  if (messages.length === 0) {
+    let nodes = document.querySelectorAll(config.messageSelector);
+    const uniqueNodes = Array.from(new Set(Array.from(nodes)));
     
-    // Clean up common action button labels and UI noise typically found at the end of message cards
-    text = text
-      .replace(/(\n|^)(Copy|Copy code|Read aloud|Share|Regenerate|Thumbs up|Thumbs down|Try again|Retry|Good response|Bad response)\s*$/gi, '')
-      .trim();
+    // De-duplicate nested matched elements (keep outermost nodes to capture full message text and prevent turn-splitting)
+    const nonNestedNodes = uniqueNodes.filter(node => {
+      return !uniqueNodes.some(otherNode => otherNode !== node && otherNode.contains(node));
+    });
+
+    const minLength = isKnownPlatform ? 1 : 20;
+    const validNodes = nonNestedNodes.filter(node => node.innerText && node.innerText.trim().length >= minLength);
+    
+    messages = validNodes.map((msg, index) => {
+      const role = detectRole(msg, index, platform);
+      let text = msg.innerText.trim();
       
-    return { role, text };
-  });
+      // Clean up common action button labels and UI noise typically found at the end of message cards
+      text = text
+        .replace(/(\n|^)(Copy|Copy code|Read aloud|Share|Regenerate|Thumbs up|Thumbs down|Try again|Retry|Good response|Bad response)\s*$/gi, '')
+        .trim();
+        
+      return { role, text };
+    });
+  }
 
   // 2. Generic Data Extraction (Avoid polluting known platforms unless we captured absolutely nothing)
   if ((!isKnownPlatform && messages.length < 5) || (isKnownPlatform && messages.length === 0)) {
@@ -244,7 +357,11 @@ function extractChat() {
   if (isKnownPlatform) {
     try {
       const artifacts = extractArtifacts();
-      messages.push(...artifacts);
+      // Ensure we don't duplicate if already extracted (e.g. from React state)
+      const filteredArtifacts = artifacts.filter(art => {
+        return !messages.some(m => m.text.includes(art.text.substring(0, 100)));
+      });
+      messages.push(...filteredArtifacts);
     } catch (e) {
       console.warn('BridgeAI: Artifact extraction skipped/failed:', e);
     }
@@ -351,20 +468,21 @@ function handleDashboardEvents() {
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'EXTRACT_CHAT') {
-    try {
-      const data = extractChat();
-      sendResponse({ data });
-    } catch (e) {
-      console.error('BridgeAI Extraction Error:', e);
-      sendResponse({ data: null, error: e.message || 'Unknown extraction error' });
-    }
+    extractChat()
+      .then(data => {
+        sendResponse({ data });
+      })
+      .catch(e => {
+        console.error('BridgeAI Extraction Error:', e);
+        sendResponse({ data: null, error: e.message || 'Unknown extraction error' });
+      });
+    return true; // Keep message channel open for async response!
   }
   if (request.action === 'VAULT_UPDATED') {
     // Trigger real-time update in Dashboard via localStorage event
     localStorage.setItem('bridge_vault_updated', Date.now());
-    return;
+    return true;
   }
-  return true;
 });
 
 // Run automation if applicable
