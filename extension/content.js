@@ -189,29 +189,76 @@ function extractReactState() {
     script.textContent = `
       (function() {
         try {
+          const keysToSkip = new Set([
+            'return', 'child', 'sibling', 'stateNode', '_owner', '_currentElement', 
+            '_reactInternalFiber', '_reactFiber', 'domNode', 'element', 'container', 
+            'current', 'owner', 'fiber', 'node', 'react'
+          ]);
+
           // Helper to recursively find a messages list array inside any object/state
-          function findMessagesArray(obj, depth = 0) {
-            if (!obj || depth > 5) return null;
-            
+          function findMessagesArray(obj, depth = 0, visited = new WeakSet()) {
+            if (!obj || depth > 12) return null;
+            if (typeof obj !== 'object') return null;
+            if (visited.has(obj)) return null;
+            visited.add(obj);
+
             const isMessagesList = (arr) => {
               if (!Array.isArray(arr) || arr.length === 0) return false;
-              const sample = arr[0];
-              if (!sample || typeof sample !== 'object') return false;
               
-              // A message object must have some indicator of role/sender and content/text
-              const hasRole = sample.sender !== undefined || sample.role !== undefined || sample.type !== undefined || sample.author !== undefined;
-              const hasContent = sample.text !== undefined || sample.content !== undefined || sample.parts !== undefined || sample.body !== undefined;
-              return hasRole && hasContent;
+              // We check if the array contains at least one object that looks like a message
+              return arr.some(sample => {
+                if (!sample || typeof sample !== 'object') return false;
+                
+                const roleVal = String(sample.sender || sample.role || sample.type || sample.author || '').toLowerCase();
+                const isKnownRole = roleVal.includes('user') || 
+                                    roleVal.includes('human') || 
+                                    roleVal.includes('assistant') || 
+                                    roleVal.includes('model') || 
+                                    roleVal.includes('bot') || 
+                                    roleVal.includes('system');
+                                    
+                const hasContent = sample.text !== undefined || 
+                                   sample.content !== undefined || 
+                                   sample.parts !== undefined || 
+                                   sample.body !== undefined ||
+                                   sample.message !== undefined;
+                                   
+                return isKnownRole && hasContent;
+              });
             };
 
+            // 1. Check all direct keys first
             for (const key in obj) {
+              if (keysToSkip.has(key)) continue;
               try {
                 const val = obj[key];
                 if (Array.isArray(val) && isMessagesList(val)) {
                   return val;
                 }
-                if (val && typeof val === 'object' && key !== 'return' && key !== 'child' && key !== 'sibling') {
-                  const found = findMessagesArray(val, depth + 1);
+              } catch(e) {}
+            }
+
+            // 2. Prioritize key names that are highly likely to contain messages
+            const priorityKeys = ['messages', 'history', 'turns', 'chatHistory', 'messageList', 'conversation', 'currentConversation'];
+            for (const key of priorityKeys) {
+              if (key in obj && !keysToSkip.has(key)) {
+                try {
+                  const val = obj[key];
+                  if (val && typeof val === 'object') {
+                    const found = findMessagesArray(val, depth + 1, visited);
+                    if (found) return found;
+                  }
+                } catch(e) {}
+              }
+            }
+
+            // 3. Fallback search
+            for (const key in obj) {
+              if (priorityKeys.includes(key) || keysToSkip.has(key)) continue;
+              try {
+                const val = obj[key];
+                if (val && typeof val === 'object') {
+                  const found = findMessagesArray(val, depth + 1, visited);
                   if (found) return found;
                 }
               } catch(e) {}
@@ -221,7 +268,7 @@ function extractReactState() {
 
           // Query the actual message DOM elements first
           const msgEls = document.querySelectorAll(
-            '.font-claude-message, .font-user-message, [data-testid*="message"], [data-testid*="turn"]'
+            '.font-claude-message, .font-user-message, [data-testid*="message"], [data-testid*="turn"], [class*="Message"], [class*="message"], [class*="turn"]'
           );
           
           let messages = null;
@@ -269,23 +316,25 @@ function extractReactState() {
           }
 
           if (messages) {
-            const formatted = messages.map(m => {
-              let text = '';
-              if (typeof m.text === 'string') text = m.text;
-              else if (typeof m.content === 'string') text = m.content;
-              else if (Array.isArray(m.content)) {
-                text = m.content.map(c => {
-                  if (typeof c === 'string') return c;
-                  return c.text || c.val || '';
-                }).join('\\n');
-              } else if (Array.isArray(m.parts)) {
-                text = m.parts.map(p => typeof p === 'string' ? p : p.text || '').join('\\n');
-              }
-              
-              const roleVal = m.sender || m.role || 'user';
-              const role = (roleVal === 'human' || roleVal === 'user' || roleVal === 'USER') ? 'user' : 'assistant';
-              return { role, text: text.trim() };
-            }).filter(m => m.text.length > 0);
+            const formatted = messages
+              .filter(m => m && typeof m === 'object')
+              .map(m => {
+                let text = '';
+                if (typeof m.text === 'string') text = m.text;
+                else if (typeof m.content === 'string') text = m.content;
+                else if (Array.isArray(m.content)) {
+                  text = m.content.map(c => {
+                    if (typeof c === 'string') return c;
+                    return c.text || c.val || '';
+                  }).join('\\\\n');
+                } else if (Array.isArray(m.parts)) {
+                  text = m.parts.map(p => typeof p === 'string' ? p : p.text || '').join('\\\\n');
+                }
+                
+                const roleVal = String(m.sender || m.role || 'user').toLowerCase();
+                const role = (roleVal === 'human' || roleVal === 'user') ? 'user' : 'assistant';
+                return { role, text: text.trim() };
+              }).filter(m => m.text.length > 0);
             
             if (formatted.length > 0) {
               window.dispatchEvent(new CustomEvent('BRIDGE_REACT_EXTRACTED', { detail: { messages: formatted } }));
