@@ -290,7 +290,7 @@ app.post('/api/summarize', async (req, res) => {
       body: JSON.stringify({
         messages: [
           { role: 'system', content: `You are an expert intelligence analyst. ${PROMPTS[finalMode] || PROMPTS.quick} Output ONLY the summary in professional markdown.` },
-          { role: 'user', content: formattedChat.substring(0, 8000) }
+          { role: 'user', content: formattedChat.substring(0, 120000) }
         ],
         model: 'openai',
         seed: Math.floor(Math.random() * 1000000)

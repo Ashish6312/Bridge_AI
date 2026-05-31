@@ -133,6 +133,49 @@ function detectRole(msg, index, platform) {
   return (index % 2 === 0) ? 'user' : 'assistant';
 }
 
+/**
+ * Extract contents of active artifacts, Monaco editors, and Canvas documents.
+ */
+function extractArtifacts() {
+  const artifacts = [];
+  
+  // 1. Look for Monaco editor (used for code views in Claude/ChatGPT)
+  const editors = document.querySelectorAll('.monaco-editor, [class*="monaco-editor"]');
+  editors.forEach(editor => {
+    const text = editor.innerText || '';
+    if (text.trim().length > 50) {
+      artifacts.push({ role: 'system_data', text: `[Active Editor Code]\n\n${text.trim()}` });
+    }
+  });
+
+  // 2. Look for Claude Artifact Viewer panels or ChatGPT Canvas panels
+  const viewers = document.querySelectorAll(
+    '[data-testid="artifact-viewer"], [class*="artifact-viewer"], [class*="artifact-container"], ' +
+    '[data-testid="canvas-editor"], [class*="canvas-editor"], [class*="canvas-view"]'
+  );
+  viewers.forEach(viewer => {
+    const title = viewer.querySelector('[class*="title"], h1, h2, h3')?.innerText || 'Active Document';
+    const text = viewer.innerText || '';
+    if (text.trim().length > 50) {
+      artifacts.push({ role: 'system_data', text: `[Document: ${title}]\n\n${text.trim()}` });
+    }
+  });
+
+  // 3. Fallback to any visible code views or text pre blocks outside normal turns
+  const preBlocks = document.querySelectorAll('pre');
+  preBlocks.forEach(pre => {
+    const isInsideMessage = Array.from(document.querySelectorAll('.font-claude-message, .font-user-message, article, .message-content')).some(msg => msg.contains(pre));
+    if (!isInsideMessage) {
+      const text = pre.innerText || '';
+      if (text.trim().length > 50) {
+        artifacts.push({ role: 'system_data', text: `[Sidebar Code Snippet]\n\n${text.trim()}` });
+      }
+    }
+  });
+
+  return artifacts;
+}
+
 function extractChat() {
   const platform = getPlatform();
   const config = EXTRACTORS[platform] || EXTRACTORS.universal;
@@ -195,6 +238,16 @@ function extractChat() {
             messages.push({ role: 'list_item', text: l.innerText.trim() });
         }
     });
+  }
+
+  // 3. Extract active artifacts, monaco code editor sessions, or Canvas views
+  if (isKnownPlatform) {
+    try {
+      const artifacts = extractArtifacts();
+      messages.push(...artifacts);
+    } catch (e) {
+      console.warn('BridgeAI: Artifact extraction skipped/failed:', e);
+    }
   }
 
   const host = window.location.hostname;
