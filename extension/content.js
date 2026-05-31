@@ -13,8 +13,12 @@ const EXTRACTORS = {
     authorSelector: '.author-name'
   },
   claude: {
-    messageSelector: '.font-claude-message',
+    messageSelector: '.font-claude-message, .font-user-message, [data-testid="user-message"], [data-testid="assistant-message"]',
     authorSelector: '.nickname'
+  },
+  perplexity: {
+    messageSelector: '[class*="query"], [class*="answer"], [class*="UserMessage"], [class*="AssistantMessage"]',
+    authorSelector: ''
   },
   mistral: {
     messageSelector: '[class*="chat-message"]',
@@ -70,6 +74,65 @@ function formatPlatformName(platform, host) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+/**
+ * Detect role of a message node dynamically.
+ */
+function detectRole(msg, index, platform) {
+  // 1. Try to get role from data attributes on the element, its children, or its ancestors
+  let role = msg.getAttribute('data-message-author-role') || 
+             msg.querySelector('[data-message-author-role]')?.getAttribute('data-message-author-role') ||
+             msg.closest('[data-message-author-role]')?.getAttribute('data-message-author-role');
+  
+  if (role) {
+    role = role.toLowerCase();
+    if (role === 'user' || role === 'human') return 'user';
+    if (role === 'assistant' || role === 'model' || role === 'bot') return 'assistant';
+  }
+
+  // 2. Platform-specific selector-based role detection
+  if (platform === 'claude') {
+    if (msg.closest('.font-user-message, [data-testid="user-message"]')) return 'user';
+    if (msg.closest('.font-claude-message, [data-testid="assistant-message"]')) return 'assistant';
+  }
+  
+  if (platform === 'chatgpt') {
+    const turn = msg.closest('[data-testid^="conversation-turn-"]');
+    if (turn) {
+      if (turn.querySelector('[data-message-author-role="user"]')) return 'user';
+      if (turn.querySelector('[data-message-author-role="assistant"]')) return 'assistant';
+    }
+  }
+
+  if (platform === 'gemini') {
+    if (msg.closest('.query-container, .user-query, [class*="user"]')) return 'user';
+    if (msg.closest('.model-response, [class*="model"], [class*="assistant"]')) return 'assistant';
+  }
+
+  if (platform === 'perplexity') {
+    if (msg.closest('[class*="query"], [class*="UserMessage"]')) return 'user';
+    if (msg.closest('[class*="answer"], [class*="AssistantMessage"]')) return 'assistant';
+  }
+
+  // 3. Fallback to general class/testid checks
+  const testId = (msg.getAttribute('data-testid') || msg.closest('[data-testid]')?.getAttribute('data-testid') || '').toLowerCase();
+  const className = (msg.className || '').toLowerCase() + ' ' + (msg.parentElement?.className || '').toLowerCase();
+  
+  if (testId.includes('user') || className.includes('user') || className.includes('font-user')) {
+    return 'user';
+  }
+  if (testId.includes('assistant') || testId.includes('model') || className.includes('assistant') || className.includes('model') || className.includes('claude') || className.includes('font-claude')) {
+    return 'assistant';
+  }
+
+  // 4. Text prefix check
+  const txt = msg.innerText.toLowerCase();
+  if (txt.startsWith('user:') || txt.startsWith('me:')) return 'user';
+  if (txt.startsWith('ai:') || txt.startsWith('assistant:') || txt.startsWith('claude:')) return 'assistant';
+
+  // 5. Index-based alternation
+  return (index % 2 === 0) ? 'user' : 'assistant';
+}
+
 function extractChat() {
   const platform = getPlatform();
   const config = EXTRACTORS[platform] || EXTRACTORS.universal;
@@ -79,21 +142,30 @@ function extractChat() {
   // 1. Try Chat Extraction
   let nodes = document.querySelectorAll(config.messageSelector);
   const uniqueNodes = Array.from(new Set(Array.from(nodes)));
-  const validNodes = uniqueNodes.filter(node => node.innerText && node.innerText.trim().length > 20);
   
-  messages = validNodes.map((msg, index) => {
-    let role = msg.getAttribute('data-message-author-role');
-    if (!role) {
-      const txt = msg.innerText.toLowerCase();
-      if (txt.includes('user:') || txt.includes('me:')) role = 'user';
-      else if (txt.includes('ai:') || txt.includes('assistant:')) role = 'assistant';
-      else role = (index % 2 === 0) ? 'user' : 'assistant';
-    }
-    return { role, text: msg.innerText.trim() };
+  // De-duplicate nested matched elements (keep outermost nodes to capture full message text and prevent turn-splitting)
+  const nonNestedNodes = uniqueNodes.filter(node => {
+    return !uniqueNodes.some(otherNode => otherNode !== node && otherNode.contains(node));
   });
 
-  // 2. Generic Data Extraction (For sites like Internship Portal)
-  if (messages.length < 5) {
+  const isKnownPlatform = platform !== 'universal' && platform !== 'dashboard';
+  const minLength = isKnownPlatform ? 1 : 20;
+  const validNodes = nonNestedNodes.filter(node => node.innerText && node.innerText.trim().length >= minLength);
+  
+  messages = validNodes.map((msg, index) => {
+    const role = detectRole(msg, index, platform);
+    let text = msg.innerText.trim();
+    
+    // Clean up common action button labels and UI noise typically found at the end of message cards
+    text = text
+      .replace(/(\n|^)(Copy|Copy code|Read aloud|Share|Regenerate|Thumbs up|Thumbs down|Try again|Retry|Good response|Bad response)\s*$/gi, '')
+      .trim();
+      
+    return { role, text };
+  });
+
+  // 2. Generic Data Extraction (Avoid polluting known platforms unless we captured absolutely nothing)
+  if ((!isKnownPlatform && messages.length < 5) || (isKnownPlatform && messages.length === 0)) {
     // Grab Meta Description
     const metaDesc = document.querySelector('meta[name="description"]')?.content;
     if (metaDesc) messages.push({ role: 'system_metadata', text: `Description: ${metaDesc}` });
@@ -127,13 +199,14 @@ function extractChat() {
 
   const host = window.location.hostname;
   const siteName = formatPlatformName(platform, host);
+  const minTextLength = isKnownPlatform ? 0 : 5;
 
   return {
     platform: siteName,
     url: window.location.href,
     title: document.title,
     timestamp: new Date().toISOString(),
-    messages: messages.filter(m => m.text.length > 5)
+    messages: messages.filter(m => m.text.trim().length > minTextLength)
   };
 }
 
