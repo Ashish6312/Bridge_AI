@@ -527,7 +527,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        messages: capturedData.messages,
+                        messages: capturedData.compressedMessages ? [] : capturedData.messages,
+                        compressedMessages: capturedData.compressedMessages,
                         platform: capturedData.platform,
                         title: capturedData.title,
                         email: userSession?.email || 'guest',

@@ -134,6 +134,31 @@ function detectRole(msg, index, platform) {
 }
 
 /**
+ * Compress messages using native CompressionStream (gzip) and convert to base64.
+ */
+async function compressMessages(messages) {
+  try {
+    const jsonString = JSON.stringify(messages);
+    const stream = new Blob([jsonString]).stream();
+    const compressedStream = stream.pipeThrough(new CompressionStream('gzip'));
+    const response = new Response(compressedStream);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.error('BridgeAI Compression Failed:', err);
+    return null;
+  }
+}
+
+/**
  * Asynchronously extract full chat logs from page's React State if available.
  * Bypasses DOM-based virtual scrolling limits.
  */
@@ -415,13 +440,16 @@ async function extractChat() {
   const host = window.location.hostname;
   const siteName = formatPlatformName(platform, host);
   const minTextLength = isKnownPlatform ? 0 : 5;
+  const filteredMessages = messages.filter(m => m.text.trim().length > minTextLength);
+  const compressed = await compressMessages(filteredMessages);
 
   return {
     platform: siteName,
     url: window.location.href,
     title: document.title,
     timestamp: new Date().toISOString(),
-    messages: messages.filter(m => m.text.trim().length > minTextLength)
+    compressedMessages: compressed, // Gzip compressed Base64
+    messages: filteredMessages
   };
 }
 

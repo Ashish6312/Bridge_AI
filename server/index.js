@@ -5,13 +5,15 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const cron = require('node-cron');
 const EventEmitter = require('events');
+const zlib = require('zlib');
 const { sendEmail, sendWelcomeEmail, sendPromotionEmail } = require('./emailService');
 
 const app = express();
 const hubEmitter = new EventEmitter();
 // Sovereign Extension Protocol: Enable universal handshake
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PATCH', 'DELETE'], allowedHeaders: ['Content-Type', 'Authorization'] }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Enterprise Telemetery Log
 app.use((req, res, next) => {
@@ -215,10 +217,36 @@ app.get('/api/auth/me', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+/**
+ * Helper to decompress gzip base64 string to message array
+ */
+function decompressMessages(base64Str) {
+  if (!base64Str) return null;
+  try {
+    const buffer = Buffer.from(base64Str, 'base64');
+    const decompressed = zlib.gunzipSync(buffer);
+    return JSON.parse(decompressed.toString('utf8'));
+  } catch (err) {
+    console.error('[COMPRESSION] Decompression failed:', err);
+    return null;
+  }
+}
 
 app.post('/api/summarize', async (req, res) => {
   try {
-    const { messages, platform, title, email, mode = 'quick', project_id = null } = req.body;
+    let { messages, compressedMessages, platform, title, email, mode = 'quick', project_id = null } = req.body;
+
+    if (compressedMessages) {
+      const decompressed = decompressMessages(compressedMessages);
+      if (decompressed && decompressed.length > 0) {
+        messages = decompressed;
+      }
+    }
+
+    if (!messages) {
+      messages = [];
+    }
+
     if (!email || email === 'guest') {
       return res.status(401).json({ success: false, error: "Unauthorized: User session required for hub dispatch." });
     }
