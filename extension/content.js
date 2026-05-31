@@ -164,40 +164,85 @@ function extractReactState() {
     script.textContent = `
       (function() {
         try {
-          const allElements = document.querySelectorAll('*');
+          // Helper to recursively find a messages list array inside any object/state
+          function findMessagesArray(obj, depth = 0) {
+            if (!obj || depth > 5) return null;
+            
+            const isMessagesList = (arr) => {
+              if (!Array.isArray(arr) || arr.length === 0) return false;
+              const sample = arr[0];
+              if (!sample || typeof sample !== 'object') return false;
+              
+              // A message object must have some indicator of role/sender and content/text
+              const hasRole = sample.sender !== undefined || sample.role !== undefined || sample.type !== undefined || sample.author !== undefined;
+              const hasContent = sample.text !== undefined || sample.content !== undefined || sample.parts !== undefined || sample.body !== undefined;
+              return hasRole && hasContent;
+            };
+
+            for (const key in obj) {
+              try {
+                const val = obj[key];
+                if (Array.isArray(val) && isMessagesList(val)) {
+                  return val;
+                }
+                if (val && typeof val === 'object' && key !== 'return' && key !== 'child' && key !== 'sibling') {
+                  const found = findMessagesArray(val, depth + 1);
+                  if (found) return found;
+                }
+              } catch(e) {}
+            }
+            return null;
+          }
+
+          // Query the actual message DOM elements first
+          const msgEls = document.querySelectorAll(
+            '.font-claude-message, .font-user-message, [data-testid*="message"], [data-testid*="turn"]'
+          );
+          
           let messages = null;
-          for (const el of allElements) {
+          for (const el of msgEls) {
             const key = Object.keys(el).find(k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'));
             if (!key) continue;
             
             let curr = el[key];
             while (curr) {
-              const props = curr.memoizedProps;
-              const state = curr.memoizedState;
-              
-              const isMessagesList = (arr) => {
-                if (!Array.isArray(arr) || arr.length === 0) return false;
-                const sample = arr[0];
-                return sample && (
-                  (sample.sender !== undefined || sample.role !== undefined) && 
-                  (sample.text !== undefined || sample.content !== undefined || sample.parts !== undefined)
-                );
-              };
-
-              if (props) {
-                if (isMessagesList(props.messages)) { messages = props.messages; break; }
-                if (props.value && isMessagesList(props.value.messages)) { messages = props.value.messages; break; }
-                if (props.state && isMessagesList(props.state.messages)) { messages = props.state.messages; break; }
+              // Recursively search memoizedProps and memoizedState for a message list
+              if (curr.memoizedProps) {
+                const found = findMessagesArray(curr.memoizedProps);
+                if (found) { messages = found; break; }
               }
-              if (state && state.memoizedState) {
-                if (isMessagesList(state.memoizedState.messages)) { messages = state.memoizedState.messages; break; }
-                if (isMessagesList(state.memoizedState.history)) { messages = state.memoizedState.history; break; }
+              if (curr.memoizedState) {
+                const found = findMessagesArray(curr.memoizedState);
+                if (found) { messages = found; break; }
               }
               curr = curr.return;
             }
             if (messages) break;
           }
           
+          // If not found from message elements, scan all elements as a last resort
+          if (!messages) {
+            const allElements = document.querySelectorAll('*');
+            for (const el of allElements) {
+              const key = Object.keys(el).find(k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'));
+              if (!key) continue;
+              
+              let curr = el[key];
+              while (curr) {
+                if (curr.memoizedProps) {
+                  const found = findMessagesArray(curr.memoizedProps);
+                  if (found) { messages = found; break; }
+                }
+                if (curr.memoizedState) {
+                  const found = findMessagesArray(curr.memoizedState);
+                  if (found) { messages = found; break; }
+                }
+                curr = curr.return;
+              }
+              if (messages) break;
+            }
+          }
+
           if (messages) {
             const formatted = messages.map(m => {
               let text = '';
