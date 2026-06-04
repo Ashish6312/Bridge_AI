@@ -1133,14 +1133,14 @@ const ProjectWorkspace = ({
 
   const renderTabNavigation = () => {
     const tabs = [
-      { id: 'logs', label: 'Session Logs', icon: <Layers size={14} /> },
-      { id: 'memory', label: 'Memory Layer', icon: <Database size={14} /> },
-      { id: 'decisions', label: 'Decision Ledger', icon: <Cpu size={14} /> },
-      { id: 'chat', label: 'Memory Assistant', icon: <MessageSquare size={14} /> }
+      { id: 'logs',      label: 'Saved Chats',      icon: <Layers size={14} /> },
+      { id: 'memory',    label: 'Project Rules',    icon: <Database size={14} /> },
+      { id: 'decisions', label: 'Decisions Made',   icon: <Settings size={14} /> },
+      { id: 'chat',      label: 'AI Assistant',     icon: <MessageSquare size={14} /> },
     ];
 
     return (
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '24px', overflowX: 'auto' }}>
         {tabs.map(t => {
           const isActive = projectTab === t.id;
           return (
@@ -1154,6 +1154,18 @@ const ProjectWorkspace = ({
                 color: isActive ? 'var(--primary)' : 'rgba(255,255,255,0.5)',
                 fontWeight: isActive ? '700' : '500', cursor: 'pointer', transition: 'all 0.25s',
                 fontSize: '0.85rem'
+              }}
+              onMouseEnter={e => {
+                if (!isActive) {
+                  e.currentTarget.style.color = '#fff';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                }
+              }}
+              onMouseLeave={e => {
+                if (!isActive) {
+                  e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
+                  e.currentTarget.style.background = 'transparent';
+                }
               }}
             >
               {t.icon}
@@ -1174,7 +1186,7 @@ const ProjectWorkspace = ({
       {/* Project Header Banner */}
       <div style={{ position: 'relative', overflow: 'hidden', padding: '28px 32px', borderRadius: '24px', background: 'rgba(13, 13, 13, 0.45)', border: '1px solid rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <button 
                 onClick={() => setActiveProject(null)}
@@ -1185,15 +1197,15 @@ const ProjectWorkspace = ({
               <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
               <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600', letterSpacing: '1px' }}>PROJECT VAULT</span>
             </div>
-            <h1 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#FFFFFF', margin: 0 }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#FFFFFF', margin: 0, maxWidth: '100%', wordBreak: 'break-word' }}>
               {projects.find(p => p.id === projectId)?.name || projectId}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '4px', margin: '4px 0 0 0' }}>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '4px', margin: '4px 0 0 0', wordBreak: 'break-word', lineHeight: '1.4' }}>
               Aggregate and scale organizational context for Humans, AIs, and agents.
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexShrink: 0 }}>
             <button 
               onClick={compileMemory}
               disabled={isCompiling}
@@ -1269,16 +1281,16 @@ const ProjectWorkspace = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ padding: '20px', borderRadius: '16px', background: 'rgba(222, 106, 57, 0.02)', border: '1px solid rgba(222, 106, 57, 0.1)', marginBottom: '4px' }}>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Cpu size={14} /> Shared Memory Concept
+                  <Cpu size={14} /> Project Rules
                 </h4>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.5' }}>
-                  This layer keeps your active architecture rules and stack properties synchronized. Hit <strong>Compile Memory</strong> above to let the AI analyze your bridged chat histories and automatically update these fields.
+                  This section lists the active tech tools, goals, and coding rules for your project. Click <strong>Compile Memory</strong> above to let the AI automatically fill these details using your saved chat logs.
                 </p>
               </div>
 
               <div className="grid-responsive-2" style={{ gap: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>TECH STACK &amp; DEPS</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>TECH STACK</label>
                   <textarea
                     value={techStack}
                     onChange={(e) => setTechStack(e.target.value)}
@@ -1292,7 +1304,7 @@ const ProjectWorkspace = ({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>CORE OBJECTIVES &amp; FOCUS</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>PROJECT GOALS</label>
                   <textarea
                     value={goals}
                     onChange={(e) => setGoals(e.target.value)}
@@ -1307,7 +1319,7 @@ const ProjectWorkspace = ({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>DEVELOPER RULES &amp; ARCHITECTURE CONSTRAINTS</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>CODING RULES &amp; ARCHITECTURE</label>
                 <textarea
                   value={rules}
                   onChange={(e) => setRules(e.target.value)}
@@ -1327,7 +1339,7 @@ const ProjectWorkspace = ({
                   className="btn-primary"
                   style={{ padding: '12px 24px', fontSize: '0.85rem', background: 'rgba(222, 106, 57, 0.1)', color: 'var(--primary)', border: '1px solid rgba(222, 106, 57, 0.3)' }}
                 >
-                  {savingContext ? 'Saving...' : 'Save Context Memory'}
+                  {savingContext ? 'Saving...' : 'Save Rules'}
                 </button>
               </div>
             </div>
@@ -1340,14 +1352,14 @@ const ProjectWorkspace = ({
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
-              Reasoning record. Document technical compromises and discussions.
+              Log decisions made, options you looked at, and questions still open.
             </span>
             <button
               onClick={() => setShowDecModal(true)}
               className="btn-primary"
               style={{ padding: '8px 16px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              <Plus size={14} /> Log Decision
+              <Plus size={14} /> Save Decision
             </button>
           </div>
 
@@ -1360,7 +1372,7 @@ const ProjectWorkspace = ({
             <div className="grid-responsive-3" style={{ gap: '20px', alignItems: 'flex-start' }}>
               <div style={{ flex: 1, minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px' }}>
-                  <CheckCircle2 size={12} /> ACCEPTED DECISIONS ({acceptedDecisions.length})
+                  <CheckCircle2 size={12} /> DECISIONS MADE ({acceptedDecisions.length})
                 </div>
                 {acceptedDecisions.map(d => (
                   <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(16, 185, 129, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
@@ -1377,13 +1389,13 @@ const ProjectWorkspace = ({
                   </div>
                 ))}
                 {acceptedDecisions.length === 0 && (
-                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No accepted records</div>
+                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No decisions saved yet</div>
                 )}
               </div>
 
               <div style={{ flex: 1, minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', color: '#ef4444', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px' }}>
-                  <X size={12} /> REJECTED ALTERNATIVES ({rejectedDecisions.length})
+                  <X size={12} /> REJECTED OPTIONS ({rejectedDecisions.length})
                 </div>
                 {rejectedDecisions.map(d => (
                   <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
@@ -1400,13 +1412,13 @@ const ProjectWorkspace = ({
                   </div>
                 ))}
                 {rejectedDecisions.length === 0 && (
-                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No rejected records</div>
+                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No rejected options yet</div>
                 )}
               </div>
 
               <div style={{ flex: 1, minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.15)', color: '#f59e0b', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px' }}>
-                  <HelpCircleIcon size={12} /> OPEN ARCHITECTURE QUESTIONS ({openQuestions.length})
+                  <HelpCircleIcon size={12} /> OPEN QUESTIONS ({openQuestions.length})
                 </div>
                 {openQuestions.map(d => (
                   <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(245, 158, 11, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
@@ -1423,7 +1435,7 @@ const ProjectWorkspace = ({
                   </div>
                 ))}
                 {openQuestions.length === 0 && (
-                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No open questions</div>
+                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No pending questions</div>
                 )}
               </div>
             </div>
@@ -1432,7 +1444,7 @@ const ProjectWorkspace = ({
           {showDecModal && (
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(6px)' }}>
               <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} style={{ width: '90%', maxWidth: '460px', background: 'rgba(13,13,13,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '28px', boxShadow: '0 24px 50px rgba(0,0,0,0.6)' }}>
-                <h3 style={{ margin: '0 0 20px 0', color: 'white', fontSize: '1.25rem', fontWeight: 800 }}>Log Technical Decision</h3>
+                <h3 style={{ margin: '0 0 20px 0', color: 'white', fontSize: '1.25rem', fontWeight: 800 }}>Save a Project Decision</h3>
                 
                 <form onSubmit={createDecision} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -1448,20 +1460,20 @@ const ProjectWorkspace = ({
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>DECISION STATUS / TYPE</label>
+                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>DECISION STATUS</label>
                     <select
                       value={decType}
                       onChange={(e) => setDecType(e.target.value)}
                       style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(13,13,13,1)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', cursor: 'pointer', outline: 'none' }}
                     >
-                      <option value="accepted">Accepted (Adopted in main architecture)</option>
-                      <option value="rejected">Rejected (Alternatives discarded)</option>
-                      <option value="open">Open Question (Under discussion/research)</option>
+                      <option value="accepted">Accepted (Decided and implemented)</option>
+                      <option value="rejected">Rejected (Considered but discarded)</option>
+                      <option value="open">Open Question (Still deciding)</option>
                     </select>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>RATIONALE &amp; COMPROMISES</label>
+                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>WHY THIS CHOICE? (REASONING)</label>
                     <textarea
                       required
                       placeholder="Explain why this choice was made, or why it was rejected, or what details are currently under debate."
@@ -1472,7 +1484,7 @@ const ProjectWorkspace = ({
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>ALTERNATIVES CONSIDERED</label>
+                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>OTHER OPTIONS CONSIDERED</label>
                     <input
                       type="text"
                       placeholder="e.g. MongoDB, Redis, LevelDB"
@@ -1484,8 +1496,8 @@ const ProjectWorkspace = ({
 
                   <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                     <button type="button" onClick={() => setShowDecModal(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
-                    <button type="submit" disabled={savingDecision} style={{ flex: 2, padding: '10px', borderRadius: '8px', border: 'none', background: 'var(--primary)', color: 'white', fontWeight: '600', cursor: 'pointer' }}>
-                      {savingDecision ? 'Saving...' : 'Add to Ledger'}
+                    <button type="submit" disabled={savingDecision} className="btn-primary" style={{ flex: 1, padding: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      {savingDecision ? 'Saving...' : 'Save Decision'}
                     </button>
                   </div>
                 </form>
@@ -1529,10 +1541,10 @@ const ProjectWorkspace = ({
 
             <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '10px 20px', borderTop: '1px solid rgba(255,255,255,0.03)', background: 'rgba(0,0,0,0.1)' }}>
               {[
-                "Why did we make our database decision?",
-                "Create a developer onboarding markdown guide",
-                "Draft a Claude/Cursor system prompt for our rules",
-                "Summarize outstanding open architectural questions"
+                "Why did we choose our database?",
+                "Write a developer onboarding guide",
+                "Create a system prompt for Claude",
+                "What decisions are still pending?"
               ].map((s, i) => (
                 <button
                   key={i}
@@ -1596,6 +1608,7 @@ const Dashboard = () => {
   const [projects, setProjects] = useState([]);
   const [activeProject, setActiveProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [toast, setToast] = useState(null);
   const [stats, setStats] = useState({ totalBridges: 0, totalTokens: 0, plan: 'free', usageCount: 0 });
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -1757,8 +1770,10 @@ const Dashboard = () => {
     }
   }, [bridges.length]);
 
-  const refreshVault = () => {
-    loadData();
+  const refreshVault = async () => {
+    setIsRefreshing(true);
+    await loadData(true);
+    setIsRefreshing(false);
     try { window.dispatchEvent(new CustomEvent('RELOAD_EXTENSION')); } catch (e) {}
   };
 
@@ -1889,7 +1904,7 @@ const Dashboard = () => {
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Cpu size={14} color="white" />
                   </div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.5px', color: 'var(--text-main)' }}>INTELLIGENCE VAULT</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.5px', color: 'var(--text-main)' }}>MY MEMORY VAULT</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: hubStatus === 'online' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(244, 63, 94, 0.08)', padding: '2px 8px', borderRadius: '100px', border: hubStatus === 'online' ? '1px solid rgba(34, 197, 94, 0.15)' : '1px solid rgba(244, 63, 94, 0.15)' }}>
                   <div className={hubStatus === 'online' ? 'pulse' : ''} style={{ width: '5px', height: '5px', borderRadius: '50%', background: hubStatus === 'online' ? '#22c55e' : '#f43f5e' }} />
@@ -1926,25 +1941,25 @@ const Dashboard = () => {
               
               {/* Group: Vault Ops */}
               <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px', marginBottom: '12px', paddingLeft: '4px' }}>VAULT ENGINE</div>
+                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px', marginBottom: '12px', paddingLeft: '4px' }}>VAULT STORAGE</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <NavItem 
                     active={activeTab === 'saved' && !activeProject} 
                     icon={<Layers size={14} />} 
-                    label="All Intelligence" 
+                    label="All Saved Chats" 
                     count={bridges.length} 
                     onClick={() => { setActiveTab('saved'); setActiveProject(null); }} 
                   />
                   <NavItem 
                     active={activeTab === 'history'} 
                     icon={<Clock size={14} />} 
-                    label="History Archive" 
+                    label="Bridge History" 
                     onClick={() => setActiveTab('history')} 
                   />
                   <NavItem 
                     active={activeTab === 'extension'} 
                     icon={<Zap size={14} />} 
-                    label="Analyst Module" 
+                    label="Chrome Extension" 
                     status="LIVE"
                     onClick={() => setActiveTab('extension')} 
                   />
@@ -1954,11 +1969,11 @@ const Dashboard = () => {
               {/* Group: Project Folders */}
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingLeft: '4px' }}>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px' }}>PROJECTS</div>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px' }}>PROJECT WORKSPACES</div>
                   <button 
                     onClick={() => {
                       if (stats.plan === 'free') {
-                        triggerToast('Upgrade to Pro to unlock Saved Prompt Vault & Project folders.');
+                        triggerToast('Upgrade to Pro to unlock Project Folders & workspaces.');
                         return;
                       }
                       setPromptModal({ isOpen: true });
@@ -1972,7 +1987,7 @@ const Dashboard = () => {
                   {stats.plan === 'free' ? (
                     <div style={{ padding: '12px', textAlign: 'center', background: 'rgba(222, 106, 57, 0.02)', borderRadius: '8px', border: '1px dashed rgba(222, 106, 57, 0.12)' }}>
                       <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', margin: 0 }}>
-                        <Lock size={10} /> Saved Prompt Vault (Pro)
+                        <Lock size={10} /> Project Folders (Pro)
                       </p>
                     </div>
                   ) : (
@@ -2000,14 +2015,14 @@ const Dashboard = () => {
               {/* Group: Capacity Protocol */}
               <div style={{ marginTop: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingLeft: '4px' }}>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px' }}>STORAGE CAPACITY</div>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px' }}>STORAGE LIMIT</div>
                   <span style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--primary)' }}>{(stats.plan || 'FREE').toUpperCase()}</span>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
                   {String(stats.plan).toLowerCase() === 'infinite' || String(stats.plan).toLowerCase() === 'pro' ? (
                     <div style={{ textAlign: 'center', padding: '4px 0' }}>
                       <div style={{ fontSize: '0.65rem', fontWeight: '700', color: '#f59e0b', letterSpacing: '0.5px', marginBottom: '2px' }}>STATUS</div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'white' }}>UNLIMITED RELAY</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'white' }}>UNLIMITED STORAGE</div>
                     </div>
                   ) : (
                     <>
@@ -2050,7 +2065,7 @@ const Dashboard = () => {
         </motion.aside>
 
         {/* Main Content */}
-        <main style={{ flex: 1 }}>
+        <main style={{ flex: 1, minWidth: 0 }}>
           {activeTab === 'saved' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {activeProject ? (
@@ -2292,7 +2307,15 @@ const Dashboard = () => {
                     {activeProject && (
                        <button onClick={() => setActiveProject(null)} className="btn-primary" style={{ padding: '14px 28px' }}><MessageSquare size={18} /> Show All Intelligence</button>
                     )}
-                    <button onClick={refreshVault} className="btn-secondary" style={{ padding: '14px 28px' }}><RefreshCw size={18} /> Refresh Vault</button>
+                    <button 
+                      onClick={refreshVault} 
+                      disabled={isRefreshing} 
+                      className="btn-secondary" 
+                      style={{ padding: '14px 28px', display: 'flex', alignItems: 'center', gap: '8px', minWidth: '160px', justifyContent: 'center' }}
+                    >
+                      <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} /> 
+                      {isRefreshing ? 'Refreshing...' : 'Refresh Vault'}
+                    </button>
                   </div>
                 </div>
               )}

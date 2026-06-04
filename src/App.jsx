@@ -40,7 +40,7 @@ const BridgeRoutes = () => {
   return (
     <AnimatePresence mode="wait" onExitComplete={() => {
       if (!window.location.hash) {
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }}>
       <Routes location={location} key={location.pathname}>
@@ -86,6 +86,16 @@ function App() {
       }, 100);
     }
   }, [location]);
+
+  // Smooth scroll to top on page path changes
+  React.useEffect(() => {
+    if (!location.hash) {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }, [location.pathname]);
 
   // Real-Time Extension Sync (Global)
   React.useEffect(() => {

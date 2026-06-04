@@ -178,94 +178,103 @@ const LandingPage = () => {
       {/* ══════════════════════════════════════════════
           SECTION 1: HERO
       ══════════════════════════════════════════════ */}
-      <section id="hero" className="grid-responsive-2" style={{ position:'relative', zIndex:2, alignItems:'center', gap:'clamp(2rem, 5vw, 4rem)', padding:'0 clamp(1rem, 5vw, 3rem)', minHeight:'calc(100vh - 72px)', marginTop:72, overflowX:'hidden', width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
+      <section id="hero" style={{ position:'relative', zIndex:2, display: 'flex', alignItems: 'center', minHeight:'calc(100vh - 72px)', marginTop:72, overflowX:'hidden', width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
         {/* Local Ambient Glow for Hero */}
         <div style={{ position:'absolute', top:'10%', left:'30%', width:450, height:450, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,107,44,0.1) 0%, transparent 70%)', filter: 'blur(100px)', pointerEvents:'none', zIndex: 0 }} />
 
-        {/* LEFT */}
-        <motion.div initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7 }} style={{ padding:'2.5rem 0 1.5rem', position:'relative', zIndex:1 }}>
-          <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
-            style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:99, border:`1px solid rgba(255,107,44,0.35)`, background:'rgba(255,107,44,0.08)', fontSize:12, fontWeight:600, color:P, letterSpacing:'0.05em', marginBottom:'1rem', boxShadow:'0 0 20px rgba(255,107,44,0.15)' }}>
-            <span style={{ width:6, height:6, borderRadius:'50%', background:ACC_RED, animation:'ldBlink 1.5s infinite', boxShadow:`0 0 6px ${ACC_RED}` }} />
-            Now in v2.0 · Enterprise Edition
+        <div className="grid-responsive-2" style={{ width: '100%', maxWidth: 1200, margin: '0 auto', alignItems:'center', gap:'clamp(2rem, 5vw, 4rem)', padding:'2rem clamp(1rem, 5vw, 3rem)', boxSizing: 'border-box' }}>
+          {/* LEFT */}
+          <motion.div initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7 }} style={{ padding:'2.5rem 0 1.5rem', position:'relative', zIndex:1 }}>
+            <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
+              style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:99, border:`1px solid rgba(255,107,44,0.35)`, background:'rgba(255,107,44,0.08)', fontSize:12, fontWeight:600, color:P, letterSpacing:'0.05em', marginBottom:'1rem', boxShadow:'0 0 20px rgba(255,107,44,0.15)' }}>
+              <span style={{ width:6, height:6, borderRadius:'50%', background:ACC_RED, animation:'ldBlink 1.5s infinite', boxShadow:`0 0 6px ${ACC_RED}` }} />
+              Now in v2.0 · Enterprise Edition
+            </motion.div>
+
+            <h1 style={{ fontSize:'clamp(38px,4.2vw,58px)', fontWeight:800, lineHeight:1.1, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
+              Stop Fragmenting<br />
+              <span style={{ 
+                background:`linear-gradient(135deg,#FF6B2C 0%,#FF5C5C 50%,#7C3AED 100%)`, 
+                WebkitBackgroundClip:'text', 
+                WebkitTextFillColor:'transparent', 
+                backgroundClip:'text',
+                WebkitBoxDecorationBreak: 'clone',
+                boxDecorationBreak: 'clone'
+              }}>Your Project Memory</span><br />
+              Across AI Chats.
+            </h1>
+
+            <p style={{ fontSize:15, color:MUTED, lineHeight:1.85, fontWeight:500, opacity:0.85, maxWidth:450, marginBottom:'1.5rem' }}>
+              Knowledge is scattered across ChatGPT, Claude, Gemini, docs, Slack, and code. BridgeAI is the shared knowledge layer that aggregates, tracks decisions, and serves as an organizational memory for humans, AI, and agents.
+            </p>
+
+            <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:'1.5rem' }}>
+              <Link to="/dashboard"
+                style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'14px 28px', borderRadius:10, background:'rgba(255,107,44,0.08)', color:P, border:'1px solid rgba(255,107,44,0.3)', fontWeight:700, textDecoration:'none', fontSize:14, boxShadow:`0 0 20px rgba(255,107,44,0.2)`, transition:'all 0.25s' }}
+                onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.background=P; e.currentTarget.style.color='#050505'; e.currentTarget.style.boxShadow='0 0 35px rgba(255,107,44,0.5)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.background='rgba(255,107,44,0.08)'; e.currentTarget.style.color=P; e.currentTarget.style.boxShadow='0 0 20px rgba(255,107,44,0.2)'; }}>
+                Get Started Free <ArrowRight size={16} />
+              </Link>
+              <Link to="/docs"
+                style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'14px 28px', borderRadius:10, background:'rgba(255,255,255,0.03)', color:TEXT, border:`1px solid rgba(255,107,44,0.15)`, fontWeight:600, textDecoration:'none', fontSize:14, transition:'all 0.25s' }}
+                onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.borderColor=`rgba(255,107,44,0.45)`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.borderColor='rgba(255,107,44,0.15)'; }}>
+                View Documentation
+              </Link>
+            </div>
+
+            <div>
+              <div style={{ fontSize:11, letterSpacing:'0.1em', textTransform:'uppercase', color:MUTED, fontWeight:600, marginBottom:'0.75rem', fontFamily:"'Space Mono',monospace" }}>Works with</div>
+              <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                {[{ label:'GPT-4', color:'#34d399' },{ label:'Claude', color:'#E57373' },{ label:'Gemini', color:'#64a0ff' },{ label:'Mistral', color:'#ffbe32' },{ label:'Llama 3', color:'#c084fc' }].map(m => (
+                  <span key={m.label} style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:99, border:`1px solid rgba(255,107,44,0.15)`, background:'rgba(255,107,44,0.04)', fontSize:11.5, fontWeight:600, color:MUTED, transition:'all 0.2s' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor=`rgba(255,107,44,0.35)`; e.currentTarget.style.color=P; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,107,44,0.15)'; e.currentTarget.style.color=MUTED; }}>
+                    <span style={{ width:7, height:7, borderRadius:'50%', background:m.color, boxShadow:`0 0 6px ${m.color}80` }} />
+                    {m.label}
+                  </span>
+                ))}
+              </div>
+            </div>
           </motion.div>
 
-          <h1 style={{ fontSize:'clamp(42px,5vw,72px)', fontWeight:800, lineHeight:0.95, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
-            Stop Fragmenting<br />
-            <span style={{ background:`linear-gradient(135deg,#FF6B2C 0%,#FF5C5C 50%,#7C3AED 100%)`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Your Project Memory</span><br />
-            Across AI Chats.
-          </h1>
-
-          <p style={{ fontSize:15, color:MUTED, lineHeight:1.85, fontWeight:500, opacity:0.85, maxWidth:450, marginBottom:'1.5rem' }}>
-            Knowledge is scattered across ChatGPT, Claude, Gemini, docs, Slack, and code. BridgeAI is the shared knowledge layer that aggregates, tracks decisions, and serves as an organizational memory for humans, AI, and agents.
-          </p>
-
-          <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:'1.5rem' }}>
-            <Link to="/dashboard"
-              style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'14px 28px', borderRadius:10, background:'rgba(255,107,44,0.08)', color:P, border:'1px solid rgba(255,107,44,0.3)', fontWeight:700, textDecoration:'none', fontSize:14, boxShadow:`0 0 20px rgba(255,107,44,0.2)`, transition:'all 0.25s' }}
-              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.background=P; e.currentTarget.style.color='#050505'; e.currentTarget.style.boxShadow='0 0 35px rgba(255,107,44,0.5)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.background='rgba(255,107,44,0.08)'; e.currentTarget.style.color=P; e.currentTarget.style.boxShadow='0 0 20px rgba(255,107,44,0.2)'; }}>
-              Get Started Free <ArrowRight size={16} />
-            </Link>
-            <Link to="/docs"
-              style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'14px 28px', borderRadius:10, background:'rgba(255,255,255,0.03)', color:TEXT, border:`1px solid rgba(255,107,44,0.15)`, fontWeight:600, textDecoration:'none', fontSize:14, transition:'all 0.25s' }}
-              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.borderColor=`rgba(255,107,44,0.45)`; }}
-              onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.borderColor='rgba(255,107,44,0.15)'; }}>
-              View Documentation
-            </Link>
-          </div>
-
-          <div>
-            <div style={{ fontSize:11, letterSpacing:'0.1em', textTransform:'uppercase', color:MUTED, fontWeight:600, marginBottom:'0.75rem', fontFamily:"'Space Mono',monospace" }}>Works with</div>
-            <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
-              {[{ label:'GPT-4', color:'#34d399' },{ label:'Claude', color:'#E57373' },{ label:'Gemini', color:'#64a0ff' },{ label:'Mistral', color:'#ffbe32' },{ label:'Llama 3', color:'#c084fc' }].map(m => (
-                <span key={m.label} style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:99, border:`1px solid rgba(255,107,44,0.15)`, background:'rgba(255,107,44,0.04)', fontSize:11.5, fontWeight:600, color:MUTED, transition:'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor=`rgba(255,107,44,0.35)`; e.currentTarget.style.color=P; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,107,44,0.15)'; e.currentTarget.style.color=MUTED; }}>
-                  <span style={{ width:7, height:7, borderRadius:'50%', background:m.color, boxShadow:`0 0 6px ${m.color}80` }} />
-                  {m.label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* RIGHT: NETWORK VIZ */}
-        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.4, duration:1 }} style={{ display:'flex', alignItems:'center', justifyContent: 'center', padding:'2.5rem 0 1.5rem', position:'relative', zIndex:1, width:'100%' }}>
-          <div className="hero-viz-wrapper">
-            <div className="hero-viz-container">
-              {[{ s:300, d:30, c:'rgba(255,107,44,0.2)' },{ s:400, d:45, c:'rgba(124,58,237,0.12)', rev:true }].map((r,i) => (
-                <div key={i} style={{ position:'absolute', borderRadius:'50%', border:`1px dashed ${r.c}`, width:r.s, height:r.s, top:'50%', left:'50%', transform:'translate(-50%,-50%)', animation:`ldSpin ${r.d}s linear infinite ${r.rev?'reverse':''}` }} />
-              ))}
-              <svg viewBox="0 0 460 460" style={{ position:'absolute', inset:0, pointerEvents:'none', width:'100%', height:'100%' }}>
-                {[[230,230,90,90],[230,230,370,90],[230,230,90,370],[230,230,370,370]].map(([x1,y1,x2,y2],i) => (
-                  <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(222,106,57,0.15)" strokeWidth={1.5} strokeDasharray="6 4" fill="none" style={{ animation:`ldDash 2s linear infinite`, animationDelay:`${i*0.4}s` }} />
+          {/* RIGHT: NETWORK VIZ */}
+          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.4, duration:1 }} style={{ display:'flex', alignItems:'center', justifyContent: 'center', padding:'2.5rem 0 1.5rem', position:'relative', zIndex:1, width:'100%' }}>
+            <div className="hero-viz-wrapper">
+              <div className="hero-viz-container">
+                {[{ s:300, d:30, c:'rgba(255,107,44,0.2)' },{ s:400, d:45, c:'rgba(124,58,237,0.12)', rev:true }].map((r,i) => (
+                  <div key={i} style={{ position:'absolute', borderRadius:'50%', border:`1px dashed ${r.c}`, width:r.s, height:r.s, top:'50%', left:'50%', transform:'translate(-50%,-50%)', animation:`ldSpin ${r.d}s linear infinite ${r.rev?'reverse':''}` }} />
                 ))}
-              </svg>
-              <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:90, height:90, background:`radial-gradient(circle at 40% 40%,rgba(222,106,57,0.15),rgba(5,5,5,0.9))`, border:`2px solid rgba(222,106,57,0.25)`, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, animation:'ldPulse 3s ease-in-out infinite' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#DE6A39" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 4px rgba(222,106,57,0.15))' }}>
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                <svg viewBox="0 0 460 460" style={{ position:'absolute', inset:0, pointerEvents:'none', width:'100%', height:'100%' }}>
+                  {[[230,230,90,90],[230,230,370,90],[230,230,90,370],[230,230,370,370]].map(([x1,y1,x2,y2],i) => (
+                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(222,106,57,0.15)" strokeWidth={1.5} strokeDasharray="6 4" fill="none" style={{ animation:`ldDash 2s linear infinite`, animationDelay:`${i*0.4}s` }} />
+                  ))}
                 </svg>
-              </div>
-              {[
-                { label:'GPT-4',  pos:{ top:55,   left:55 }, color:'#34d399', bg:'radial-gradient(#0d2018,#051210)', bd:'rgba(52,211,153,0.3)' },
-                { label:'Claude', pos:{ top:55,   right:55  }, color:'#E57373', bg:'radial-gradient(#1a0e0c,#100503)', bd:'rgba(229,115,115,0.3)' },
-                { label:'Gemini', pos:{ top:335,  left:55   }, color:'#64a0ff', bg:'radial-gradient(#0d1220,#080b18)', bd:'rgba(100,160,255,0.3)' },
-                { label:'Mistral',pos:{ top:335,  right:55  }, color:'#ffbe32', bg:'radial-gradient(#1a1005,#0d0803)', bd:'rgba(255,190,50,0.3)' },
-              ].map(n => (
-                <div key={n.label} style={{ position:'absolute', ...n.pos, display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-                  <div style={{ width:70, height:70, borderRadius:'50%', background:n.bg, border:`2px solid ${n.bd}`, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s', boxShadow:`0 0 20px ${n.bd}` }}
-                    onMouseEnter={e => { e.currentTarget.style.transform='scale(1.12)'; e.currentTarget.style.boxShadow=`0 0 30px ${n.color}60`; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=`0 0 20px ${n.bd}`; }}>
-                    <div style={{ width:38, height:38, borderRadius:'50%', background:n.color, boxShadow:`0 0 12px ${n.color}80` }} />
-                  </div>
-                  <span style={{ fontFamily:"'Space Mono',monospace", fontSize:11, fontWeight:700, color:TEXT, letterSpacing:'0.05em' }}>{n.label}</span>
+                <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:90, height:90, background:`radial-gradient(circle at 40% 40%,rgba(222,106,57,0.15),rgba(5,5,5,0.9))`, border:`2px solid rgba(222,106,57,0.25)`, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, animation:'ldPulse 3s ease-in-out infinite' }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#DE6A39" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 4px rgba(222,106,57,0.15))' }}>
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
                 </div>
-              ))}
+                {[
+                  { label:'GPT-4',  pos:{ top:55,   left:55 }, color:'#34d399', bg:'radial-gradient(#0d2018,#051210)', bd:'rgba(52,211,153,0.3)' },
+                  { label:'Claude', pos:{ top:55,   right:55  }, color:'#E57373', bg:'radial-gradient(#1a0e0c,#100503)', bd:'rgba(229,115,115,0.3)' },
+                  { label:'Gemini', pos:{ top:335,  left:55   }, color:'#64a0ff', bg:'radial-gradient(#0d1220,#080b18)', bd:'rgba(100,160,255,0.3)' },
+                  { label:'Mistral',pos:{ top:335,  right:55  }, color:'#ffbe32', bg:'radial-gradient(#1a1005,#0d0803)', bd:'rgba(255,190,50,0.3)' },
+                ].map(n => (
+                  <div key={n.label} style={{ position:'absolute', ...n.pos, display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+                    <div style={{ width:70, height:70, borderRadius:'50%', background:n.bg, border:`2px solid ${n.bd}`, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s', boxShadow:`0 0 20px ${n.bd}` }}
+                      onMouseEnter={e => { e.currentTarget.style.transform='scale(1.12)'; e.currentTarget.style.boxShadow=`0 0 30px ${n.color}60`; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=`0 0 20px ${n.bd}`; }}>
+                      <div style={{ width:38, height:38, borderRadius:'50%', background:n.color, boxShadow:`0 0 12px ${n.color}80` }} />
+                    </div>
+                    <span style={{ fontFamily:"'Space Mono',monospace", fontSize:11, fontWeight:700, color:TEXT, letterSpacing:'0.05em' }}>{n.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════════
@@ -450,62 +459,64 @@ const LandingPage = () => {
           </motion.div>
         </div>
 
-        <div style={{ marginBottom:'3rem' }}>
-          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:P, fontWeight:700, marginBottom:'0.75rem' }}>The Shared Knowledge Layer</div>
-          <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT }}>Aggregate Chats, Rationale,<br />and Architecture Dynamically.</h2>
-        </div>
-        <div className="grid-responsive-3" style={{ gap:'24px' }}>
-          {FEATURES.map((f,i) => (
-            <motion.div key={i} initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} transition={{ delay:i*0.07, type: 'spring', bounce: 0.4 }}
-              style={{
-                background: 'linear-gradient(180deg, rgba(24,24,27,0.8) 0%, rgba(9,9,11,0.8) 100%)',
-                border: '1px solid rgba(255,255,255,0.05)',
-                borderRadius: 24,
-                padding: '36px 32px',
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                cursor: 'default',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                backdropFilter: 'blur(20px)'
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-6px)';
-                e.currentTarget.style.borderColor = 'rgba(255,107,44,0.3)';
-                e.currentTarget.style.boxShadow = '0 30px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255, 107, 44, 0.08)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = '';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
-                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.4)';
-              }}>
-              
-              {/* Massive animated background glow */}
-              <motion.div 
-                animate={{ 
-                  scale: [1, 1.3, 1],
-                  opacity: [0.4, 0.8, 0.4],
-                  x: [0, -30, 0],
-                  y: [0, 30, 0]
-                }} 
-                transition={{ duration: 8 + (i % 3) * 2, repeat: Infinity, ease: "easeInOut" }}
-                style={{ position:'absolute', top: -80, right: -80, width: 250, height: 250, borderRadius:'50%', background:`radial-gradient(circle, rgba(255,107,44,0.15) 0%, transparent 70%)`, pointerEvents: 'none' }} 
-              />
-              
-              <div style={{ position: 'relative', zIndex: 1, width: 56, height: 56, borderRadius: 16, border: `1px solid ${f.color}40`, background: `linear-gradient(135deg, ${f.color}20, ${f.color}05)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: f.color, marginBottom: '2rem', boxShadow: `inset 0 0 20px ${f.color}20` }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative' }}>
+          <div style={{ marginBottom:'3rem' }}>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:P, fontWeight:700, marginBottom:'0.75rem' }}>The Shared Knowledge Layer</div>
+            <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT }}>Aggregate Chats, Rationale,<br />and Architecture Dynamically.</h2>
+          </div>
+          <div className="grid-responsive-3" style={{ gap:'24px' }}>
+            {FEATURES.map((f,i) => (
+              <motion.div key={i} initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} transition={{ delay:i*0.07, type: 'spring', bounce: 0.4 }}
+                style={{
+                  background: 'linear-gradient(180deg, rgba(24,24,27,0.8) 0%, rgba(9,9,11,0.8) 100%)',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: 24,
+                  padding: '36px 32px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                  cursor: 'default',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                  backdropFilter: 'blur(20px)'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-6px)';
+                  e.currentTarget.style.borderColor = 'rgba(255,107,44,0.3)';
+                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255, 107, 44, 0.08)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = '';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
+                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.4)';
+                }}>
+                
+                {/* Massive animated background glow */}
                 <motion.div 
-                   animate={{ rotate: [0, 5, -5, 0] }} 
-                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: i }}
-                   style={{ filter: `drop-shadow(0 0 10px ${f.color}80)`, display: 'inline-block' }}>
-                   {f.icon}
-                </motion.div>
-              </div>
-              
-              <div style={{ position: 'relative', zIndex: 1, fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.75rem', color: TEXT, letterSpacing: '-0.01em' }}>{f.title}</div>
-              <p style={{ position: 'relative', zIndex: 1, fontSize: '0.95rem', color: MUTED, lineHeight: 1.7, margin: 0 }}>{f.desc}</p>
-              
-            </motion.div>
-          ))}
+                  animate={{ 
+                    scale: [1, 1.3, 1],
+                    opacity: [0.4, 0.8, 0.4],
+                    x: [0, -30, 0],
+                    y: [0, 30, 0]
+                  }} 
+                  transition={{ duration: 8 + (i % 3) * 2, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ position:'absolute', top: -80, right: -80, width: 250, height: 250, borderRadius:'50%', background:`radial-gradient(circle, rgba(255,107,44,0.15) 0%, transparent 70%)`, pointerEvents: 'none' }} 
+                />
+                
+                <div style={{ position: 'relative', zIndex: 1, width: 56, height: 56, borderRadius: 16, border: `1px solid ${f.color}40`, background: `linear-gradient(135deg, ${f.color}20, ${f.color}05)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: f.color, marginBottom: '2rem', boxShadow: `inset 0 0 20px ${f.color}20` }}>
+                  <motion.div 
+                     animate={{ rotate: [0, 5, -5, 0] }} 
+                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: i }}
+                     style={{ filter: `drop-shadow(0 0 10px ${f.color}80)`, display: 'inline-block' }}>
+                     {f.icon}
+                  </motion.div>
+                </div>
+                
+                <div style={{ position: 'relative', zIndex: 1, fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.75rem', color: TEXT, letterSpacing: '-0.01em' }}>{f.title}</div>
+                <p style={{ position: 'relative', zIndex: 1, fontSize: '0.95rem', color: MUTED, lineHeight: 1.7, margin: 0 }}>{f.desc}</p>
+                
+              </motion.div>
+            ))}
+          </div>
         </div>
       </motion.section>
 

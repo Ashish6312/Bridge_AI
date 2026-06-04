@@ -6,30 +6,30 @@ import { Link } from 'react-router-dom';
 const STEPS = [
   {
     icon: <Download size={24} color="#8b5cf6" />,
-    title: "Download Intelligence Package",
-    desc: "Obtain the official BridgeAI extension bundle. This contains the sovereign relay logic for your browser.",
+    title: "Download Extension ZIP",
+    desc: "Download the BridgeAI extension file to your computer.",
     action: true,
   },
   {
     icon: <ExternalLink size={24} color="#06b6d4" />,
-    title: 'Initialize Developer Protocol',
-    desc: 'Navigate to chrome://extensions and enable "Developer Mode" in the top-right corner.',
+    title: 'Open Extensions Menu',
+    desc: 'Open chrome://extensions in a new tab and turn on "Developer mode" in the top-right corner.',
     code: 'chrome://extensions',
   },
   {
     icon: <Puzzle size={24} color="#f43f5e" />,
-    title: 'Materialize Unpacked',
-    desc: 'Select "Load unpacked" and point it to the extracted BridgeAI folder in your downloads.',
+    title: 'Load Unpacked Extension',
+    desc: 'Click "Load unpacked" in the top-left and select the unzipped BridgeAI folder.',
   },
   {
     icon: <Pin size={24} color="#4ade80" />,
-    title: 'Pin to Command Center',
-    desc: 'Click the extensions icon (🧩), find BridgeAI, and pin it to your primary toolbar.',
+    title: 'Pin Extension to Toolbar',
+    desc: 'Click the extension puzzle piece icon (🧩), find BridgeAI, and pin it for easy access.',
   },
   {
     icon: <CheckCircle size={24} color="#8b5cf6" />,
-    title: 'Relay Operational',
-    desc: 'Open any AI platform (Gemini, Claude, ChatGPT) and click the 🔷 icon to start bridging.',
+    title: 'Start Syncing Chats',
+    desc: 'Open ChatGPT, Claude, or Gemini, click the blue BridgeAI icon, and capture your chats!',
   },
 ];
 
@@ -58,14 +58,14 @@ const ExtensionPage = () => {
               marginBottom: '32px'
             }}>
               <Puzzle size={14} color="var(--primary)" />
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)' }}>Installation Protocol</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)' }}>How to Install</span>
             </div>
             
             <h1 style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', fontWeight: '900', marginBottom: '24px', letterSpacing: '-0.04em', lineHeight: 1, color: 'var(--text-main)' }}>
-              Deploy the <span style={{ color: 'var(--primary)' }}>BridgeAI Relay</span>
+              Install the <span style={{ color: 'var(--primary)' }}>BridgeAI Extension</span>
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', lineHeight: '1.7', maxWidth: '700px', margin: '0 auto' }}>
-              Equip your browser with the sovereign context engine. Works across all Chromium-based browsers including Chrome, Brave, and Edge.
+              Add BridgeAI to your browser to sync chats instantly. Works on Chrome, Brave, Edge, and other major browsers.
             </p>
           </motion.div>
         </div>
@@ -82,10 +82,10 @@ const ExtensionPage = () => {
               <div style={{ background: 'var(--primary)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
                 <Download size={32} color="white" />
               </div>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)' }}>Ready for Deployment</h3>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)' }}>Download Extension</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '32px' }}>
-                Download the latest stable build of the BridgeAI sovereign package. 
-                This ZIP contains everything needed to bridge context across your LLM hubs.
+                Download the latest version of the BridgeAI extension. 
+                This ZIP file contains the extension files you'll load into your browser.
               </p>
               
               <button 
@@ -93,7 +93,7 @@ const ExtensionPage = () => {
                 className="btn-primary" 
                 style={{ width: '100%', padding: '20px', fontSize: '1.1rem', justifyContent: 'center', borderRadius: '16px' }}
               >
-                {downloaded ? <><CheckCircle size={22} /> Package Obtained</> : <><Download size={22} /> Download Package (.zip)</>}
+                {downloaded ? <><CheckCircle size={22} /> Download Started</> : <><Download size={22} /> Download Extension (.zip)</>}
               </button>
               
               <div style={{ marginTop: '32px', padding: '20px', borderRadius: '16px', background: 'var(--gray-50)', border: '1px solid var(--gray-200)' }}>
@@ -102,7 +102,7 @@ const ExtensionPage = () => {
                   <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase' }}>Verified Build</span>
                 </div>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  This package is stripped of all server-side logic and secrets. It is safe for local developer installation.
+                  This extension runs entirely in your browser. Your API keys and data are kept safe and local.
                 </p>
               </div>
             </div>
@@ -124,7 +124,7 @@ const ExtensionPage = () => {
                 </div>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: '900', color: 'var(--primary)', opacity: 0.6 }}>PROTOCOL {i + 1}</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: '900', color: 'var(--primary)', opacity: 0.6 }}>STEP {i + 1}</span>
                     <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>{step.title}</h4>
                   </div>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, lineHeight: 1.5 }}>{step.desc}</p>

@@ -72,23 +72,23 @@ const PLATFORMS = [
 const FAQS = [
   {
     q: 'How does BridgeAI work?',
-    a: 'BridgeAI injects lightweight content scripts on target AI websites. When you click capture, it scans the DOM structure of your active chat page, extracts user prompts and assistant replies, cleans the text formatting, and stores it in your local buffer. From there, you can rewrite, format, and load that context on any other AI target page with one click.'
+    a: 'BridgeAI is a browser extension that reads your active AI chat logs when you click "Capture". It organizes the questions you asked and the answers you got, and saves them. You can then copy or send that context into any other AI chat window with a single click, without having to re-type or re-explain your ideas.'
   },
   {
     q: 'Is my data stored locally?',
-    a: 'Yes, absolutely. By default, all extracted prompt histories and metadata are saved inside your local browser storage using the chrome.storage.local API. Zero data is sent to external cloud staging nodes unless you log into your account and explicitly click to synchronize your vaults.'
+    a: 'Yes, absolutely. By default, all of your saved chat history is stored securely inside your own web browser. No data is sent to our servers unless you sign in and explicitly choose to back up or sync your chats across your devices.'
   },
   {
     q: 'What platforms are supported?',
-    a: 'Currently, BridgeAI supports high-fidelity structured extraction and auto-paste capabilities for ChatGPT, Claude, Gemini, Perplexity, DeepSeek, Poe, and Mistral. We also offer a universal content extractor that parses standard article containers on other pages.'
+    a: 'Currently, BridgeAI supports all major AI chat platforms: ChatGPT, Claude, Gemini, Perplexity, DeepSeek, Poe, and Mistral. It also has a universal reader that works on other websites to capture article text.'
   },
   {
     q: 'Why are permissions required?',
-    a: 'The extension requests storage (to buffer the active contexts), activeTab and scripting (to extract the chat logs when you click the capture trigger), clipboardWrite (to enable the manual Copy Formatted Context button), and host permissions (to securely exchange auth state with the dashboard).'
+    a: 'The extension needs a few permissions to function: browser storage to save your chats, page access to read your current chat session when you click capture, clipboard access to let you copy text easily, and dashboard access to sync your account details.'
   },
   {
     q: 'Why is extraction failing?',
-    a: 'Extraction failure usually occurs when third-party AI platforms change their DOM structural classnames (e.g., during a UI updates). If this happens, make sure your extension is updated to the latest build, reload the target AI page tab, and click the capture action again. If the issue persists, submit a bug report below so our team can update selectors.'
+    a: 'This usually happens when an AI platform (like ChatGPT or Claude) updates its website layout. If capture stops working, make sure your BridgeAI extension is updated to the latest version, refresh the AI website tab, and try again. If it still fails, please send us a report below so we can fix it!'
   }
 ];
 
@@ -197,7 +197,7 @@ const SupportPage = () => {
           }}>
             <HelpCircle size={14} color="var(--primary)" />
             <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)' }}>
-              Command Center
+              Help &amp; Support
             </span>
           </div>
           <h1 style={{ 
@@ -208,10 +208,10 @@ const SupportPage = () => {
             lineHeight: 1.05,
             color: 'var(--text)'
           }}>
-            Technical Support <span style={{ color: 'var(--primary)' }}>Protocol</span>
+            Support &amp; <span style={{ color: 'var(--primary)' }}>Troubleshooting</span>
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: '1.2rem', lineHeight: '1.7', maxWidth: '700px', margin: '0 auto' }}>
-            Troubleshoot context relays, view server statuses, or log issues directly.
+            Got questions? We're here to help. Check platform status, find answers, or send us a message.
           </p>
         </div>
 
@@ -273,10 +273,10 @@ const SupportPage = () => {
               boxShadow: 'var(--shadow)'
             }}>
               <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text)', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Cpu color="var(--secondary)" size={22} /> Extraction Core Status
+                <Cpu color="var(--secondary)" size={22} /> AI Platform Status
               </h3>
               <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: '24px', lineHeight: 1.6 }}>
-                Our content parsing engines map page markers dynamically. View current status:
+                Check if our integrations with your favorite AI chat tools are working normally:
               </p>
               <div className="grid-auto-fit-small" style={{ gap: '16px' }}>
                 {PLATFORMS.map((plat, i) => (
@@ -310,23 +310,23 @@ const SupportPage = () => {
                 boxShadow: 'var(--shadow)'
               }}>
                 <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ShieldAlert size={18} color="#dc2626" /> Report Selector Break
+                  <ShieldAlert size={18} color="#dc2626" /> Report a Bug
                 </h4>
                 {submittedBug ? (
                   <div style={{ textAlign: 'center', padding: '24px 0', color: '#16a34a' }}>
                     <CheckCircle size={32} style={{ marginBottom: '12px' }} />
-                    <p style={{ margin: 0, fontWeight: '700' }}>Bug logged into system.</p>
+                    <p style={{ margin: 0, fontWeight: '700' }}>Thank you! Your bug report has been sent.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleBugSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Title</label>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Brief Summary</label>
                       <input 
                         type="text" 
                         required
                         value={bugForm.title}
                         onChange={e => setBugForm({ ...bugForm, title: e.target.value })}
-                        placeholder="e.g. Claude chat text layout break"
+                        placeholder="e.g. Claude context won't load"
                         style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text)', outline: 'none' }}
                       />
                     </div>
@@ -347,18 +347,18 @@ const SupportPage = () => {
                       </select>
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Observation Details</label>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>What happened?</label>
                       <textarea 
                         required
                         rows="3"
                         value={bugForm.description}
                         onChange={e => setBugForm({ ...bugForm, description: e.target.value })}
-                        placeholder="Describe extraction selector failures..."
+                        placeholder="Describe the issue and steps to reproduce it..."
                         style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text)', outline: 'none', resize: 'vertical' }}
                       />
                     </div>
                     <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.9rem', display: 'flex', justifyContent: 'center', gap: '8px', borderRadius: '10px' }}>
-                      <Send size={16} /> Submit Bug Report
+                      <Send size={16} /> Send Bug Report
                     </button>
                   </form>
                 )}
@@ -378,18 +378,18 @@ const SupportPage = () => {
                 {submittedFeature ? (
                   <div style={{ textAlign: 'center', padding: '24px 0', color: '#16a34a' }}>
                     <CheckCircle size={32} style={{ marginBottom: '12px' }} />
-                    <p style={{ margin: 0, fontWeight: '700' }}>Feature logged into Roadmap.</p>
+                    <p style={{ margin: 0, fontWeight: '700' }}>Thank you! Your suggestion has been saved.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleFeatureSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Feature Title</label>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>What is the feature?</label>
                       <input 
                         type="text" 
                         required
                         value={featureForm.title}
                         onChange={e => setFeatureForm({ ...featureForm, title: e.target.value })}
-                        placeholder="e.g. Export context as HTML PDF"
+                        placeholder="e.g. Export chats as markdown files"
                         style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text)', outline: 'none' }}
                       />
                     </div>
@@ -406,18 +406,18 @@ const SupportPage = () => {
                       </select>
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Functional Details</label>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Why would this be useful?</label>
                       <textarea 
                         required
                         rows="3"
                         value={featureForm.details}
                         onChange={e => setFeatureForm({ ...featureForm, details: e.target.value })}
-                        placeholder="Describe how this feature improves your Multi-LLM sync productivity..."
+                        placeholder="Describe how this feature would help you save time or improve your workflow..."
                         style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text)', outline: 'none', resize: 'vertical' }}
                       />
                     </div>
                     <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.9rem', display: 'flex', justifyContent: 'center', gap: '8px', borderRadius: '10px' }}>
-                      <Send size={16} /> Submit Proposal
+                      <Send size={16} /> Send Feature Request
                     </button>
                   </form>
                 )}
@@ -468,14 +468,14 @@ const SupportPage = () => {
               boxShadow: 'var(--shadow)'
             }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text)', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Settings color="var(--primary)" size={20} /> Extension Setup Protocol
+                <Settings color="var(--primary)" size={20} /> How to Install the Extension
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {[
-                  { t: 'Extract Package', d: 'Extract your downloaded bridgeai-extension.zip bundle into a dedicated directory.' },
-                  { t: 'Enable Developer Settings', d: 'Navigate to chrome://extensions in your URL bar and switch Developer Mode ON.' },
-                  { t: 'Load Unpacked Directory', d: 'Click Load unpacked in the top-left and select the extracted extension folder.' },
-                  { t: 'Pin Icon', d: 'Pin BridgeAI (🔷) to your browser toolbar for single-click access.' }
+                  { t: 'Unzip the File', d: 'Unzip your downloaded bridgeai-extension.zip file into a folder on your computer.' },
+                  { t: 'Open Browser Extensions', d: 'Type chrome://extensions in your Chrome address bar and turn on "Developer mode" in the top-right corner.' },
+                  { t: 'Load Extension Folder', d: 'Click the "Load unpacked" button in the top-left corner and choose the unzipped extension folder.' },
+                  { t: 'Pin to Toolbar', d: 'Click the extension puzzle piece icon in your browser toolbar, find BridgeAI, and pin it for quick access.' }
                 ].map((step, i) => (
                   <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                     <div style={{ 
