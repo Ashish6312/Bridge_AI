@@ -149,7 +149,7 @@ const LandingPage = () => {
         @keyframes reviewScroll2 { from{transform:translateX(-50%)} to{transform:translateX(0)} }
         .lp-root input { cursor: text !important; }
         .lp-root button, .lp-root a { cursor: pointer !important; }
-        @media (max-width: 768px) {
+        @media (max-width: 1200px) {
           .desktop-only-floats {
             display: none !important;
           }
@@ -178,7 +178,7 @@ const LandingPage = () => {
       {/* ══════════════════════════════════════════════
           SECTION 1: HERO
       ══════════════════════════════════════════════ */}
-      <section id="hero" className="grid-responsive-2" style={{ position:'relative', zIndex:2, alignItems:'center', gap:'clamp(2rem, 5vw, 4rem)', padding:'80px clamp(1rem, 5vw, 3rem)', minHeight:'calc(100vh - 72px)', marginTop:72, overflowX:'hidden', width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
+      <section id="hero" className="grid-responsive-2" style={{ position:'relative', zIndex:2, alignItems:'center', gap:'clamp(2rem, 5vw, 4rem)', padding:'20px clamp(1rem, 5vw, 3rem) 80px', minHeight:'calc(100vh - 72px)', marginTop:72, overflowX:'hidden', width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
         {/* Local Ambient Glow for Hero */}
         <div style={{ position:'absolute', top:'10%', left:'30%', width:450, height:450, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,107,44,0.1) 0%, transparent 70%)', filter: 'blur(100px)', pointerEvents:'none', zIndex: 0 }} />
 

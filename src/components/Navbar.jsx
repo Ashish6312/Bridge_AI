@@ -120,7 +120,7 @@ const Navbar = () => {
         fontFamily: "'Outfit', 'Inter', sans-serif"
       }}>
         <style>{`
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .nav-capsule {
               display: none !important;
             }
