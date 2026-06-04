@@ -1046,6 +1046,8 @@ const ProjectWorkspace = ({
   const [savingDecision, setSavingDecision] = useState(false);
 
   const [chatInput, setChatInput] = useState('');
+  const [chatSessions, setChatSessions] = useState([]);
+  const [activeSessionId, setActiveSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([
     { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
   ]);
@@ -1067,6 +1069,7 @@ const ProjectWorkspace = ({
   useEffect(() => {
     if (!email || !projectId) return;
     fetchContext();
+    fetchChatSessions();
   }, [projectId, email]);
 
   useEffect(() => {
@@ -1085,18 +1088,33 @@ const ProjectWorkspace = ({
         setTechStack(data.data.tech_stack || '');
         setGoals(data.data.goals || '');
         setRules(data.data.rules || '');
-        if (data.data.chat_history && Array.isArray(data.data.chat_history) && data.data.chat_history.length > 0) {
-          setChatHistory(data.data.chat_history);
+      }
+    } catch (err) {
+      triggerToast('Error loading project context.');
+    } finally {
+      setLoadingContext(false);
+    }
+  };
+
+  const fetchChatSessions = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/chats?email=${email}&project_id=${encodeURIComponent(projectId)}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setChatSessions(data.data);
+        if (data.data.length > 0) {
+          const mostRecent = data.data[0];
+          setActiveSessionId(mostRecent.id);
+          setChatHistory(mostRecent.messages || []);
         } else {
+          setActiveSessionId(null);
           setChatHistory([
             { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
           ]);
         }
       }
     } catch (err) {
-      triggerToast('Error loading project context.');
-    } finally {
-      setLoadingContext(false);
+      console.error("Error fetching chat sessions:", err);
     }
   };
 
@@ -1219,28 +1237,70 @@ const ProjectWorkspace = ({
     }
   };
 
-  const saveChatHistoryToServer = async (historyToSave) => {
+  const saveChatSessionToServer = async (sessionId, title, messagesList) => {
     try {
-      await fetch(`${API_BASE}/api/projects/chat/history`, {
+      const res = await fetch(`${API_BASE}/api/projects/chats`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: sessionId,
           email,
           project_id: projectId,
-          chat_history: historyToSave
+          title,
+          messages: messagesList
         })
       });
+      const data = await res.json();
+      if (data.success) {
+        const listRes = await fetch(`${API_BASE}/api/projects/chats?email=${email}&project_id=${encodeURIComponent(projectId)}`);
+        const listData = await listRes.json();
+        if (listData.success && listData.data) {
+          setChatSessions(listData.data);
+        }
+      }
     } catch (err) {
-      console.error("Failed to save chat history on server:", err);
+      console.error("Failed to save chat session on server:", err);
     }
   };
 
-  const clearChatHistory = async () => {
-    const defaultHistory = [
+  const startNewChat = () => {
+    setActiveSessionId(null);
+    setChatHistory([
       { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
-    ];
-    setChatHistory(defaultHistory);
-    await saveChatHistoryToServer(defaultHistory);
+    ]);
+  };
+
+  const selectChatSession = (sessionId) => {
+    const session = chatSessions.find(s => s.id === sessionId);
+    if (session) {
+      setActiveSessionId(sessionId);
+      setChatHistory(session.messages || []);
+    }
+  };
+
+  const deleteChatSession = async (e, sessionId) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/chats/${sessionId}?email=${email}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast('Conversation deleted.');
+        const updated = chatSessions.filter(s => s.id !== sessionId);
+        setChatSessions(updated);
+        if (activeSessionId === sessionId) {
+          if (updated.length > 0) {
+            setActiveSessionId(updated[0].id);
+            setChatHistory(updated[0].messages || []);
+          } else {
+            startNewChat();
+          }
+        }
+      }
+    } catch (err) {
+      triggerToast('Could not delete conversation.');
+    }
   };
 
   const sendChatMessage = async (e) => {
@@ -1252,6 +1312,19 @@ const ProjectWorkspace = ({
     const updatedWithUser = [...chatHistory, userMsgObj];
     setChatHistory(updatedWithUser);
     setSendingChat(true);
+
+    let currentSessionId = activeSessionId;
+    let title = 'New Chat';
+    if (!currentSessionId) {
+      currentSessionId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      setActiveSessionId(currentSessionId);
+      title = userMessage.length > 35 ? userMessage.substring(0, 35) + '...' : userMessage;
+    } else {
+      const existingSession = chatSessions.find(s => s.id === currentSessionId);
+      if (existingSession) {
+        title = existingSession.title || 'New Chat';
+      }
+    }
 
     try {
       const res = await fetch(`${API_BASE}/api/projects/chat`, {
@@ -1268,18 +1341,18 @@ const ProjectWorkspace = ({
       if (data.success) {
         const updatedWithAssistant = [...updatedWithUser, { role: 'assistant', text: data.text }];
         setChatHistory(updatedWithAssistant);
-        await saveChatHistoryToServer(updatedWithAssistant);
+        await saveChatSessionToServer(currentSessionId, title, updatedWithAssistant);
       } else {
         const errorMsg = "Error: " + (data.error || 'Failed to query memory assistant.');
         const updatedWithError = [...updatedWithUser, { role: 'assistant', text: errorMsg }];
         setChatHistory(updatedWithError);
-        await saveChatHistoryToServer(updatedWithError);
+        await saveChatSessionToServer(currentSessionId, title, updatedWithError);
       }
     } catch (err) {
       const connectErrorMsg = "Failed to connect to AI server. Check connection.";
       const updatedWithFail = [...updatedWithUser, { role: 'assistant', text: connectErrorMsg }];
       setChatHistory(updatedWithFail);
-      await saveChatHistoryToServer(updatedWithFail);
+      await saveChatSessionToServer(currentSessionId, title, updatedWithFail);
     } finally {
       setSendingChat(false);
     }
@@ -1661,7 +1734,6 @@ const ProjectWorkspace = ({
         </motion.div>
       )}
 
-      {/* 🤖 MEMORY CHAT ASSISTANT */}
       {projectTab === 'chat' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div style={{ display: 'flex', flexDirection: 'column', height: '520px', borderRadius: '16px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
@@ -1671,168 +1743,235 @@ const ProjectWorkspace = ({
                 <Cpu size={16} color="var(--primary)" />
                 <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'rgba(255,255,255,0.8)' }}>AI Memory Assistant</span>
               </div>
-              {chatHistory.length > 1 && (
-                <button
-                  type="button"
-                  onClick={clearChatHistory}
-                  style={{
-                    background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '6px',
-                    transition: 'all 0.25s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'transparent' }}
-                >
-                  <Trash2 size={12} />
-                  Clear Chat
-                </button>
-              )}
             </div>
 
-            {chatHistory.length <= 1 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '20px 40px', textAlign: 'center' }}>
-                <motion.div 
-                  animate={{ scale: [1, 1.05, 1] }} 
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ 
-                    width: '64px', height: '64px', borderRadius: '20px', 
-                    background: 'linear-gradient(135deg, #DE6A39 0%, #7C3AED 100%)', 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                    boxShadow: '0 0 30px rgba(222, 106, 57, 0.3)', marginBottom: '24px'
-                  }}
-                >
-                  <Cpu size={32} color="white" />
-                </motion.div>
-                <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '8px', letterSpacing: '-0.02em' }}>
-                  How can I help you today?
-                </h2>
-                <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', maxWidth: '400px', marginBottom: '32px', lineHeight: '1.5' }}>
-                  Ask anything about this project's architecture, decisions ledger, tech stack, rules, or uploaded contexts.
-                </p>
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              {/* Left Sidebar */}
+              <div style={{ width: '240px', borderRight: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
+                {/* New Chat Button */}
+                <div style={{ padding: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={startNewChat}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px',
+                      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '10px', color: 'white', fontSize: '0.82rem', fontWeight: '600',
+                      cursor: 'pointer', transition: 'all 0.25s', textAlign: 'left'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.4)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  >
+                    <Plus size={14} color="var(--primary)" />
+                    New chat
+                  </button>
+                </div>
 
-                <div className="grid-responsive-2" style={{ width: '100%', maxWidth: '640px', gap: '12px' }}>
-                  {[
-                    { q: "Why did we choose our database?", d: "Query active postgres/neon reasons" },
-                    { q: "Write a developer onboarding guide", d: "Summarize active guidelines & rules" },
-                    { q: "Create a system prompt for Claude", d: "Distill memory rules into Claude format" },
-                    { q: "What decisions are still pending?", d: "List all open items in decision ledger" }
-                  ].map((s, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setChatInput(s.q)}
-                      style={{
-                        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: '12px', padding: '16px', color: 'rgba(255,255,255,0.8)', cursor: 'pointer',
-                        textAlign: 'left', transition: 'all 0.25s', display: 'flex', flexDirection: 'column', gap: '4px'
-                      }}
-                      onMouseEnter={e => { 
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; 
-                        e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.4)';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                      }}
-                      onMouseLeave={e => { 
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; 
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-                        e.currentTarget.style.transform = '';
-                      }}
-                    >
-                      <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'white' }}>{s.q}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{s.d}</div>
-                    </button>
-                  ))}
+                {/* Sessions list */}
+                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 10px 14px 10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'rgba(255,255,255,0.3)', padding: '0 10px 6px 10px', letterSpacing: '0.5px' }}>
+                    RECENTS
+                  </div>
+                  {chatSessions.length === 0 ? (
+                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem', textAlign: 'center', padding: '20px 10px', fontStyle: 'italic' }}>
+                      No recent chats
+                    </div>
+                  ) : (
+                    chatSessions.map(s => {
+                      const isActive = s.id === activeSessionId;
+                      return (
+                        <div
+                          key={s.id}
+                          onClick={() => selectChatSession(s.id)}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '9px 12px',
+                            borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
+                            background: isActive ? 'rgba(222, 106, 57, 0.12)' : 'transparent',
+                            border: `1px solid ${isActive ? 'rgba(222, 106, 57, 0.2)' : 'transparent'}`,
+                          }}
+                          onMouseEnter={e => {
+                            if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                          }}
+                          onMouseLeave={e => {
+                            if (!isActive) e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                            <MessageSquare size={12} color={isActive ? 'var(--primary)' : 'rgba(255,255,255,0.4)'} style={{ flexShrink: 0 }} />
+                            <span style={{
+                              fontSize: '0.78rem', color: isActive ? 'white' : 'rgba(255,255,255,0.6)',
+                              fontWeight: isActive ? '600' : '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                            }}>
+                              {s.title || 'New Chat'}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => deleteChatSession(e, s.id)}
+                            style={{
+                              background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', padding: '2px', borderRadius: '4px', transition: 'all 0.15s', flexShrink: 0
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)' }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; e.currentTarget.style.background = 'transparent' }}
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
-            ) : (
-              <div ref={chatContainerRef} style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {chatHistory.map((msg, idx) => {
-                  const isAssistant = msg.role === 'assistant';
-                  return (
+
+              {/* Right Chat Area */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'transparent' }}>
+                {chatHistory.length <= 1 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '20px 40px', textAlign: 'center', overflowY: 'auto' }}>
                     <motion.div 
-                      key={idx} 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      style={{ display: 'flex', gap: '12px', justifyContent: isAssistant ? 'flex-start' : 'flex-end', alignItems: 'flex-start' }}
+                      animate={{ scale: [1, 1.05, 1] }} 
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                      style={{ 
+                        width: '64px', height: '64px', borderRadius: '20px', 
+                        background: 'linear-gradient(135deg, #DE6A39 0%, #7C3AED 100%)', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                        boxShadow: '0 0 30px rgba(222, 106, 57, 0.3)', marginBottom: '24px', flexShrink: 0
+                      }}
                     >
-                      {isAssistant && (
+                      <Cpu size={32} color="white" />
+                    </motion.div>
+                    <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '8px', letterSpacing: '-0.02em' }}>
+                      How can I help you today?
+                    </h2>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', maxWidth: '400px', marginBottom: '32px', lineHeight: '1.5' }}>
+                      Ask anything about this project's architecture, decisions ledger, tech stack, rules, or uploaded contexts.
+                    </p>
+
+                    <div className="grid-responsive-2" style={{ width: '100%', maxWidth: '640px', gap: '12px' }}>
+                      {[
+                        { q: "Why did we choose our database?", d: "Query active postgres/neon reasons" },
+                        { q: "Write a developer onboarding guide", d: "Summarize active guidelines & rules" },
+                        { q: "Create a system prompt for Claude", d: "Distill memory rules into Claude format" },
+                        { q: "What decisions are still pending?", d: "List all open items in decision ledger" }
+                      ].map((s, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setChatInput(s.q)}
+                          style={{
+                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+                            borderRadius: '12px', padding: '16px', color: 'rgba(255,255,255,0.8)', cursor: 'pointer',
+                            textAlign: 'left', transition: 'all 0.25s', display: 'flex', flexDirection: 'column', gap: '4px'
+                          }}
+                          onMouseEnter={e => { 
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; 
+                            e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.4)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={e => { 
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; 
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                            e.currentTarget.style.transform = '';
+                          }}
+                        >
+                          <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'white' }}>{s.q}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{s.d}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div ref={chatContainerRef} style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {chatHistory.map((msg, idx) => {
+                      const isAssistant = msg.role === 'assistant';
+                      return (
+                        <motion.div 
+                          key={idx} 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          style={{ display: 'flex', gap: '12px', justifyContent: isAssistant ? 'flex-start' : 'flex-end', alignItems: 'flex-start' }}
+                        >
+                          {isAssistant && (
+                            <div style={{ 
+                              width: '32px', height: '32px', borderRadius: '10px', 
+                              background: 'linear-gradient(135deg, #DE6A39, #7C3AED)', 
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                              flexShrink: 0, color: 'white', fontSize: '0.9rem',
+                              boxShadow: '0 0 10px rgba(222,106,57,0.2)' 
+                            }}>
+                              🤖
+                            </div>
+                          )}
+                          <div style={{
+                            maxWidth: '75%', 
+                            padding: isAssistant ? '0 12px' : '12px 18px', 
+                            borderRadius: isAssistant ? '0' : '20px',
+                            background: isAssistant ? 'transparent' : 'rgba(222, 106, 57, 0.15)',
+                            border: isAssistant ? 'none' : '1px solid rgba(222, 106, 57, 0.25)',
+                            color: '#E2E8F0', 
+                            fontSize: '0.9rem', 
+                            lineHeight: '1.6'
+                          }}>
+                            {isAssistant ? parseMarkdownToJSX(msg.text) : msg.text}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                    {sendingChat && (
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
                         <div style={{ 
                           width: '32px', height: '32px', borderRadius: '10px', 
-                          background: 'linear-gradient(135deg, #DE6A39, #7C3AED)', 
+                          background: 'rgba(255,255,255,0.05)', 
                           display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                          flexShrink: 0, color: 'white', fontSize: '0.9rem',
-                          boxShadow: '0 0 10px rgba(222,106,57,0.2)' 
+                          flexShrink: 0, color: 'white' 
                         }}>
-                          🤖
+                          💭
                         </div>
-                      )}
-                      <div style={{
-                        maxWidth: '75%', 
-                        padding: isAssistant ? '0 12px' : '12px 18px', 
-                        borderRadius: isAssistant ? '0' : '20px',
-                        background: isAssistant ? 'transparent' : 'rgba(222, 106, 57, 0.15)',
-                        border: isAssistant ? 'none' : '1px solid rgba(222, 106, 57, 0.25)',
-                        color: '#E2E8F0', 
-                        fontSize: '0.9rem', 
-                        lineHeight: '1.6'
-                      }}>
-                        {isAssistant ? parseMarkdownToJSX(msg.text) : msg.text}
+                        <span>Memory Assistant is consulting vault logs...</span>
                       </div>
-                    </motion.div>
-                  );
-                })}
-                {sendingChat && (
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
-                    <div style={{ 
-                      width: '32px', height: '32px', borderRadius: '10px', 
-                      background: 'rgba(255,255,255,0.05)', 
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                      flexShrink: 0, color: 'white' 
-                    }}>
-                      💭
-                    </div>
-                    <span>Memory Assistant is consulting vault logs...</span>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            <div style={{ padding: '16px 20px 20px 20px', borderTop: '1px solid rgba(255,255,255,0.03)', background: 'transparent' }}>
-              <form onSubmit={sendChatMessage} style={{ 
-                display: 'flex', 
-                alignItems: 'center',
-                background: 'rgba(0, 0, 0, 0.25)', 
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '24px', 
-                padding: '4px 8px 4px 18px',
-                transition: 'border-color 0.25s',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
-              }}
-              onFocusCapture={e => e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.4)'}
-              onBlurCapture={e => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
-              >
-                <input
-                  type="text"
-                  placeholder="Ask anything about this project's architecture, rules, or stack..."
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  style={{ flex: 1, padding: '12px 0', background: 'transparent', border: 'none', color: 'white', outline: 'none', fontSize: '0.9rem' }}
-                />
-                <button
-                  type="submit"
-                  disabled={sendingChat || !chatInput.trim()}
-                  className="btn-primary"
-                  style={{ 
-                    width: '36px', height: '36px', borderRadius: '50%', padding: 0, border: 'none', 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    background: chatInput.trim() ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                    color: chatInput.trim() ? 'white' : 'rgba(255,255,255,0.2)',
-                    transition: 'all 0.25s', cursor: chatInput.trim() ? 'pointer' : 'default'
+                <div style={{ padding: '16px 20px 20px 20px', borderTop: '1px solid rgba(255,255,255,0.03)', background: 'transparent' }}>
+                  <form onSubmit={sendChatMessage} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    background: 'rgba(0, 0, 0, 0.25)', 
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '24px', 
+                    padding: '4px 8px 4px 18px',
+                    transition: 'border-color 0.25s',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
                   }}
-                >
-                  <ArrowRight size={16} />
-                </button>
-              </form>
+                  onFocusCapture={e => e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.4)'}
+                  onBlurCapture={e => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
+                  >
+                    <input
+                      type="text"
+                      placeholder="Ask anything about this project's architecture, rules, or stack..."
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      style={{ flex: 1, padding: '12px 0', background: 'transparent', border: 'none', color: 'white', outline: 'none', fontSize: '0.9rem' }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={sendingChat || !chatInput.trim()}
+                      className="btn-primary"
+                      style={{ 
+                        width: '36px', height: '36px', borderRadius: '50%', padding: 0, border: 'none', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        background: chatInput.trim() ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                        color: chatInput.trim() ? 'white' : 'rgba(255,255,255,0.2)',
+                        transition: 'all 0.25s', cursor: chatInput.trim() ? 'pointer' : 'default'
+                      }}
+                    >
+                      <ArrowRight size={16} />
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>

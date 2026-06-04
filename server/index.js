@@ -207,8 +207,19 @@ const initDB = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
+      CREATE TABLE IF NOT EXISTS project_chats (
+        id VARCHAR(50) PRIMARY KEY,
+        project_id TEXT,
+        user_email TEXT,
+        title TEXT DEFAULT 'New Chat',
+        messages JSON DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE INDEX IF NOT EXISTS idx_project_contexts_lookup ON project_contexts(user_email, project_id);
       CREATE INDEX IF NOT EXISTS idx_project_decisions_lookup ON project_decisions(user_email, project_id);
+      CREATE INDEX IF NOT EXISTS idx_project_chats_lookup ON project_chats(user_email, project_id);
     `);
     // Crucial Migrations
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT \'free\'');
@@ -866,6 +877,62 @@ app.post('/api/projects/chat/history', async (req, res) => {
       [project_id, email, JSON.stringify(chat_history || [])]
     );
     res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// List all chat sessions for a project
+app.get('/api/projects/chats', async (req, res) => {
+  try {
+    const { email, project_id } = req.query;
+    if (!email || !project_id) return res.status(400).json({ error: "Email and project_id required" });
+    const result = await pool.query(
+      'SELECT * FROM project_chats WHERE user_email = $1 AND project_id = $2 ORDER BY updated_at DESC',
+      [email, project_id]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Create or update a chat session
+app.post('/api/projects/chats', async (req, res) => {
+  try {
+    const { id, email, project_id, title, messages } = req.body;
+    if (!id || !email || !project_id) {
+      return res.status(400).json({ error: "id, email, and project_id required" });
+    }
+    const result = await pool.query(
+      `INSERT INTO project_chats (id, project_id, user_email, title, messages, updated_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+       ON CONFLICT (id)
+       DO UPDATE SET title = $4, messages = $5, updated_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [id, project_id, email, title || 'New Chat', JSON.stringify(messages || [])]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete a specific chat session
+app.delete('/api/projects/chats/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ error: "Email query parameter required" });
+    
+    const result = await pool.query(
+      'DELETE FROM project_chats WHERE id = $1 AND user_email = $2 RETURNING *',
+      [id, email]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: "Chat session not found or unauthorized" });
+    }
+    res.json({ success: true, message: "Chat session deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
