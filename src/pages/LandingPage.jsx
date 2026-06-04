@@ -129,7 +129,7 @@ const LandingPage = () => {
   const glassCard = { background: 'rgba(13,13,13,0.72)', backdropFilter: 'blur(16px)', border: `1px solid rgba(255,107,44,0.15)` };
 
   return (
-    <div className="lp-root" style={{ background: BG, minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+    <div className="lp-root" style={{ background: BG, minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
 
       {/* ── GLOBAL KEYFRAMES ── */}
       <style>{`
@@ -178,7 +178,7 @@ const LandingPage = () => {
       {/* ══════════════════════════════════════════════
           SECTION 1: HERO
       ══════════════════════════════════════════════ */}
-      <section id="hero" className="grid-responsive-2" style={{ position:'relative', zIndex:2, alignItems:'center', gap:'clamp(2rem, 5vw, 4rem)', padding:'0 clamp(1rem, 5vw, 3rem)', minHeight:'calc(100vh - 72px)', marginTop:72, overflowX:'hidden', width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
+      <section id="hero" className="grid-responsive-2" style={{ position:'relative', zIndex:2, alignItems:'center', gap:'clamp(2rem, 5vw, 4rem)', padding:'80px clamp(1rem, 5vw, 3rem)', minHeight:'calc(100vh - 72px)', marginTop:72, overflowX:'hidden', width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
         {/* Local Ambient Glow for Hero */}
         <div style={{ position:'absolute', top:'10%', left:'30%', width:450, height:450, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,107,44,0.1) 0%, transparent 70%)', filter: 'blur(100px)', pointerEvents:'none', zIndex: 0 }} />
 
@@ -190,7 +190,7 @@ const LandingPage = () => {
             Now in v2.0 · Enterprise Edition
           </motion.div>
 
-          <h1 style={{ fontSize:'clamp(42px,5vw,72px)', fontWeight:800, lineHeight:0.95, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
+          <h1 style={{ fontSize:'clamp(32px,5vw,72px)', fontWeight:800, lineHeight:0.95, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
             Stop Fragmenting<br />
             <span style={{ 
               background:`linear-gradient(135deg,#FF6B2C 0%,#FF5C5C 50%,#7C3AED 100%)`, 
@@ -644,7 +644,7 @@ const LandingPage = () => {
       {/* ══════════════════════════════════════════════
           SECTION 6: FLOATING BLURRED CARDS CTA
       ══════════════════════════════════════════════ */}
-      <section style={{ position:'relative', zIndex:2, minHeight:'80vh', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', borderTop:`1px solid rgba(255,107,44,0.12)`, background:`radial-gradient(ellipse at 50% 50%, rgba(255,107,44,0.06) 0%, rgba(5,5,5,0) 65%)` }}>
+      <section style={{ position:'relative', zIndex:2, minHeight:'80vh', padding:'120px 20px', display:'flex', alignItems:'center', justifyContent:'center', overflow:'visible', borderTop:`1px solid rgba(255,107,44,0.12)`, background:`radial-gradient(ellipse at 50% 50%, rgba(255,107,44,0.06) 0%, rgba(5,5,5,0) 65%)` }}>
 
         {/* Deep radial glow */}
         <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:600, height:600, borderRadius:'50%', background:`radial-gradient(circle, rgba(255,107,44,0.08) 0%, rgba(124,58,237,0.03) 40%, transparent 70%)`, filter:'blur(30px)', pointerEvents:'none' }} />
@@ -716,7 +716,7 @@ const LandingPage = () => {
         {/* Center CTA */}
         <div style={{ position:'relative', zIndex:5, textAlign:'center', maxWidth:560, padding:'0 2rem' }}>
           <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}>
-            <h2 style={{ fontSize:'clamp(32px,5vw,58px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT, marginBottom:'1.25rem' }}>
+            <h2 style={{ fontSize:'clamp(24px,5vw,58px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT, marginBottom:'1.25rem' }}>
               The Future of Software Development Isn't Documenting Later.<br />
               <span style={{ background:`linear-gradient(135deg,${P},${PURP})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>It's Preserving Decisions Now.</span>
             </h2>
