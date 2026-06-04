@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import React, { lazy, Suspense } from 'react';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AnimatePresence } from 'framer-motion';
 
@@ -8,22 +8,23 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import GlobalBackground from './components/GlobalBackground';
 import ChatWidget from './components/ChatWidget';
-import LandingPage from './pages/LandingPage';
-import Dashboard from './pages/Dashboard';
-import LoginPage from './pages/LoginPage';
-import DocsPage from './pages/DocsPage';
-import ServicesPage from './pages/ServicesPage';
-import AboutPage from './pages/AboutPage';
-import ProfilePage from './pages/ProfilePage';
-import ExtensionPage from './pages/ExtensionPage';
-import LogoutPage from './pages/LogoutPage';
-import SEOContentPage from './pages/SEOContentPage';
-import BlogListPage from './pages/BlogListPage';
-import BlogDetailPage from './pages/BlogDetailPage';
-import PrivacyPage from './pages/PrivacyPage';
-import TermsPage from './pages/TermsPage';
-import SupportPage from './pages/SupportPage';
-import { Navigate } from 'react-router-dom';
+
+// Lazy Loaded Pages
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const DocsPage = lazy(() => import('./pages/DocsPage'));
+const ServicesPage = lazy(() => import('./pages/ServicesPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const ExtensionPage = lazy(() => import('./pages/ExtensionPage'));
+const LogoutPage = lazy(() => import('./pages/LogoutPage'));
+const SEOContentPage = lazy(() => import('./pages/SEOContentPage'));
+const BlogListPage = lazy(() => import('./pages/BlogListPage'));
+const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const SupportPage = lazy(() => import('./pages/SupportPage'));
 
 const ProtectedRoute = ({ children }) => {
   const user = localStorage.getItem('bridge_user');
@@ -65,6 +66,32 @@ const BridgeRoutes = () => {
     </AnimatePresence>
   );
 };
+
+const PageLoader = () => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '60vh',
+    width: '100%',
+    flexDirection: 'column',
+    gap: '20px'
+  }}>
+    <div style={{
+      width: '40px',
+      height: '40px',
+      borderRadius: '50%',
+      border: '3px solid var(--primary-soft)',
+      borderTopColor: 'var(--primary)',
+      animation: 'spin 1s linear infinite'
+    }} />
+    <style>{`
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+);
 
 function App() {
   React.useEffect(() => {
@@ -117,7 +144,9 @@ function App() {
         <GlobalBackground />
         <Navbar />
         <main style={{ flex: 1, position: 'relative' }}>
-          <BridgeRoutes />
+          <Suspense fallback={<PageLoader />}>
+            <BridgeRoutes />
+          </Suspense>
         </main>
         <Footer />
       </div>

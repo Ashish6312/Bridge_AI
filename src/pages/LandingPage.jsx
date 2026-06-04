@@ -190,7 +190,7 @@ const LandingPage = () => {
             Now in v2.0 · Enterprise Edition
           </motion.div>
 
-          <h1 style={{ fontSize:'clamp(32px,5vw,72px)', fontWeight:800, lineHeight:0.95, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
+          <h1 style={{ fontSize:'clamp(32px,5vw,72px)', fontWeight:800, lineHeight:1.15, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
             Stop Fragmenting<br />
             <span style={{ 
               background:`linear-gradient(135deg,#FF6B2C 0%,#FF5C5C 50%,#7C3AED 100%)`, 
