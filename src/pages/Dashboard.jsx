@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Plus, Search, MessageSquare, Clock, Code, Target, Layers, Activity,
-  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw, FileText, X, Trash2, Lock, Settings, Edit2
+  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw, FileText, X, Trash2, Lock, Settings, Edit2,
+  PanelLeftClose, PanelLeft
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
 import IntelligenceBridge from '../components/IntelligenceBridge';
@@ -1084,6 +1085,21 @@ const ProjectWorkspace = ({
   const [decAlternatives, setDecAlternatives] = useState('');
   const [savingDecision, setSavingDecision] = useState(false);
 
+  const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(window.innerWidth >= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setIsChatSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [chatInput, setChatInput] = useState('');
   const [chatSessions, setChatSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
@@ -1418,6 +1434,7 @@ const ProjectWorkspace = ({
     setChatHistory([
       { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
     ]);
+    if (isMobile) setIsChatSidebarOpen(false);
   };
 
   const selectChatSession = (sessionId) => {
@@ -1426,6 +1443,7 @@ const ProjectWorkspace = ({
       setActiveSessionId(sessionId);
       setChatHistory(session.messages || []);
     }
+    if (isMobile) setIsChatSidebarOpen(false);
   };
 
   const deleteChatSession = async (e, sessionId) => {
@@ -1516,7 +1534,7 @@ const ProjectWorkspace = ({
       {/* Project Header Banner */}
       <div style={{ position: 'relative', overflow: 'hidden', padding: '28px 32px', borderRadius: '24px', background: 'rgba(13, 13, 13, 0.45)', border: '1px solid rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: '1 1 280px', minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <button 
                 onClick={() => setActiveProject(null)}
@@ -1527,10 +1545,10 @@ const ProjectWorkspace = ({
               <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
               <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600', letterSpacing: '1px' }}>PROJECT VAULT</span>
             </div>
-            <h1 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#FFFFFF', margin: 0, maxWidth: '100%', wordBreak: 'break-word' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#FFFFFF', margin: 0, maxWidth: '100%', wordBreak: 'normal', overflowWrap: 'break-word' }}>
               {projects.find(p => p.id === projectId)?.name || projectId}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '4px', margin: '4px 0 0 0', wordBreak: 'break-word', lineHeight: '1.4' }}>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '4px', margin: '4px 0 0 0', wordBreak: 'normal', overflowWrap: 'break-word', lineHeight: '1.4' }}>
               Aggregate and scale organizational context for Humans, AIs, and agents.
             </p>
           </div>
@@ -1975,18 +1993,73 @@ const ProjectWorkspace = ({
 
       {projectTab === 'chat' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', height: '520px', borderRadius: '16px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '520px', borderRadius: '16px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', position: 'relative' }}>
             {/* Header Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.15)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Cpu size={16} color="var(--primary)" />
-                <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'rgba(255,255,255,0.8)' }}>AI Memory Assistant</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.15)', zIndex: 11 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button 
+                  type="button"
+                  onClick={() => setIsChatSidebarOpen(!isChatSidebarOpen)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px',
+                    borderRadius: '6px',
+                    transition: 'all 0.2s',
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.08)'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'white'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)' }}
+                  title={isChatSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+                >
+                  {isChatSidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeft size={14} />}
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Cpu size={16} color="var(--primary)" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'rgba(255,255,255,0.8)' }}>AI Memory Assistant</span>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+              {/* Overlay Backdrop for Mobile */}
+              {isMobile && isChatSidebarOpen && (
+                <div 
+                  onClick={() => setIsChatSidebarOpen(false)}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(0, 0, 0, 0.6)',
+                    backdropFilter: 'blur(3px)',
+                    zIndex: 9,
+                    cursor: 'pointer'
+                  }}
+                />
+              )}
+
               {/* Left Sidebar */}
-              <div style={{ width: '240px', borderRight: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
+              <div style={{ 
+                width: isChatSidebarOpen ? '240px' : '0px', 
+                borderRight: (isChatSidebarOpen && !isMobile) ? '1px solid rgba(255,255,255,0.05)' : 'none', 
+                background: isMobile ? 'rgba(13,13,13,0.98)' : 'rgba(0,0,0,0.15)', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                overflow: 'hidden', 
+                flexShrink: 0,
+                transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease',
+                position: isMobile ? 'absolute' : 'relative',
+                left: 0,
+                top: 0,
+                bottom: 0,
+                zIndex: 10,
+                height: '100%',
+                boxShadow: (isChatSidebarOpen && isMobile) ? '10px 0 30px rgba(0,0,0,0.5)' : 'none'
+              }}>
                 {/* New Chat Button */}
                 <div style={{ padding: '14px' }}>
                   <button

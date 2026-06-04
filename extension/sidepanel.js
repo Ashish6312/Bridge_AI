@@ -487,27 +487,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (optimizeBtn) {
-        optimizeBtn.addEventListener('click', () => {
+        optimizeBtn.addEventListener('click', async () => {
             const isFree = (userSession?.plan || 'free') === 'free';
             if (isFree) {
                 showCustomModal('Forge Logic Required', 'The optimization engine requires a Pro or Infinite plan to distill raw intelligence into professional prompts.');
                 return;
             }
-            
+
+            if (!capturedData || !capturedData.messages || capturedData.messages.length === 0) {
+                showCustomModal('No Context', 'No captured chat context found to optimize.', 'error');
+                return;
+            }
+
             optimizeBtn.disabled = true;
-            optimizeBtn.innerHTML = `Distilling Intelligence...`;
-            
-            setTimeout(() => {
-                optimizeBtn.innerHTML = `✅ Context Optimized`;
-                optimizeBtn.style.background = 'rgba(16, 185, 129, 0.1)';
-                optimizeBtn.style.borderColor = '#10b981';
-                optimizeBtn.style.color = '#10b981';
-                
-                // Simulate optimization by adding a metadata flag
-                if (capturedData) capturedData.optimized = true;
-                
-                showCustomModal('Optimization Complete', 'Your intelligence has been distilled into a high-fidelity context bundle ready for forging.', 'success');
-            }, 1500);
+            optimizeBtn.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Distilling...`;
+
+            // Format messages the exact same way the backend expects
+            const formattedChat = capturedData.messages.map(m => `${m.role.toUpperCase()}: ${m.text || m.content || ''}`).join('\n\n');
+
+            try {
+                const res = await fetch(`${API_BASE}/api/optimize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ summary: formattedChat })
+                });
+
+                const result = await res.json();
+                if (result.success && result.optimized) {
+                    optimizeBtn.innerHTML = `✅ Context Optimized`;
+                    optimizeBtn.style.background = 'rgba(16, 185, 129, 0.1)';
+                    optimizeBtn.style.borderColor = '#10b981';
+                    optimizeBtn.style.color = '#10b981';
+
+                    if (capturedData) {
+                        capturedData.optimized = true;
+                        capturedData.optimizedPrompt = result.optimized;
+                    }
+
+                    // Render the optimized prompt in the UI data container dynamically
+                    if (dataContainer) {
+                        // Check if an optimized block already exists, if so remove it
+                        const existingOpt = dataContainer.querySelector('.optimized-datapoint');
+                        if (existingOpt) existingOpt.remove();
+
+                        const div = document.createElement('div');
+                        div.className = 'data-point fade-in optimized-datapoint';
+                        div.style.borderLeft = '3px solid #10b981';
+                        div.innerHTML = `
+                            <label style="color: #10b981;">Optimized System Prompt (Click to Copy)</label>
+                            <pre style="white-space: pre-wrap; font-family: 'Space Mono', monospace; font-size: 0.75rem; color: #e4e4e7; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 8px; margin-top: 6px; max-height: 120px; overflow-y: auto; cursor: pointer; user-select: all; text-align: left; line-height: 1.4;"></pre>
+                        `;
+                        const pre = div.querySelector('pre');
+                        pre.textContent = result.optimized; // Set textContent to avoid HTML injection
+
+                        pre.addEventListener('click', () => {
+                            navigator.clipboard.writeText(result.optimized);
+                            showCustomModal('Copied!', 'Optimized prompt copied to clipboard.', 'success');
+                        });
+
+                        dataContainer.appendChild(div);
+                    }
+
+                    showCustomModal('Optimization Complete', 'Your intelligence has been distilled into a high-fidelity system prompt and is ready for use.', 'success');
+                } else {
+                    throw new Error(result.error || 'Optimization failed');
+                }
+            } catch (err) {
+                console.error('Optimization API Error:', err);
+                optimizeBtn.disabled = false;
+                optimizeBtn.innerHTML = `Optimize Intelligence`;
+                showCustomModal('Optimization Failed', err.message || 'The LLM API returned an error.', 'error');
+            }
         });
     }
 
