@@ -706,7 +706,7 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
       )}
 
       {/* Sync bar (Low opacity platform buttons, highlight on hover) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', paddingRight: '76px' }}>
         <span style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-muted)', marginRight: '4px' }}>Sync:</span>
         {[
           { name: 'Gemini',    url: 'https://gemini.google.com/app',  color: '#4285F4', icon: <Zap size={12} /> },
@@ -2681,7 +2681,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container" style={{ padding: '120px 0 40px 0', background: 'transparent' }}>
+    <div className="container" style={{ padding: '120px 0 100px 0', background: 'transparent' }}>
       <div className="dashboard-layout mobile-col" style={{ display: 'flex', gap: '32px' }}>
         
         {/* Elite Dashboard Sidebar */}

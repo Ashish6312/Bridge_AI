@@ -517,7 +517,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const result = await res.json();
                 if (result.success && result.optimized) {
-                    optimizeBtn.innerHTML = `✅ Context Optimized`;
+                    optimizeBtn.innerHTML = `✅ Optimized`;
                     optimizeBtn.style.background = 'rgba(16, 185, 129, 0.1)';
                     optimizeBtn.style.borderColor = '#10b981';
                     optimizeBtn.style.color = '#10b981';
@@ -527,31 +527,55 @@ document.addEventListener('DOMContentLoaded', async () => {
                         capturedData.optimizedPrompt = result.optimized;
                     }
 
-                    // Render the optimized prompt in the UI data container dynamically
+                    // Render the optimized prompt inline in the panel (no popup)
                     if (dataContainer) {
-                        // Check if an optimized block already exists, if so remove it
                         const existingOpt = dataContainer.querySelector('.optimized-datapoint');
                         if (existingOpt) existingOpt.remove();
 
                         const div = document.createElement('div');
                         div.className = 'data-point fade-in optimized-datapoint';
-                        div.style.borderLeft = '3px solid #10b981';
+                        div.style.cssText = 'border-left: 3px solid #10b981; position: relative;';
                         div.innerHTML = `
-                            <label style="color: #10b981;">Optimized System Prompt (Click to Copy)</label>
-                            <pre style="white-space: pre-wrap; font-family: 'Space Mono', monospace; font-size: 0.75rem; color: #e4e4e7; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 8px; margin-top: 6px; max-height: 120px; overflow-y: auto; cursor: pointer; user-select: all; text-align: left; line-height: 1.4;"></pre>
+                            <label style="color: #10b981; display:flex; align-items:center; justify-content:space-between;">
+                                <span>Optimized Prompt</span>
+                                <span id="copy-hint" style="font-size:0.6rem; color:#10b981; opacity:0.7; cursor:pointer;">Click to copy ↓</span>
+                            </label>
+                            <pre id="opt-pre" style="white-space: pre-wrap; font-family: 'Space Mono', monospace; font-size: 0.72rem; color: #e4e4e7; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 8px; margin-top: 6px; max-height: 180px; overflow-y: auto; cursor: pointer; user-select: all; text-align: left; line-height: 1.45;"></pre>
                         `;
-                        const pre = div.querySelector('pre');
-                        pre.textContent = result.optimized; // Set textContent to avoid HTML injection
+                        const pre = div.querySelector('#opt-pre');
+                        const copyHint = div.querySelector('#copy-hint');
+                        pre.textContent = result.optimized;
 
-                        pre.addEventListener('click', () => {
+                        const doCopy = () => {
                             navigator.clipboard.writeText(result.optimized);
-                            showCustomModal('Copied!', 'Optimized prompt copied to clipboard.', 'success');
-                        });
+                            const orig = copyHint.textContent;
+                            copyHint.textContent = 'Copied ✓';
+                            copyHint.style.opacity = '1';
+                            pre.style.borderColor = '#10b981';
+                            pre.style.boxShadow = '0 0 8px rgba(16,185,129,0.25)';
+                            setTimeout(() => {
+                                copyHint.textContent = orig;
+                                copyHint.style.opacity = '0.7';
+                                pre.style.boxShadow = 'none';
+                            }, 2000);
+                        };
+                        pre.addEventListener('click', doCopy);
+                        copyHint.addEventListener('click', doCopy);
 
                         dataContainer.appendChild(div);
-                    }
 
-                    showCustomModal('Optimization Complete', 'Your intelligence has been distilled into a high-fidelity system prompt and is ready for use.', 'success');
+                        // Flash-highlight and scroll the new block into view
+                        setTimeout(() => {
+                            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            div.style.outline = '1.5px solid rgba(16,185,129,0.6)';
+                            div.style.boxShadow = '0 0 16px rgba(16,185,129,0.2)';
+                            setTimeout(() => {
+                                div.style.outline = 'none';
+                                div.style.boxShadow = 'none';
+                                div.style.transition = 'all 0.6s ease';
+                            }, 1400);
+                        }, 80);
+                    }
                 } else {
                     throw new Error(result.error || 'Optimization failed');
                 }

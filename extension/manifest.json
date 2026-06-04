@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Bridge AI - Universal Chat & Prompt Sync",
-  "version": "1.0.1",
-  "description": "Instantly bridge, summarize, and sync conversation contexts across ChatGPT, Claude, Gemini, and DeepSeek without context loss.",
+  "version": "1.0.2",
+  "description": "Bridge your AI chat sessions across any platform without losing context. Capture, summarize, and sync your conversation history into a personal intelligence vault.",
   "permissions": ["activeTab", "scripting", "storage", "tabs", "sidePanel"],
   "action": {
     "default_popup": "popup.html",
