@@ -1901,6 +1901,75 @@ const ProjectWorkspace = ({
               </motion.div>
             </div>
           )}
+
+          {elaboratingDecision && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(6px)' }}>
+              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} style={{ width: '90%', maxWidth: '640px', background: 'rgba(13,13,13,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '28px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 24px 50px rgba(0,0,0,0.6)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <span style={{ 
+                      fontSize: '0.65rem', fontWeight: '800', padding: '3px 8px', borderRadius: '4px', letterSpacing: '0.5px', marginRight: '8px',
+                      background: elaboratingDecision.decision_type === 'accepted' ? 'rgba(16, 185, 129, 0.15)' : elaboratingDecision.decision_type === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                      color: elaboratingDecision.decision_type === 'accepted' ? '#10b981' : elaboratingDecision.decision_type === 'rejected' ? '#ef4444' : '#f59e0b'
+                    }}>
+                      {elaboratingDecision.decision_type === 'accepted' ? 'ACCEPTED DECISION' : elaboratingDecision.decision_type === 'rejected' ? 'REJECTED OPTION' : 'OPEN QUESTION'}
+                    </span>
+                    <h3 style={{ margin: '8px 0 0 0', color: 'white', fontSize: '1.25rem', fontWeight: 800 }}>{elaboratingDecision.title}</h3>
+                  </div>
+                  <button onClick={() => setElaboratingDecision(null)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '1.2rem', padding: 0 }}>
+                    &times;
+                  </button>
+                </div>
+
+                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingRight: '8px' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)' }}>
+                      <strong>Rationale:</strong> {elaboratingDecision.rationale || 'None provided'}
+                    </div>
+                    {elaboratingDecision.alternatives && (
+                      <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '8px', marginTop: '4px' }}>
+                        <strong>Alternatives/Preferred Options:</strong> {elaboratingDecision.alternatives}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '0.85rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Cpu size={14} /> AI Architectural Elaboration
+                    </h4>
+                    
+                    {loadingElaboration ? (
+                      <div style={{ padding: '32px 0', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+                        <RefreshCw size={20} className="ldBlink" style={{ marginBottom: '8px' }} />
+                        <p style={{ fontSize: '0.78rem', margin: 0 }}>Architect is analyzing rules &amp; context to elaborate...</p>
+                      </div>
+                    ) : (
+                      <div style={{ 
+                        background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px',
+                        fontSize: '0.85rem', color: '#E2E8F0', lineHeight: '1.6', overflowX: 'auto'
+                      }}>
+                        {aiElaboration ? parseMarkdownToJSX(aiElaboration) : 'No elaboration generated.'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                  <button onClick={() => setElaboratingDecision(null)} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    Close
+                  </button>
+                  <button 
+                    onClick={() => moveDecisionToChat(elaboratingDecision, aiElaboration)} 
+                    disabled={loadingElaboration}
+                    className="btn-primary" 
+                    style={{ padding: '8px 16px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    💬 Discuss in Chatbot
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
         </motion.div>
       )}
 
