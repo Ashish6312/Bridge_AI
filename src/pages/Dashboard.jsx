@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Plus, Search, MessageSquare, Clock, Code, Target, Layers, Activity,
-  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw, FileText, X, Trash2, Lock, Settings
+  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw, FileText, X, Trash2, Lock, Settings, Edit2
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
 import IntelligenceBridge from '../components/IntelligenceBridge';
@@ -212,8 +212,38 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(ctx.title);
+  const [editSummary, setEditSummary] = useState(ctx.summary);
+  const [editChatLog, setEditChatLog] = useState(ctx.chat_log || ctx.chatLog || '');
+
   const exportRef = useRef(null);
   const projectMenuRef = useRef(null);
+
+  useEffect(() => {
+    setEditTitle(ctx.title || '');
+    setEditSummary(ctx.summary || '');
+    setEditChatLog(ctx.chat_log || ctx.chatLog || '');
+  }, [ctx]);
+
+  const handleSaveEdit = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/bridge/${ctx.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editTitle, summary: editSummary, chat_log: editChatLog })
+      });
+      if (res.ok) {
+        triggerToast('Vault item successfully updated.');
+        setIsEditing(false);
+        loadData();
+      } else {
+        triggerToast('Failed to save changes.');
+      }
+    } catch (err) {
+      triggerToast('Network error: Update failed.');
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -349,6 +379,70 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
     }
   };
 
+  if (isEditing) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }} 
+        animate={{ opacity: 1, scale: 1 }}
+        style={{ 
+          padding: '24px', 
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.1)', 
+          borderLeft: '4px solid var(--primary)', 
+          background: 'rgba(18, 18, 18, 0.95)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)'
+        }}
+      >
+        <h4 style={{ margin: '0 0 16px 0', color: 'white', fontSize: '1rem', fontWeight: 800 }}>Edit Intelligence Card</h4>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>CARD TITLE</label>
+            <input 
+              type="text" 
+              value={editTitle} 
+              onChange={e => setEditTitle(e.target.value)} 
+              style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', padding: '10px 14px', borderRadius: '8px', width: '100%', fontSize: '0.9rem', outline: 'none' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>SMART SUMMARY</label>
+            <textarea 
+              value={editSummary} 
+              onChange={e => setEditSummary(e.target.value)} 
+              style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', padding: '10px 14px', borderRadius: '8px', width: '100%', height: '120px', fontSize: '0.85rem', outline: 'none', resize: 'vertical', lineHeight: '1.5' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>RAW CHAT LOG</label>
+            <textarea 
+              value={editChatLog} 
+              onChange={e => setEditChatLog(e.target.value)} 
+              style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', padding: '10px 14px', borderRadius: '8px', width: '100%', height: '160px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', fontFamily: 'monospace', lineHeight: '1.4' }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={handleSaveEdit} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>Save Changes</button>
+          <button 
+            onClick={() => { 
+              setIsEditing(false); 
+              setEditTitle(ctx.title || ''); 
+              setEditSummary(ctx.summary || ''); 
+              setEditChatLog(ctx.chat_log || ctx.chatLog || ''); 
+            }} 
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', padding: '8px 16px', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: '600' }}
+          >
+            Cancel
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} 
@@ -377,6 +471,20 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
 
         {/* Unified sleek Action Toolbar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          <button 
+            onClick={() => setIsEditing(true)} 
+            style={{ 
+              width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.02)', 
+              border: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' 
+            }} 
+            onMouseEnter={e => { e.currentTarget.style.color = 'white'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+            title="Edit Log"
+          >
+            <Edit2 size={13} />
+          </button>
+
           <button 
             onClick={handleSmartRename} 
             style={{ 
@@ -958,10 +1066,12 @@ const ProjectWorkspace = ({
   // Load context and decisions on project/tab changes
   useEffect(() => {
     if (!email || !projectId) return;
-    
-    if (projectTab === 'memory') {
-      fetchContext();
-    } else if (projectTab === 'decisions') {
+    fetchContext();
+  }, [projectId, email]);
+
+  useEffect(() => {
+    if (!email || !projectId) return;
+    if (projectTab === 'decisions') {
       fetchDecisions();
     }
   }, [projectId, projectTab, email]);
@@ -975,6 +1085,13 @@ const ProjectWorkspace = ({
         setTechStack(data.data.tech_stack || '');
         setGoals(data.data.goals || '');
         setRules(data.data.rules || '');
+        if (data.data.chat_history && Array.isArray(data.data.chat_history) && data.data.chat_history.length > 0) {
+          setChatHistory(data.data.chat_history);
+        } else {
+          setChatHistory([
+            { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
+          ]);
+        }
       }
     } catch (err) {
       triggerToast('Error loading project context.');
@@ -1027,6 +1144,7 @@ const ProjectWorkspace = ({
         setTechStack(data.data.tech_stack || '');
         setGoals(data.data.goals || '');
         setRules(data.data.rules || '');
+        fetchDecisions(); // Fetch updated decisions compiled by AI
         triggerToast('AI Distillation Complete: Memory Layer synthesized!');
       } else {
         triggerToast(data.error || 'Compilation failed.');
@@ -1101,12 +1219,38 @@ const ProjectWorkspace = ({
     }
   };
 
+  const saveChatHistoryToServer = async (historyToSave) => {
+    try {
+      await fetch(`${API_BASE}/api/projects/chat/history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          project_id: projectId,
+          chat_history: historyToSave
+        })
+      });
+    } catch (err) {
+      console.error("Failed to save chat history on server:", err);
+    }
+  };
+
+  const clearChatHistory = async () => {
+    const defaultHistory = [
+      { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
+    ];
+    setChatHistory(defaultHistory);
+    await saveChatHistoryToServer(defaultHistory);
+  };
+
   const sendChatMessage = async (e) => {
     e.preventDefault();
     if (!chatInput.trim() || sendingChat) return;
     const userMessage = chatInput;
     setChatInput('');
-    setChatHistory(prev => [...prev, { role: 'user', text: userMessage }]);
+    const userMsgObj = { role: 'user', text: userMessage };
+    const updatedWithUser = [...chatHistory, userMsgObj];
+    setChatHistory(updatedWithUser);
     setSendingChat(true);
 
     try {
@@ -1117,17 +1261,25 @@ const ProjectWorkspace = ({
           email,
           project_id: projectId,
           message: userMessage,
-          history: chatHistory.filter(h => h.role !== 'assistant')
+          history: chatHistory
         })
       });
       const data = await res.json();
       if (data.success) {
-        setChatHistory(prev => [...prev, { role: 'assistant', text: data.text }]);
+        const updatedWithAssistant = [...updatedWithUser, { role: 'assistant', text: data.text }];
+        setChatHistory(updatedWithAssistant);
+        await saveChatHistoryToServer(updatedWithAssistant);
       } else {
-        setChatHistory(prev => [...prev, { role: 'assistant', text: "Error: " + (data.error || 'Failed to query memory assistant.') }]);
+        const errorMsg = "Error: " + (data.error || 'Failed to query memory assistant.');
+        const updatedWithError = [...updatedWithUser, { role: 'assistant', text: errorMsg }];
+        setChatHistory(updatedWithError);
+        await saveChatHistoryToServer(updatedWithError);
       }
     } catch (err) {
-      setChatHistory(prev => [...prev, { role: 'assistant', text: "Failed to connect to AI server. Check connection." }]);
+      const connectErrorMsg = "Failed to connect to AI server. Check connection.";
+      const updatedWithFail = [...updatedWithUser, { role: 'assistant', text: connectErrorMsg }];
+      setChatHistory(updatedWithFail);
+      await saveChatHistoryToServer(updatedWithFail);
     } finally {
       setSendingChat(false);
     }
@@ -1513,6 +1665,30 @@ const ProjectWorkspace = ({
       {projectTab === 'chat' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div style={{ display: 'flex', flexDirection: 'column', height: '520px', borderRadius: '16px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+            {/* Header Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.15)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Cpu size={16} color="var(--primary)" />
+                <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'rgba(255,255,255,0.8)' }}>AI Memory Assistant</span>
+              </div>
+              {chatHistory.length > 1 && (
+                <button
+                  type="button"
+                  onClick={clearChatHistory}
+                  style={{
+                    background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '6px',
+                    transition: 'all 0.25s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'transparent' }}
+                >
+                  <Trash2 size={12} />
+                  Clear Chat
+                </button>
+              )}
+            </div>
+
             {chatHistory.length <= 1 ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '20px 40px', textAlign: 'center' }}>
                 <motion.div 
@@ -2249,6 +2425,7 @@ const Dashboard = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {activeProject ? (
                 <ProjectWorkspace 
+                  key={activeProject}
                   projectId={activeProject}
                   projects={projects}
                   bridges={bridges}

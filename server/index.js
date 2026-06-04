@@ -215,6 +215,7 @@ const initDB = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS settings JSON DEFAULT \'{"notifications":true,"autoBridge":false,"secureMode":true}\'');
     await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS mode VARCHAR(20) DEFAULT \'quick\'');
     await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS project_id TEXT');
+    await pool.query("ALTER TABLE project_contexts ADD COLUMN IF NOT EXISTS chat_history JSON DEFAULT '[]'");
   } catch (err) {
     console.error("DB Init Error:", err);
   }
@@ -528,7 +529,7 @@ app.get('/api/user/status', async (req, res) => {
 
 app.patch('/api/bridge/:id', async (req, res) => {
   try {
-    const { title, project_id, summary } = req.body;
+    const { title, project_id, summary, chat_log } = req.body;
     let query = 'UPDATE bridges SET ';
     const params = [];
     let setClauses = [];
@@ -544,6 +545,10 @@ app.patch('/api/bridge/:id', async (req, res) => {
     if (summary !== undefined) {
       params.push(summary);
       setClauses.push(`summary = $${params.length}`);
+    }
+    if (chat_log !== undefined) {
+      params.push(chat_log);
+      setClauses.push(`chat_log = $${params.length}`);
     }
 
     if (setClauses.length === 0) return res.status(400).json({ error: "No fields to update" });
@@ -820,7 +825,7 @@ app.get('/api/projects/context', async (req, res) => {
       [email, project_id]
     );
     if (result.rowCount === 0) {
-      return res.json({ success: true, data: { project_id, user_email: email, tech_stack: '', goals: '', rules: '' } });
+      return res.json({ success: true, data: { project_id, user_email: email, tech_stack: '', goals: '', rules: '', chat_history: [] } });
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -840,6 +845,25 @@ app.post('/api/projects/context', async (req, res) => {
        DO UPDATE SET tech_stack = $3, goals = $4, rules = $5, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
       [project_id, email, tech_stack || '', goals || '', rules || '']
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Update Project Chat History
+app.post('/api/projects/chat/history', async (req, res) => {
+  try {
+    const { email, project_id, chat_history } = req.body;
+    if (!email || !project_id) return res.status(400).json({ error: "Email and project_id required" });
+    const result = await pool.query(
+      `INSERT INTO project_contexts (project_id, user_email, chat_history, updated_at)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+       ON CONFLICT (project_id, user_email)
+       DO UPDATE SET chat_history = $3, updated_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [project_id, email, JSON.stringify(chat_history || [])]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
