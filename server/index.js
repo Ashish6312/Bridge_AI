@@ -227,6 +227,15 @@ const initDB = async () => {
     await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS mode VARCHAR(20) DEFAULT \'quick\'');
     await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS project_id TEXT');
     await pool.query("ALTER TABLE project_contexts ADD COLUMN IF NOT EXISTS chat_history JSON DEFAULT '[]'");
+    // Deduplicate existing project decisions
+    await pool.query(`
+      DELETE FROM project_decisions 
+      WHERE id NOT IN (
+        SELECT MIN(id) 
+        FROM project_decisions 
+        GROUP BY project_id, user_email, LOWER(title)
+      )
+    `);
   } catch (err) {
     console.error("DB Init Error:", err);
   }
@@ -1064,15 +1073,29 @@ Format:
       [project_id, email, compiledJson.tech_stack || '', compiledJson.goals || '', compiledJson.rules || '']
     );
 
-    // Save project decisions
+    // Save project decisions (upsert to avoid duplicates by checking title)
     if (compiledJson.decisions && Array.isArray(compiledJson.decisions)) {
       for (const dec of compiledJson.decisions) {
-        const decId = 'dec_' + Math.random().toString(36).substr(2, 9);
-        await pool.query(
-          `INSERT INTO project_decisions (id, project_id, user_email, decision_type, title, rationale, alternatives, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
-          [decId, project_id, email, dec.decision_type || 'accepted', dec.title, dec.rationale || '', dec.alternatives || '']
+        if (!dec.title) continue;
+        const existing = await pool.query(
+          'SELECT id FROM project_decisions WHERE project_id = $1 AND user_email = $2 AND LOWER(title) = LOWER($3)',
+          [project_id, email, dec.title]
         );
+        if (existing.rowCount > 0) {
+          await pool.query(
+            `UPDATE project_decisions 
+             SET decision_type = $1, rationale = $2, alternatives = $3 
+             WHERE id = $4`,
+            [dec.decision_type || 'accepted', dec.rationale || '', dec.alternatives || '', existing.rows[0].id]
+          );
+        } else {
+          const decId = 'dec_' + Math.random().toString(36).substr(2, 9);
+          await pool.query(
+            `INSERT INTO project_decisions (id, project_id, user_email, decision_type, title, rationale, alternatives, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+            [decId, project_id, email, dec.decision_type || 'accepted', dec.title, dec.rationale || '', dec.alternatives || '']
+          );
+        }
       }
     }
 
