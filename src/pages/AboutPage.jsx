@@ -36,7 +36,7 @@ const AboutPage = () => {
     <div style={{ background: 'var(--bg-main)', minHeight: '100vh', fontFamily: "'Inter', sans-serif" }}>
       <SEOHelmet 
         title="About Us"
-        description="Learn more about BridgeAI - our mission to enable context portability and eliminate redundant typing across AI platforms."
+        description="Learn more about BridgeAI - our mission to provide a shared knowledge layer and organizational memory system for humans, AI tools, and agents."
         keywords={['about bridgeai', 'context bridge team', 'Entrext Labs', 'LLM workflow automation', 'local-first tool']}
       />
 
@@ -52,12 +52,14 @@ const AboutPage = () => {
                 <span style={{ fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)' }}>About BridgeAI</span>
               </div>
               <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.2rem)', fontWeight: '900', color: 'var(--text-main)', letterSpacing: '-0.05em', marginBottom: '32px', lineHeight: 1.1 }}>
-                Making AI Tools <br /> <span style={{ color: 'var(--primary)' }}>Work Together.</span>
+                Preserving Project <br /> <span style={{ color: 'var(--primary)' }}>Memory.</span>
               </h1>
               <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', lineHeight: '1.7', marginBottom: '48px', maxWidth: '650px' }}>
-                Every AI tool has different strengths. Some people use ChatGPT for coding, Claude for long documents, Gemini for research, and DeepSeek for technical reasoning.
+                We started BridgeAI with a simple observation: people were using multiple AI models—like ChatGPT, Claude, and Gemini—on the same project, and losing context every time they switched tools.
                 <br /><br />
-                The problem? Every time you switch tools, you have to explain everything again. BridgeAI helps people move conversations, projects, research, prompts, and ideas between AI platforms without losing context.
+                However, through deep customer validation with AI engineers, architects, and CTOs, we discovered a much larger problem: <strong>Knowledge Fragmentation</strong>. Critical business logic, constraints, and technical reasoning are scattered across fleeting AI chats, Slack messages, Notion docs, and code comments.
+                <br /><br />
+                Today, BridgeAI is the <strong>Shared Knowledge Layer & Organizational Memory System</strong> that aggregates project context and captures technical decision histories for humans, AI tools, and autonomous coding agents.
               </p>
               
               <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
@@ -84,9 +86,9 @@ const AboutPage = () => {
                       <Award color="var(--primary)" size={20} />
                       <span style={{ fontWeight: '800', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-main)' }}>Our Mission</span>
                    </div>
-                   <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-main)', lineHeight: 1.5, fontWeight: '600' }}>
-                      "To make switching between AI tools as easy as switching between browser tabs."
-                   </p>
+                    <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-main)', lineHeight: 1.5, fontWeight: '600' }}>
+                       "To provide a single trusted source of technical context and decision history for humans and AI systems alike."
+                    </p>
                 </div>
               </div>
             </motion.div>
@@ -103,10 +105,10 @@ const AboutPage = () => {
           </div>
           <div className="grid-responsive-2" style={{ gap: '32px' }}>
             {[
-              { icon: <Activity />, title: "Save Time", desc: "Stop copying entire conversations between AI platforms. Continue where you left off." },
-              { icon: <Shield />, title: "Privacy First", desc: "Your conversations belong to you. BridgeAI is designed to keep your data secure and under your control." },
-              { icon: <Globe />, title: "AI-Agnostic", desc: "We don't believe in locking people into one AI platform. Use whichever AI is best for the task. BridgeAI helps them work together." },
-              { icon: <Target />, title: "Productivity Without Friction", desc: "The best tools disappear into the background. BridgeAI is designed to make switching between AI platforms feel effortless." }
+              { icon: <Activity />, title: "Unify Fragmentation", desc: "Aggregate fleeting developer chats, model context, and business rules into structured, long-term project memory." },
+              { icon: <Shield />, title: "Privacy & IP Control", desc: "Keep your sensitive business code and architecture rules secure. Local-first architecture ensures full data sovereignty." },
+              { icon: <Globe />, title: "Model-Independent", desc: "Equip humans and diverse AI models (ChatGPT, Claude, Gemini, custom agents) with the exact same trusted context layer." },
+              { icon: <Target />, title: "Preserve Reasoning", desc: "Go beyond capturing outcomes. Log why architectural decisions were made and which alternatives were rejected." }
             ].map((v, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 style={{ padding: '48px', background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '32px', boxShadow: 'var(--shadow)', transition: 'all 0.3s' }}
@@ -168,21 +170,21 @@ const AboutPage = () => {
               {[
                 { 
                   num: '01', 
-                  title: 'Capture Your Conversation', 
-                  desc: 'Click the BridgeAI extension while using your favorite AI platform.',
+                  title: 'Capture Flow States', 
+                  desc: 'Extract structured developer interactions and chats using our browser extension or CLI.',
                   icon: <Activity size={24} color="var(--primary)" />
                 },
                 { 
                   num: '02', 
-                  title: 'Save Context Securely', 
-                  desc: 'BridgeAI prepares the important information from your conversation while keeping it protected.',
-                  icon: <Shield size={24} color="var(--primary)" />
+                  title: 'Compile Shared Memory', 
+                  desc: 'BridgeAI automatically synthesizes logs into an Active Context layer detailing stack components, goals, and rules.',
+                  icon: <Layers size={24} color="var(--primary)" />
                 },
                 { 
                   num: '03', 
-                  title: 'Continue Anywhere', 
-                  desc: 'Open another supported AI platform and continue your work without starting over.',
-                  icon: <ArrowRight size={24} color="var(--primary)" />
+                  title: 'Track Decisions & Reasoning', 
+                  desc: 'Classify architectural decisions as Accepted or Rejected, and track unresolved questions for team visibility.',
+                  icon: <Shield size={24} color="var(--primary)" />
                 }
               ].map((step, idx) => (
                 <motion.div key={idx} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.15 }} 
@@ -210,12 +212,12 @@ const AboutPage = () => {
       <section style={{ padding: '120px 0', borderTop: '1px solid var(--border-subtle)' }}>
         <div className="container">
           <div style={{ textAlign: 'center' }}>
-            <h2 style={{ fontSize: '3rem', fontWeight: '900', color: 'var(--text-main)', marginBottom: '24px', letterSpacing: '-0.02em' }}>The Future of AI Isn't One Model</h2>
+            <h2 style={{ fontSize: '3rem', fontWeight: '900', color: 'var(--text-main)', marginBottom: '24px', letterSpacing: '-0.02em' }}>Ready to Scale Your Project Memory?</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 48px' }}>
-              It's many models working together. BridgeAI helps people move seamlessly between AI platforms so they can always use the right tool for the job.
+              Empower your software engineers and AI coding agents with a unified, searchable source of truth that preserves context and reasoning automatically.
             </p>
             <div className="mobile-col" style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-              <Link to="/extension" className="btn-primary" style={{ padding: '18px 48px', fontSize: '1.1rem' }}>Get Extension</Link>
+              <Link to="/dashboard" className="btn-primary" style={{ padding: '18px 48px', fontSize: '1.1rem' }}>Go to Dashboard</Link>
               <Link to="/services" className="btn-secondary" style={{ padding: '18px 48px', fontSize: '1.1rem' }}>View Pricing</Link>
             </div>
           </div>

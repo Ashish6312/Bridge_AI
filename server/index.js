@@ -130,6 +130,31 @@ const initDB = async () => {
       -- Performance Indexing
       CREATE INDEX IF NOT EXISTS idx_bridges_user_email ON bridges(user_email);
       CREATE INDEX IF NOT EXISTS idx_invoices_user_email ON invoices(user_email);
+
+      -- Shared Knowledge Layer Tables
+      CREATE TABLE IF NOT EXISTS project_contexts (
+        project_id TEXT,
+        user_email TEXT,
+        tech_stack TEXT,
+        goals TEXT,
+        rules TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (project_id, user_email)
+      );
+
+      CREATE TABLE IF NOT EXISTS project_decisions (
+        id VARCHAR(50) PRIMARY KEY,
+        project_id TEXT,
+        user_email TEXT,
+        decision_type VARCHAR(20),
+        title TEXT,
+        rationale TEXT,
+        alternatives TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_project_contexts_lookup ON project_contexts(user_email, project_id);
+      CREATE INDEX IF NOT EXISTS idx_project_decisions_lookup ON project_decisions(user_email, project_id);
     `);
     // Crucial Migrations
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT \'free\'');
@@ -875,6 +900,283 @@ app.delete('/api/user/data', async (req, res) => {
   }
 });
 
+// ─── SHARED KNOWLEDGE LAYER ENDPOINTS ────────────────────────
+
+// Retrieve Project Context
+app.get('/api/projects/context', async (req, res) => {
+  try {
+    const { email, project_id } = req.query;
+    if (!email || !project_id) return res.status(400).json({ error: "Email and project_id required" });
+    const result = await pool.query(
+      'SELECT * FROM project_contexts WHERE user_email = $1 AND project_id = $2',
+      [email, project_id]
+    );
+    if (result.rowCount === 0) {
+      return res.json({ success: true, data: { project_id, user_email: email, tech_stack: '', goals: '', rules: '' } });
+    }
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Update Project Context
+app.post('/api/projects/context', async (req, res) => {
+  try {
+    const { email, project_id, tech_stack, goals, rules } = req.body;
+    if (!email || !project_id) return res.status(400).json({ error: "Email and project_id required" });
+    const result = await pool.query(
+      `INSERT INTO project_contexts (project_id, user_email, tech_stack, goals, rules, updated_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+       ON CONFLICT (project_id, user_email)
+       DO UPDATE SET tech_stack = $3, goals = $4, rules = $5, updated_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [project_id, email, tech_stack || '', goals || '', rules || '']
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Retrieve Project Decisions
+app.get('/api/projects/decisions', async (req, res) => {
+  try {
+    const { email, project_id } = req.query;
+    if (!email || !project_id) return res.status(400).json({ error: "Email and project_id required" });
+    const result = await pool.query(
+      'SELECT * FROM project_decisions WHERE user_email = $1 AND project_id = $2 ORDER BY created_at DESC',
+      [email, project_id]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Create/Update Project Decision
+app.post('/api/projects/decisions', async (req, res) => {
+  try {
+    const { id, email, project_id, decision_type, title, rationale, alternatives } = req.body;
+    if (!email || !project_id || !title || !decision_type) {
+      return res.status(400).json({ error: "Email, project_id, decision_type, and title required" });
+    }
+    const finalId = id || 'dec_' + Date.now().toString(36);
+    const result = await pool.query(
+      `INSERT INTO project_decisions (id, project_id, user_email, decision_type, title, rationale, alternatives, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+       ON CONFLICT (id)
+       DO UPDATE SET decision_type = $4, title = $5, rationale = $6, alternatives = $7
+       RETURNING *`,
+      [finalId, project_id, email, decision_type, title, rationale || '', alternatives || '']
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete Project Decision
+app.delete('/api/projects/decisions/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM project_decisions WHERE id = $1', [req.params.id]);
+    res.json({ success: true, message: "Decision deleted successfully." });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Compile Project Memory via AI
+app.post('/api/projects/compile', async (req, res) => {
+  try {
+    const { email, project_id } = req.body;
+    if (!email || !project_id) return res.status(400).json({ error: "Email and project_id required" });
+
+    // Fetch bridges
+    const bridgesRes = await pool.query(
+      'SELECT title, summary, source, created_at FROM bridges WHERE user_email = $1 AND project_id = $2 ORDER BY created_at ASC',
+      [email, project_id]
+    );
+
+    if (bridgesRes.rowCount === 0) {
+      return res.status(400).json({ error: "No intelligence logs found in this project to compile context from. Please add some bridges first." });
+    }
+
+    const logsContext = bridgesRes.rows.map((b, idx) => {
+      return `### Log #${idx + 1}: ${b.title} [Source: ${b.source}, Date: ${b.created_at}]\nSummary:\n${b.summary}\n`;
+    }).join('\n');
+
+    const systemPrompt = `You are an expert software architect and knowledge engineer.
+Your task is to analyze multiple conversation summaries and chat logs from a developer project and distill them into a single, unified "Shared Memory Layer" JSON object.
+
+Analyze the input logs and extract:
+1. "tech_stack": Bullet points of languages, frameworks, databases, libraries, tools, and platforms actively being used.
+2. "goals": Bullet points of the project's core objectives and current focus.
+3. "rules": Bullet points of project constraints, guidelines, style rules, or environment details.
+4. "decisions": An array of architectural or business decision objects, each having:
+   - "title": A short title (e.g. "Use Tailwind CSS", "Muted Postgres DB setup").
+   - "decision_type": Strictly one of "accepted", "rejected", or "open".
+   - "rationale": Why this path was chosen, or why it was rejected, or what is being discussed.
+   - "alternatives": Other options considered (comma-separated or empty).
+
+Output strictly valid JSON and nothing else. Do NOT surround it in backticks, markdown code fences, or any other wrapper.
+Format:
+{
+  "tech_stack": "- React 19\\n- Postgres\\n...",
+  "goals": "- Build scalable API\\n...",
+  "rules": "- 100% test coverage\\n...",
+  "decisions": [
+    {
+      "title": "Use Tailwind CSS",
+      "decision_type": "accepted",
+      "rationale": "High velocity prototyping...",
+      "alternatives": "CSS Modules, styled-components"
+    }
+  ]
+}`;
+
+    const apiResponse = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Here are the intelligence logs for project "${project_id}":\n\n${logsContext.substring(0, 100000)}` }
+        ],
+        model: 'openai',
+        seed: Math.floor(Math.random() * 1000000)
+      })
+    });
+
+    if (!apiResponse.ok) {
+      throw new Error(`AI compiler service returned error status: ${apiResponse.statusText}`);
+    }
+
+    const aiData = await apiResponse.json();
+    let responseText = aiData.choices?.[0]?.message?.content || "";
+    
+    // Clean up markdown markers if any
+    responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    let compiledJson;
+    try {
+      compiledJson = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.error("JSON parse failure on AI compiler response:", responseText);
+      compiledJson = {
+        tech_stack: "Distillation Parse Error. Check raw logs.",
+        goals: "Check raw logs",
+        rules: "Check raw logs",
+        decisions: []
+      };
+    }
+
+    // Save project context
+    await pool.query(
+      `INSERT INTO project_contexts (project_id, user_email, tech_stack, goals, rules, updated_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+       ON CONFLICT (project_id, user_email)
+       DO UPDATE SET tech_stack = $3, goals = $4, rules = $5, updated_at = CURRENT_TIMESTAMP`,
+      [project_id, email, compiledJson.tech_stack || '', compiledJson.goals || '', compiledJson.rules || '']
+    );
+
+    // Save project decisions
+    if (compiledJson.decisions && Array.isArray(compiledJson.decisions)) {
+      for (const dec of compiledJson.decisions) {
+        const decId = 'dec_' + Math.random().toString(36).substr(2, 9);
+        await pool.query(
+          `INSERT INTO project_decisions (id, project_id, user_email, decision_type, title, rationale, alternatives, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+          [decId, project_id, email, dec.decision_type || 'accepted', dec.title, dec.rationale || '', dec.alternatives || '']
+        );
+      }
+    }
+
+    res.json({ success: true, data: compiledJson });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Query Project Memory via AI Assistant
+app.post('/api/projects/chat', async (req, res) => {
+  try {
+    const { email, project_id, message, history = [] } = req.body;
+    if (!email || !project_id || !message) {
+      return res.status(400).json({ error: "Email, project_id, and message required" });
+    }
+
+    // Fetch context
+    const contextRes = await pool.query(
+      'SELECT * FROM project_contexts WHERE user_email = $1 AND project_id = $2',
+      [email, project_id]
+    );
+    const context = contextRes.rows[0] || { tech_stack: '', goals: '', rules: '' };
+
+    // Fetch decisions
+    const decisionsRes = await pool.query(
+      'SELECT * FROM project_decisions WHERE user_email = $1 AND project_id = $2',
+      [email, project_id]
+    );
+    const decisionsText = decisionsRes.rows.map(d => {
+      return `- [${d.decision_type.toUpperCase()}] ${d.title}\n  Rationale: ${d.rationale}\n  Alternatives considered: ${d.alternatives || 'None'}`;
+    }).join('\n');
+
+    const systemPrompt = `You are the Project Memory Assistant for the project "${project_id}".
+Your purpose is to answer questions, generate documentation, draft system prompts, or summarize findings based on the compiled Project Memory Layer below.
+
+### PROJECT MEMORY LAYER
+1. TECH STACK:
+${context.tech_stack || "Not specified."}
+
+2. CORE GOALS:
+${context.goals || "Not specified."}
+
+3. DEVELOPMENT RULES:
+${context.rules || "Not specified."}
+
+4. DECISION LEDGER:
+${decisionsText || "No decisions logged yet."}
+
+### INSTRUCTIONS:
+- Answer questions accurately using ONLY the project memory layer details.
+- If the user asks you to write code, design guides, or onboarding docs, tailor them exactly to the stack, rules, and decisions above.
+- If information is not present in memory, note that explicitly, but suggest general software engineering best practices that align with their stack.
+- Be concise, professional, and clear. Use clean Markdown formatting.`;
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history.map(h => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.text })),
+      { role: 'user', content: message }
+    ];
+
+    const apiResponse = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
+      },
+      body: JSON.stringify({
+        messages,
+        model: 'openai',
+        seed: 42
+      })
+    });
+
+    if (!apiResponse.ok) {
+      throw new Error(`AI assistant service returned error status: ${apiResponse.statusText}`);
+    }
+
+    const data = await apiResponse.json();
+    const responseText = data.choices?.[0]?.message?.content || "No response received from memory assistant.";
+    res.json({ success: true, text: responseText });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // ─── 404 CATCH-ALL ─────────────────────────────────────────
 app.use((req, res, next) => {

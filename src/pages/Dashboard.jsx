@@ -194,7 +194,7 @@ const ForgeModal = ({ isOpen, onClose, context, onDispatch }) => {
           <button 
             onClick={handleValidateAndDispatch}
             style={{ flex: 2, padding: '10px', borderRadius: '8px', border: 'none', background: 'var(--primary)', color: 'white', fontWeight: '600', cursor: 'pointer' }}
-          >Forge Bridge & Dispatch</button>
+          >Forge Bridge &amp; Dispatch</button>
         </div>
       </motion.div>
     </div>
@@ -905,6 +905,684 @@ const NavItem = ({ active, icon, label, count, status, onClick }) => (
   </motion.button>
 );
 
+const ProjectWorkspace = ({ 
+  projectId, 
+  projects, 
+  bridges, 
+  filteredBridges, 
+  recentBridges, 
+  olderBridges, 
+  stats, 
+  triggerToast, 
+  loadData, 
+  setConfirmModal, 
+  handleForge, 
+  setActiveProject 
+}) => {
+  const [projectTab, setProjectTab] = useState('logs'); // 'logs' | 'memory' | 'decisions' | 'chat'
+  
+  const [techStack, setTechStack] = useState('');
+  const [goals, setGoals] = useState('');
+  const [rules, setRules] = useState('');
+  const [loadingContext, setLoadingContext] = useState(false);
+  const [savingContext, setSavingContext] = useState(false);
+  const [isCompiling, setIsCompiling] = useState(false);
+
+  const [decisions, setDecisions] = useState([]);
+  const [loadingDecisions, setLoadingDecisions] = useState(false);
+  const [showDecModal, setShowDecModal] = useState(false);
+  const [decTitle, setDecTitle] = useState('');
+  const [decType, setDecType] = useState('accepted');
+  const [decRationale, setDecRationale] = useState('');
+  const [decAlternatives, setDecAlternatives] = useState('');
+  const [savingDecision, setSavingDecision] = useState(false);
+
+  const [chatInput, setChatInput] = useState('');
+  const [chatHistory, setChatHistory] = useState([
+    { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
+  ]);
+  const [sendingChat, setSendingChat] = useState(false);
+  const chatEndRef = useRef(null);
+
+  const userStr = localStorage.getItem('bridge_user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const email = user?.email || '';
+
+  // Scroll to bottom of chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistory]);
+
+  // Load context and decisions on project/tab changes
+  useEffect(() => {
+    if (!email || !projectId) return;
+    
+    if (projectTab === 'memory') {
+      fetchContext();
+    } else if (projectTab === 'decisions') {
+      fetchDecisions();
+    }
+  }, [projectId, projectTab, email]);
+
+  const fetchContext = async () => {
+    setLoadingContext(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/context?email=${email}&project_id=${encodeURIComponent(projectId)}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTechStack(data.data.tech_stack || '');
+        setGoals(data.data.goals || '');
+        setRules(data.data.rules || '');
+      }
+    } catch (err) {
+      triggerToast('Error loading project context.');
+    } finally {
+      setLoadingContext(false);
+    }
+  };
+
+  const saveContext = async () => {
+    setSavingContext(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/context`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          project_id: projectId,
+          tech_stack: techStack,
+          goals,
+          rules
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast('Project Memory Layer updated successfully!');
+      } else {
+        triggerToast('Error saving context.');
+      }
+    } catch (err) {
+      triggerToast('Failed to connect to backend.');
+    } finally {
+      setSavingContext(false);
+    }
+  };
+
+  const compileMemory = async () => {
+    if (filteredBridges.length === 0) {
+      triggerToast('Add conversation bridges to this project first.');
+      return;
+    }
+    setIsCompiling(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/compile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, project_id: projectId })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTechStack(data.data.tech_stack || '');
+        setGoals(data.data.goals || '');
+        setRules(data.data.rules || '');
+        triggerToast('AI Distillation Complete: Memory Layer synthesized!');
+      } else {
+        triggerToast(data.error || 'Compilation failed.');
+      }
+    } catch (err) {
+      triggerToast('AI compiler protocol offline.');
+    } finally {
+      setIsCompiling(false);
+    }
+  };
+
+  const fetchDecisions = async () => {
+    setLoadingDecisions(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/decisions?email=${email}&project_id=${encodeURIComponent(projectId)}`);
+      const data = await res.json();
+      if (data.success) {
+        setDecisions(data.data || []);
+      }
+    } catch (err) {
+      triggerToast('Error loading decision ledger.');
+    } finally {
+      setLoadingDecisions(false);
+    }
+  };
+
+  const createDecision = async (e) => {
+    e.preventDefault();
+    if (!decTitle.trim()) return;
+    setSavingDecision(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/decisions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          project_id: projectId,
+          decision_type: decType,
+          title: decTitle,
+          rationale: decRationale,
+          alternatives: decAlternatives
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast('Decision logged in Ledger.');
+        setDecTitle('');
+        setDecRationale('');
+        setDecAlternatives('');
+        setShowDecModal(false);
+        fetchDecisions();
+      }
+    } catch (err) {
+      triggerToast('Error logging decision.');
+    } finally {
+      setSavingDecision(false);
+    }
+  };
+
+  const deleteDecision = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/decisions/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast('Decision removed.');
+        fetchDecisions();
+      }
+    } catch (err) {
+      triggerToast('Could not delete decision.');
+    }
+  };
+
+  const sendChatMessage = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim() || sendingChat) return;
+    const userMessage = chatInput;
+    setChatInput('');
+    setChatHistory(prev => [...prev, { role: 'user', text: userMessage }]);
+    setSendingChat(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          project_id: projectId,
+          message: userMessage,
+          history: chatHistory.filter(h => h.role !== 'assistant')
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setChatHistory(prev => [...prev, { role: 'assistant', text: data.text }]);
+      } else {
+        setChatHistory(prev => [...prev, { role: 'assistant', text: "Error: " + (data.error || 'Failed to query memory assistant.') }]);
+      }
+    } catch (err) {
+      setChatHistory(prev => [...prev, { role: 'assistant', text: "Failed to connect to AI server. Check connection." }]);
+    } finally {
+      setSendingChat(false);
+    }
+  };
+
+  const renderTabNavigation = () => {
+    const tabs = [
+      { id: 'logs', label: 'Session Logs', icon: <Layers size={14} /> },
+      { id: 'memory', label: 'Memory Layer', icon: <Database size={14} /> },
+      { id: 'decisions', label: 'Decision Ledger', icon: <Cpu size={14} /> },
+      { id: 'chat', label: 'Memory Assistant', icon: <MessageSquare size={14} /> }
+    ];
+
+    return (
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '24px' }}>
+        {tabs.map(t => {
+          const isActive = projectTab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setProjectTab(t.id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', borderRadius: '10px',
+                background: isActive ? 'rgba(222, 106, 57, 0.12)' : 'transparent',
+                border: `1px solid ${isActive ? 'rgba(222, 106, 57, 0.25)' : 'transparent'}`,
+                color: isActive ? 'var(--primary)' : 'rgba(255,255,255,0.5)',
+                fontWeight: isActive ? '700' : '500', cursor: 'pointer', transition: 'all 0.25s',
+                fontSize: '0.85rem'
+              }}
+            >
+              {t.icon}
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const acceptedDecisions = decisions.filter(d => d.decision_type === 'accepted');
+  const rejectedDecisions = decisions.filter(d => d.decision_type === 'rejected');
+  const openQuestions = decisions.filter(d => d.decision_type === 'open');
+
+  return (
+    <div>
+      {/* Project Header Banner */}
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '28px 32px', borderRadius: '24px', background: 'rgba(13, 13, 13, 0.45)', border: '1px solid rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <button 
+                onClick={() => setActiveProject(null)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700', padding: 0 }}
+              >
+                {"\u2190"} Back to Sectors
+              </button>
+              <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600', letterSpacing: '1px' }}>PROJECT VAULT</span>
+            </div>
+            <h1 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#FFFFFF', margin: 0 }}>
+              {projects.find(p => p.id === projectId)?.name || projectId}
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '4px', margin: '4px 0 0 0' }}>
+              Aggregate and scale organizational context for Humans, AIs, and agents.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button 
+              onClick={compileMemory}
+              disabled={isCompiling}
+              className="btn-primary" 
+              style={{ padding: '12px 20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #DE6A39, #7C3AED)', border: 'none' }}
+            >
+              <RefreshCw size={14} className={isCompiling ? 'ldBlink' : ''} />
+              {isCompiling ? 'AI Synthesizing...' : '✨ Compile Memory with AI'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {renderTabNavigation()}
+      
+      {/* 📂 SESSION LOGS */}
+      {projectTab === 'logs' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
+              Showing <strong>{filteredBridges.length}</strong> conversation logs in this sector.
+            </span>
+          </div>
+
+          {filteredBridges.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {recentBridges.map(ctx => (
+                <BridgeCard 
+                  key={ctx.id} 
+                  ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} 
+                  onDelete={() => setConfirmModal({ isOpen: true, id: ctx.id })} 
+                  onForge={handleForge} 
+                  loadData={loadData}
+                  stats={stats}
+                  triggerToast={triggerToast}
+                  projects={projects}
+                />
+              ))}
+              {olderBridges.map(ctx => (
+                <BridgeCard 
+                  key={ctx.id} 
+                  ctx={{ ...ctx, onCopy: (msg) => triggerToast(msg || 'Copied!') }} 
+                  onDelete={() => setConfirmModal({ isOpen: true, id: ctx.id })} 
+                  onForge={handleForge} 
+                  loadData={loadData}
+                  stats={stats}
+                  triggerToast={triggerToast}
+                  projects={projects}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="glass-card" style={{ padding: '60px 24px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.06)' }}>
+              <Layers size={40} style={{ color: 'var(--primary)', opacity: 0.5, marginBottom: '16px' }} />
+              <h3 style={{ fontSize: '1.25rem', color: 'white', marginBottom: '8px' }}>No Sessions in this Sector</h3>
+              <p style={{ color: 'var(--text-muted)', maxWidth: '360px', margin: '0 auto 20px', fontSize: '0.85rem' }}>
+                Paste context manually or use the browser extension to bridge conversation logs into this project vault.
+              </p>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* 🧠 MEMORY LAYER */}
+      {projectTab === 'memory' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          {loadingContext ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+              <RefreshCw size={24} className="ldBlink" style={{ marginBottom: '12px' }} />
+              <p style={{ fontSize: '0.85rem' }}>Retrieving active memory context...</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ padding: '20px', borderRadius: '16px', background: 'rgba(222, 106, 57, 0.02)', border: '1px solid rgba(222, 106, 57, 0.1)', marginBottom: '4px' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Cpu size={14} /> Shared Memory Concept
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.5' }}>
+                  This layer keeps your active architecture rules and stack properties synchronized. Hit <strong>Compile Memory</strong> above to let the AI analyze your bridged chat histories and automatically update these fields.
+                </p>
+              </div>
+
+              <div className="grid-responsive-2" style={{ gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>TECH STACK &amp; DEPS</label>
+                  <textarea
+                    value={techStack}
+                    onChange={(e) => setTechStack(e.target.value)}
+                    placeholder="e.g. - React 19&#10;- Node/Express&#10;- PostgreSQL"
+                    style={{
+                      height: '240px', padding: '16px', borderRadius: '12px', background: 'rgba(0,0,0,0.2)',
+                      border: '1px solid rgba(255,255,255,0.06)', color: 'white', fontFamily: 'monospace',
+                      fontSize: '0.85rem', resize: 'vertical', outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>CORE OBJECTIVES &amp; FOCUS</label>
+                  <textarea
+                    value={goals}
+                    onChange={(e) => setGoals(e.target.value)}
+                    placeholder="e.g. - Build scalable Auth engine&#10;- Optimize database index structures"
+                    style={{
+                      height: '240px', padding: '16px', borderRadius: '12px', background: 'rgba(0,0,0,0.2)',
+                      border: '1px solid rgba(255,255,255,0.06)', color: 'white', fontFamily: 'monospace',
+                      fontSize: '0.85rem', resize: 'vertical', outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>DEVELOPER RULES &amp; ARCHITECTURE CONSTRAINTS</label>
+                <textarea
+                  value={rules}
+                  onChange={(e) => setRules(e.target.value)}
+                  placeholder="e.g. - No styling utilities; use vanilla CSS tokens&#10;- Encrypt client credentials locally&#10;- Keep functions under 50 lines"
+                  style={{
+                    height: '160px', padding: '16px', borderRadius: '12px', background: 'rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(255,255,255,0.06)', color: 'white', fontFamily: 'monospace',
+                    fontSize: '0.85rem', resize: 'vertical', outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <button
+                  onClick={saveContext}
+                  disabled={savingContext}
+                  className="btn-primary"
+                  style={{ padding: '12px 24px', fontSize: '0.85rem', background: 'rgba(222, 106, 57, 0.1)', color: 'var(--primary)', border: '1px solid rgba(222, 106, 57, 0.3)' }}
+                >
+                  {savingContext ? 'Saving...' : 'Save Context Memory'}
+                </button>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* 📋 DECISION LEDGER */}
+      {projectTab === 'decisions' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
+              Reasoning record. Document technical compromises and discussions.
+            </span>
+            <button
+              onClick={() => setShowDecModal(true)}
+              className="btn-primary"
+              style={{ padding: '8px 16px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Plus size={14} /> Log Decision
+            </button>
+          </div>
+
+          {loadingDecisions ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+              <RefreshCw size={24} className="ldBlink" style={{ marginBottom: '12px' }} />
+              <p style={{ fontSize: '0.85rem' }}>Fetching decision ledger records...</p>
+            </div>
+          ) : (
+            <div className="grid-responsive-3" style={{ gap: '20px', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1, minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px' }}>
+                  <CheckCircle2 size={12} /> ACCEPTED DECISIONS ({acceptedDecisions.length})
+                </div>
+                {acceptedDecisions.map(d => (
+                  <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(16, 185, 129, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+                    <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
+                      <Trash2 size={12} />
+                    </button>
+                    <h5 style={{ margin: 0, fontSize: '0.9rem', color: 'white', paddingRight: '20px' }}>{d.title}</h5>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>{d.rationale}</p>
+                    {d.alternatives && (
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
+                        <strong>Alternatives:</strong> {d.alternatives}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {acceptedDecisions.length === 0 && (
+                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No accepted records</div>
+                )}
+              </div>
+
+              <div style={{ flex: 1, minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', color: '#ef4444', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px' }}>
+                  <X size={12} /> REJECTED ALTERNATIVES ({rejectedDecisions.length})
+                </div>
+                {rejectedDecisions.map(d => (
+                  <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+                    <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
+                      <Trash2 size={12} />
+                    </button>
+                    <h5 style={{ margin: 0, fontSize: '0.9rem', color: 'white', paddingRight: '20px' }}>{d.title}</h5>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>{d.rationale}</p>
+                    {d.alternatives && (
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
+                        <strong>Preferred Choice:</strong> {d.alternatives}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {rejectedDecisions.length === 0 && (
+                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No rejected records</div>
+                )}
+              </div>
+
+              <div style={{ flex: 1, minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.15)', color: '#f59e0b', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px' }}>
+                  <HelpCircleIcon size={12} /> OPEN ARCHITECTURE QUESTIONS ({openQuestions.length})
+                </div>
+                {openQuestions.map(d => (
+                  <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(245, 158, 11, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+                    <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
+                      <Trash2 size={12} />
+                    </button>
+                    <h5 style={{ margin: 0, fontSize: '0.9rem', color: 'white', paddingRight: '20px' }}>{d.title}</h5>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>{d.rationale}</p>
+                    {d.alternatives && (
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
+                        <strong>Options Considered:</strong> {d.alternatives}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {openQuestions.length === 0 && (
+                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No open questions</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {showDecModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(6px)' }}>
+              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} style={{ width: '90%', maxWidth: '460px', background: 'rgba(13,13,13,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '28px', boxShadow: '0 24px 50px rgba(0,0,0,0.6)' }}>
+                <h3 style={{ margin: '0 0 20px 0', color: 'white', fontSize: '1.25rem', fontWeight: 800 }}>Log Technical Decision</h3>
+                
+                <form onSubmit={createDecision} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>DECISION TITLE</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Use PostgreSQL for Session Ledger"
+                      value={decTitle}
+                      onChange={(e) => setDecTitle(e.target.value)}
+                      style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>DECISION STATUS / TYPE</label>
+                    <select
+                      value={decType}
+                      onChange={(e) => setDecType(e.target.value)}
+                      style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(13,13,13,1)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', cursor: 'pointer', outline: 'none' }}
+                    >
+                      <option value="accepted">Accepted (Adopted in main architecture)</option>
+                      <option value="rejected">Rejected (Alternatives discarded)</option>
+                      <option value="open">Open Question (Under discussion/research)</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>RATIONALE &amp; COMPROMISES</label>
+                    <textarea
+                      required
+                      placeholder="Explain why this choice was made, or why it was rejected, or what details are currently under debate."
+                      value={decRationale}
+                      onChange={(e) => setDecRationale(e.target.value)}
+                      style={{ height: '90px', padding: '10px 14px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', resize: 'vertical', outline: 'none', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>ALTERNATIVES CONSIDERED</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. MongoDB, Redis, LevelDB"
+                      value={decAlternatives}
+                      onChange={(e) => setDecAlternatives(e.target.value)}
+                      style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <button type="button" onClick={() => setShowDecModal(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
+                    <button type="submit" disabled={savingDecision} style={{ flex: 2, padding: '10px', borderRadius: '8px', border: 'none', background: 'var(--primary)', color: 'white', fontWeight: '600', cursor: 'pointer' }}>
+                      {savingDecision ? 'Saving...' : 'Add to Ledger'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* 🤖 MEMORY CHAT ASSISTANT */}
+      {projectTab === 'chat' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '520px', borderRadius: '16px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+            <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {chatHistory.map((msg, idx) => {
+                const isAssistant = msg.role === 'assistant';
+                return (
+                  <div key={idx} style={{ display: 'flex', gap: '12px', justifyContent: isAssistant ? 'flex-start' : 'flex-end', alignItems: 'flex-start' }}>
+                    {isAssistant && (
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'white', fontSize: '0.8rem' }}>🤖</div>
+                    )}
+                    <div style={{
+                      maxWidth: '80%', padding: '12px 16px', borderRadius: '12px',
+                      background: isAssistant ? 'rgba(255,255,255,0.02)' : 'rgba(222, 106, 57, 0.12)',
+                      border: `1px solid ${isAssistant ? 'rgba(255,255,255,0.04)' : 'rgba(222, 106, 57, 0.2)'}`,
+                      color: '#E2E8F0', fontSize: '0.875rem', lineHeight: '1.5', whiteSpace: 'pre-wrap'
+                    }}>
+                      {msg.text}
+                    </div>
+                  </div>
+                );
+              })}
+              {sendingChat && (
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>💭</div>
+                  <span>Assistant is consulting project memory ledger...</span>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '10px 20px', borderTop: '1px solid rgba(255,255,255,0.03)', background: 'rgba(0,0,0,0.1)' }}>
+              {[
+                "Why did we make our database decision?",
+                "Create a developer onboarding markdown guide",
+                "Draft a Claude/Cursor system prompt for our rules",
+                "Summarize outstanding open architectural questions"
+              ].map((s, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setChatInput(s)}
+                  style={{
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: '8px', padding: '6px 12px', color: 'rgba(255,255,255,0.6)', cursor: 'pointer',
+                    fontSize: '0.72rem', whiteSpace: 'nowrap'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'white'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={sendChatMessage} style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)' }}>
+              <input
+                type="text"
+                placeholder="Ask anything about this project's architecture, rules, or stack..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                style={{ flex: 1, padding: '16px', background: 'transparent', border: 'none', color: 'white', outline: 'none', fontSize: '0.875rem' }}
+              />
+              <button
+                type="submit"
+                disabled={sendingChat || !chatInput.trim()}
+                className="btn-primary"
+                style={{ padding: '0 24px', borderRadius: 0, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                Send <ArrowRight size={14} />
+              </button>
+            </form>
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
+const HelpCircleIcon = ({ size, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+);
+
 const Dashboard = () => {
 
 
@@ -1375,7 +2053,24 @@ const Dashboard = () => {
         <main style={{ flex: 1 }}>
           {activeTab === 'saved' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              {showSuccess && (
+              {activeProject ? (
+                <ProjectWorkspace 
+                  projectId={activeProject}
+                  projects={projects}
+                  bridges={bridges}
+                  filteredBridges={filteredBridges}
+                  recentBridges={recentBridges}
+                  olderBridges={olderBridges}
+                  stats={stats}
+                  triggerToast={triggerToast}
+                  loadData={loadData}
+                  setConfirmModal={setConfirmModal}
+                  handleForge={handleForge}
+                  setActiveProject={setActiveProject}
+                />
+              ) : (
+                <>
+                  {showSuccess && (
                 <motion.div 
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   style={{
@@ -1600,6 +2295,8 @@ const Dashboard = () => {
                     <button onClick={refreshVault} className="btn-secondary" style={{ padding: '14px 28px' }}><RefreshCw size={18} /> Refresh Vault</button>
                   </div>
                 </div>
+              )}
+                </>
               )}
             </motion.div>
           )}

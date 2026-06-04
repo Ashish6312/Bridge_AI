@@ -24,29 +24,29 @@ const SECTIONS = [
 ];
 
 const FEATURES = [
-  { icon: <RefreshCw size={24} />, color: '#3b82f6', tag: 'Seamless', title: 'Continue Anywhere', desc: 'Move chats between AI platforms without starting over.' },
-  { icon: <BrainCircuit size={24} />, color: '#ec4899', tag: 'Smart', title: 'Never Repeat Instructions', desc: 'Your project details stay with you.' },
-  { icon: <Zap size={24} />, color: '#eab308', tag: 'Productivity', title: 'Save Hours Every Week', desc: 'Stop explaining the same thing to every AI.' },
-  { icon: <Lock size={24} />, color: '#f97316', tag: 'Security', title: 'Private By Design', desc: 'Your conversations stay under your control.' },
-  { icon: <Globe size={24} />, color: '#06b6d4', tag: 'Universal', title: 'Works Across Popular AI Tools', desc: 'ChatGPT, Claude, Gemini, DeepSeek, Perplexity, and more.' },
-  { icon: <FolderArchive size={24} />, color: '#f59e0b', tag: 'Comprehensive', title: 'Transfer More Than Chats', desc: 'Projects, research, prompts, code, notes, and workflows.' },
+  { icon: <Layers size={24} />, color: '#3b82f6', tag: 'Sovereign Memory', title: 'Unified Project Memory', desc: 'Aggregate chats, code snippets, and rules from ChatGPT, Claude, and Gemini into a single trusted source.' },
+  { icon: <BrainCircuit size={24} />, color: '#ec4899', tag: 'Decision Register', title: 'Decision Ledger', desc: 'Track accepted decisions, rejected alternatives, and unresolved technical questions with full context.' },
+  { icon: <Zap size={24} />, color: '#eab308', tag: 'Productivity', title: 'Save Hours Every Week', desc: 'Eliminate manual copy-pasting, re-explaining architecture, and context loss during model handoffs.' },
+  { icon: <Lock size={24} />, color: '#f97316', tag: 'Security', title: 'Private & Local-First', desc: 'Preserve sensitive business rules and architectural context locally or self-host your memory infrastructure.' },
+  { icon: <Globe size={24} />, color: '#06b6d4', tag: 'Universal Integration', title: 'Human-AI-Agent Ecosystem', desc: 'Works across all popular AI platforms, CLI systems, IDE indexes, and autonomous agent workflows.' },
+  { icon: <FolderArchive size={24} />, color: '#f59e0b', tag: 'Onboarding', title: 'Accelerated Onboarding', desc: 'Instantly transfer project memory and reasoning logs to onboard new developers or AI coding agents.' },
 ];
 
 const REVIEWS = [
-  { name: 'Arjun Mehta',    role: 'Senior ML Engineer, Amazon',      rating: 5,   avatar: 'AM', color: '#FF6B2C', review: 'BridgeAI completely changed how our team works. Moving context from Claude to GPT-4 in under a second is mind-blowing. We save hours every week.' },
-  { name: 'Sara Chen',      role: 'AI Product Manager, Google',      rating: 5,   avatar: 'SC', color: '#FF5C5C', review: 'The context preservation is incredible. I used to spend 15 minutes re-explaining my project every time I switched models. Now it\'s instant.' },
-  { name: 'James O\'Brien', role: 'Full-Stack Developer',            rating: 4.5, avatar: 'JO', color: '#7C3AED', review: 'Honestly the only tool that understands the pain of multi-LLM workflows. The encryption also gives me peace of mind with client code.' },
-  { name: 'Priya Sharma',   role: 'Research Scientist, TCS',         rating: 5,   avatar: 'PS', color: '#FF6B2C', review: 'We\'ve cut our AI-related costs by 28% since using BridgeAI for smart model routing. The analytics dashboard is excellent.' },
-  { name: 'Lucas Novak',    role: 'DevRel Engineer, Vercel',         rating: 4.5, avatar: 'LN', color: '#7C3AED', review: 'This is the missing glue between all the AI tools I use. Setup took under 5 minutes and the extension works flawlessly.' },
-  { name: 'Aisha Patel',    role: 'Startup Founder',                 rating: 5,   avatar: 'AP', color: '#FF5C5C', review: 'As a solo founder I rely on multiple AI tools daily. BridgeAI is now the backbone of my entire research and writing workflow.' },
+  { name: 'Mohit Gour', role: 'Backend Architect & Team Lead', rating: 5, avatar: 'MG', color: '#FF6B2C', review: 'I used to keep a manual project context file. BridgeAI auto-compiles that memory layer from our model logs, keeping requirements and business rules synced across teams.' },
+  { name: 'Apoorv Nema', role: 'Senior AI Software Engineer', rating: 5, avatar: 'AN', color: '#FF5C5C', review: 'The separation of accepted decisions, rejected alternatives, and open questions is exactly how we reason. BridgeAI makes this memory layer infrastructure real.' },
+  { name: 'Shishira Bhat', role: 'CTO, Tech Growth', rating: 5, avatar: 'SB', color: '#7C3AED', review: 'Code comments capture outcomes, but not historical context or reasoning. BridgeAI stores our organizational memory for both humans and AI coders.' },
+  { name: 'Kumar Harsh', role: 'AI Agent Builder', rating: 5, avatar: 'KH', color: '#FF6B2C', review: 'Manual docs just do not scale in a multi-agent team. Having a shared memory layer that acts as infrastructure for our agents has doubled our throughput.' },
+  { name: 'Francesco Gasparinetti', role: 'SaaS Consultant', rating: 4.5, avatar: 'FG', color: '#7C3AED', review: 'BridgeAI is not an AI utility — it is a productivity booster. It provides business continuity, faster onboarding, and seamless knowledge transfer.' },
+  { name: 'Mayank Nirwan', role: 'Lead AI Engineer', rating: 5, avatar: 'MN', color: '#FF5C5C', review: 'My biggest pain was deciding what knowledge should be saved. BridgeAI automatically distills reasoning and active stack rules from raw logs. Truly exceptional.' },
 ];
 
 const COMPARISON = [
-  { us: 'One-click transfer', them: 'Copy and paste conversations' },
-  { us: 'Continue instantly', them: 'Re-explain projects repeatedly' },
-  { us: 'Keep context intact', them: 'Lose important details' },
-  { us: 'Smooth workflow', them: 'Jump between tabs manually' },
-  { us: 'Stay productive', them: 'Waste time' },
+  { us: 'Unified Project Memory Layer', them: 'Fragmented AI chats, Notion docs, and Slack' },
+  { us: 'Decision Ledger (Accepted/Rejected/Open)', them: 'No records of why technical choices were made' },
+  { us: 'AI-Distilled Context Compilation', them: 'Manual, outdated documentation pages' },
+  { us: 'Instant Developer & Agent Onboarding', them: 'Hours spent explaining architecture from scratch' },
+  { us: 'Local-First, Secure Encrypted Sync', them: 'Sensitive IP leaked across multiple chat hubs' },
 ];
 
 const LOGOS = [
@@ -54,11 +54,11 @@ const LOGOS = [
 ];
 
 const FAQS = [
-  { q: "I switch between Claude and GPT-4o dozens of times a day. Can BridgeAI really carry my context?", a: "Yes — that's exactly the problem it was built for. BridgeAI takes your current session and reformats it for the destination model in under 300ms." },
-  { q: "My company's legal team is nervous about sending source code to OpenAI's servers. How does BridgeAI handle that?", a: "BridgeAI is local-first by design — your prompts are stored on your machine, encrypted end-to-end using AES-256-GCM before they ever leave your device." },
-  { q: "We run Llama 3 on-premise for sensitive work. Will BridgeAI work with that too?", a: "Absolutely. BridgeAI works with any model that has an OpenAI-compatible API endpoint — Ollama, Llama.cpp, vLLM, LM Studio." },
-  { q: "What exactly is 'context decay' and why should I care?", a: "Context decay happens when your AI starts ignoring earlier instructions after ~8,000 tokens. BridgeAI's Context Refresh Engine detects this and re-injects key instructions automatically." },
-  { q: "Our team of 30 developers is spending a lot on API costs. Can BridgeAI help?", a: "It typically cuts token waste by 20–30% by caching repeated context and routing tasks to cheaper models when they perform comparably." },
+  { q: "Is BridgeAI just another AI utility or wrapper?", a: "No. BridgeAI is an Organizational Memory System. It functions as a shared knowledge infrastructure, consolidating context, reasoning, and technical decisions from humans, AI tools, and autonomous coding agents into a unified, searchable source of truth." },
+  { q: "Why shouldn't our engineering team just build an internal Notion page or markdown document?", a: "Documentation is static and does not scale. Developers rarely keep Notion up to date, and code comments capture outcomes but fail to preserve historical reasoning or rejected alternatives. BridgeAI automates the creation and update of your memory layer directly from your team's chat logs and developer streams." },
+  { q: "What business problems does a Shared Knowledge Layer solve?", a: "Organizations lose massive productivity during developer handoffs, onboarding, and model context resets. BridgeAI delivers value by enabling faster developer/agent onboarding, ensuring business continuity, preserving architectural reasoning, and allowing seamless knowledge transfer." },
+  { q: "How does the security architecture work for sensitive enterprise code?", a: "BridgeAI is local-first. Your technical rules, code logs, and decision registers are stored encrypted on your device. We offer secure, self-hosted deployment options for enterprises that want absolute data sovereignty." },
+  { q: "Can BridgeAI help write prompts or bootstrap autonomous AI coding agents?", a: "Yes. By distilling project memory (Active Stack, Goals, Rules, Decisions), BridgeAI's Context Engine can instantly generate tailored developer onboarding guides, system prompts, or configuration scripts for tools like Cursor, Claude Engineer, or custom AI agents." },
 ];
 
 /* ── Helper: Star Rating ── */
@@ -99,7 +99,7 @@ const LandingPage = () => {
 
   /* ── Page setup ── */
   useEffect(() => {
-    document.title = 'Bridge AI — Universal Chat & Prompt Sync';
+    document.title = 'Bridge AI — The Shared Knowledge Layer for Humans, AI, and Agents';
   }, []);
 
   /* ── active section on scroll ── */
@@ -191,13 +191,13 @@ const LandingPage = () => {
           </motion.div>
 
           <h1 style={{ fontSize:'clamp(42px,5vw,72px)', fontWeight:800, lineHeight:0.95, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
-            Use All the AIs.<br />
-            <span style={{ background:`linear-gradient(135deg,#FF6B2C 0%,#FF5C5C 50%,#7C3AED 100%)`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Lose None of</span><br />
-            the Context.
+            Stop Fragmenting<br />
+            <span style={{ background:`linear-gradient(135deg,#FF6B2C 0%,#FF5C5C 50%,#7C3AED 100%)`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Your Project Memory</span><br />
+            Across AI Chats.
           </h1>
 
-          <p style={{ fontSize:15, color:MUTED, lineHeight:1.85, fontWeight:500, opacity:0.85, maxWidth:420, marginBottom:'1.5rem' }}>
-            The AI you use depends on the job. Move your conversations between ChatGPT, Claude, Gemini, and more without starting from scratch.
+          <p style={{ fontSize:15, color:MUTED, lineHeight:1.85, fontWeight:500, opacity:0.85, maxWidth:450, marginBottom:'1.5rem' }}>
+            Knowledge is scattered across ChatGPT, Claude, Gemini, docs, Slack, and code. BridgeAI is the shared knowledge layer that aggregates, tracks decisions, and serves as an organizational memory for humans, AI, and agents.
           </p>
 
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:'1.5rem' }}>
@@ -319,8 +319,8 @@ const LandingPage = () => {
         
         <div style={{ maxWidth: 1100, margin: '0 auto 6rem', position: 'relative' }}>
           <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:ACC_RED, fontWeight:700, marginBottom:'0.75rem' }}>The Problem</div>
-            <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT }}>Tired of Explaining Yourself<br />to Every AI? <span style={{ color: MUTED }}>Same.</span></h2>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:ACC_RED, fontWeight:700, marginBottom:'0.75rem' }}>The Challenge</div>
+            <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT }}>Knowledge Fragmentation is the Real Enemy.<br />AI is Just Making it Visible.</h2>
           </div>
 
           {/* Animated Browser Mockup */}
@@ -451,8 +451,8 @@ const LandingPage = () => {
         </div>
 
         <div style={{ marginBottom:'3rem' }}>
-          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:P, fontWeight:700, marginBottom:'0.75rem' }}>Why People Love BridgeAI</div>
-          <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT }}>Use Every AI.<br />Repeat Yourself Zero Times.</h2>
+          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:P, fontWeight:700, marginBottom:'0.75rem' }}>The Shared Knowledge Layer</div>
+          <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT }}>Aggregate Chats, Rationale,<br />and Architecture Dynamically.</h2>
         </div>
         <div className="grid-responsive-3" style={{ gap:'24px' }}>
           {FEATURES.map((f,i) => (
@@ -710,11 +710,11 @@ const LandingPage = () => {
         <div style={{ position:'relative', zIndex:5, textAlign:'center', maxWidth:560, padding:'0 2rem' }}>
           <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}>
             <h2 style={{ fontSize:'clamp(32px,5vw,58px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT, marginBottom:'1.25rem' }}>
-              The Future of AI Isn't<br />
-              Picking a Winner. <span style={{ background:`linear-gradient(135deg,${P},${PURP})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>It's Connecting Them.</span>
+              The Future of Software Development Isn't Documenting Later.<br />
+              <span style={{ background:`linear-gradient(135deg,${P},${PURP})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>It's Preserving Decisions Now.</span>
             </h2>
             <p style={{ color:MUTED, fontSize:15, lineHeight:1.85, fontWeight:500, opacity:0.8, marginBottom:'2rem' }}>
-              Join thousands of people using multiple AI tools without losing context.
+              Bridge the gap between developers, AI tools, and autonomous coding agents with a unified memory layer.
             </p>
             <div style={{ display:'flex', gap:12, justifyContent: 'center', flexWrap:'wrap' }}>
               <Link to="/dashboard"
