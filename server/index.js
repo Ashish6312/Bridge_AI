@@ -1158,10 +1158,10 @@ ${decisionsText || "No decisions logged yet."}
 ${bridgesText || "No saved chats uploaded for this project yet."}
 
 ### INSTRUCTIONS:
-- Answer questions accurately using ONLY the project memory layer and the saved chats/uploaded contexts details.
-- When the user asks about what context they have uploaded or saved, consult the "SAVED CHATS / UPLOADED CONTEXTS" section above and list the titles, sources, dates, and summaries of what has been saved.
-- If the user asks you to write code, design guides, or onboarding docs, tailor them exactly to the stack, rules, decisions, and saved chats above.
-- If information is not present in memory or saved chats, note that explicitly, but suggest general software engineering best practices that align with their stack.
+- Always prioritize, ground, and frame your responses in the context of this specific project, referencing specific rules, goals, decisions, and detailed conversation logs from the "SAVED CHATS / UPLOADED CONTEXTS" (RAG) section above.
+- If the user asks a general technical question (e.g., "what is LLM", "explain RAG"), explain the concept clearly, but then immediately elaborate on how it applies to, fits into, or is implemented within their specific project stack, rules, and objectives (such as their goals around securing AI/ML internships and gaining experience with LLM/RAG workflows).
+- When discussing the saved chats or uploaded contexts (RAG), pull details directly from the transcripts (like specific guide summaries or application details) to explain or answer the user's query.
+- Tailor all generated code snippets, setup guides, and system prompts to work specifically with the project's stack (Python, FastAPI, Django, SQL, HTML).
 - Be concise, professional, and clear. Use clean Markdown formatting.`;
 
     const messages = [
