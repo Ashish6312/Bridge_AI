@@ -450,7 +450,7 @@ app.post('/api/optimize', async (req, res) => {
     if (!summary) return res.status(400).json({ success: false, error: "No summary provided" });
 
     const optimized = await callGroq([
-      { role: 'system', content: 'You are an expert prompt engineer. Turn the following context into a highly efficient, professional system prompt for another AI. Be structured and authoritative.' },
+      { role: 'system', content: 'You are a world-class prompt engineer. Your job is to transform the provided conversation context, rules, or questions into an exceptionally clear, highly structured, and authoritative System Prompt. Organize the output with sections: 1. Objective, 2. Role/Persona, 3. Core Rules/Constraints (bullet points), 4. Key Context/Data Variables, and 5. Instructions. Ensure it is ready for copy-pasting directly into another AI (like Claude or GPT) to continue the work seamlessly. Output ONLY the optimized prompt, with no intro or outro comments.' },
       { role: 'user', content: summary }
     ], { temperature: 0.2, max_tokens: 1024 });
 
