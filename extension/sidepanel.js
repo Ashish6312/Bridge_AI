@@ -231,17 +231,20 @@ const showCustomModal = (title, message, type = 'warning') => {
         iconContainer.style.borderColor = 'rgba(16, 185, 129, 0.25)';
         iconSvg.style.stroke = '#10b981';
         iconSvg.innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
-        
-        // Auto-dismiss success modals after 3 seconds
-        setTimeout(() => {
-            if (modal.style.display === 'flex') modal.style.display = 'none';
-        }, 3000);
     } else {
         iconContainer.style.background = 'rgba(139, 92, 246, 0.1)';
         iconContainer.style.borderColor = 'rgba(139, 92, 246, 0.25)';
         iconSvg.style.stroke = '#8b5cf6';
         iconSvg.innerHTML = '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>';
     }
+
+    // Auto-dismiss the popup/modal after 4 seconds (4000ms)
+    if (window.modalTimeout) clearTimeout(window.modalTimeout);
+    window.modalTimeout = setTimeout(() => {
+        if (modal && modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        }
+    }, 4000);
 };
 
 const showAnalysis = (data) => {
