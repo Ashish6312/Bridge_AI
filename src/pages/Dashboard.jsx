@@ -211,6 +211,7 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
+  const [showSecurityTooltip, setShowSecurityTooltip] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(ctx.title);
@@ -283,7 +284,7 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
       const response = await fetch(`${API_BASE}/api/regenerate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_log: ctx.chat_log || ctx.chatLog })
+        body: JSON.stringify({ chat_log: ctx.chat_log || ctx.chatLog || ctx.summary })
       });
       const data = await response.json();
       if (!data.success) throw new Error(data.error);
@@ -464,6 +465,38 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
             <span style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1px', textTransform: 'uppercase', background: 'rgba(222, 106, 57, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
               {(ctx.source || 'Manual')}
             </span>
+            <div 
+              onMouseEnter={() => setShowSecurityTooltip(true)}
+              onMouseLeave={() => setShowSecurityTooltip(false)}
+              style={{ position: 'relative', cursor: 'help' }}
+            >
+              <span style={{ 
+                fontSize: '0.65rem', fontWeight: '800', color: '#10b981', letterSpacing: '1px', textTransform: 'uppercase', 
+                background: 'rgba(16, 185, 129, 0.12)', padding: '2px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px',
+                border: '1px solid rgba(16, 185, 129, 0.25)'
+              }}>
+                <span>🔒 SECURE</span>
+              </span>
+              {showSecurityTooltip && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, marginTop: '8px',
+                  background: 'rgba(15, 23, 42, 0.98)', backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)', color: '#E2E8F0',
+                  borderRadius: '12px', padding: '14px', zIndex: 1000, width: '260px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.6)', fontSize: '0.78rem', lineHeight: '1.4'
+                }}>
+                  <div style={{ fontWeight: 'bold', color: '#10b981', marginBottom: '6px' }}>
+                    Sovereign Privacy Shield
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '4px', listStyleType: 'disc' }}>
+                    <li><strong>Zero Password Logging:</strong> We never capture passwords.</li>
+                    <li><strong>Local Storage:</strong> Encrypted locally in your browser context.</li>
+                    <li><strong>On-Demand Sync:</strong> Synchronization triggers only upon your explicit action.</li>
+                    <li><strong>TLS 1.3 Transmission:</strong> Fully encrypted channel.</li>
+                  </ul>
+                </div>
+              )}
+            </div>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '500' }}>{formatTime(ctx.created_at)}</span>
           </div>
           <h3 style={{ fontSize: '1.15rem', fontWeight: '600', color: 'var(--text-main)', letterSpacing: '-0.01em', wordBreak: 'break-word' }}>{ctx.title}</h3>
@@ -686,9 +719,9 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
           <button 
             key={plat.name}
             onClick={() => {
-              const finalContext = ctx.chat_log;
+              const finalContext = ctx.chat_log || ctx.chatLog || ctx.summary || '';
               window.dispatchEvent(new CustomEvent('BRIDGE_SEND_TO_STORAGE', { detail: { context: finalContext } }));
-              copyToClipboard(finalContext, 'Full Intelligence Log ready!');
+              copyToClipboard(finalContext, `${plat.name} Context Prepared!`);
               window.open(plat.url, '_blank');
             }}
             style={{
