@@ -993,7 +993,7 @@ app.post('/api/projects/compile', async (req, res) => {
 
     // Fetch bridges
     const bridgesRes = await pool.query(
-      'SELECT title, summary, source, created_at FROM bridges WHERE user_email = $1 AND project_id = $2 ORDER BY created_at ASC',
+      'SELECT title, summary, chat_log, source, created_at FROM bridges WHERE user_email = $1 AND project_id = $2 ORDER BY created_at ASC',
       [email, project_id]
     );
 
@@ -1002,7 +1002,7 @@ app.post('/api/projects/compile', async (req, res) => {
     }
 
     const logsContext = bridgesRes.rows.map((b, idx) => {
-      return `### Log #${idx + 1}: ${b.title} [Source: ${b.source}, Date: ${b.created_at}]\nSummary:\n${b.summary}\n`;
+      return `### Log #${idx + 1}: ${b.title} [Source: ${b.source}, Date: ${b.created_at}]\nSummary:\n${b.summary}\nFull Transcript:\n${b.chat_log || 'No transcript available.'}\n`;
     }).join('\n');
 
     const systemPrompt = `You are an expert software architect and knowledge engineer.
@@ -1108,11 +1108,11 @@ app.post('/api/projects/chat', async (req, res) => {
 
     // RAG: Retrieve all saved chats (bridges) for the project to provide context
     const bridgesRes = await pool.query(
-      'SELECT title, summary, source, created_at FROM bridges WHERE user_email = $1 AND project_id = $2 ORDER BY created_at DESC LIMIT 15',
+      'SELECT title, summary, chat_log, source, created_at FROM bridges WHERE user_email = $1 AND project_id = $2 ORDER BY created_at DESC LIMIT 15',
       [email, project_id]
     );
     const bridgesText = bridgesRes.rows.map((b, idx) => {
-      return `[Saved Chat #${idx + 1}] Title: ${b.title}\nSource: ${b.source} (Created: ${b.created_at})\nSummary: ${b.summary}`;
+      return `[Saved Chat #${idx + 1}] Title: ${b.title}\nSource: ${b.source} (Created: ${b.created_at})\nSummary: ${b.summary}\nFull Transcript:\n${b.chat_log || 'No transcript available.'}`;
     }).join('\n\n');
 
     const systemPrompt = `You are the Project Memory Assistant for the project "${project_id}".
