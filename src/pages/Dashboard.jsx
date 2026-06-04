@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Plus, Search, MessageSquare, Clock, Code, Target, Layers, Activity,
-  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw, FileText, X, Trash2, Lock
+  CheckCircle2, ExternalLink, Zap, Download, GitMerge, BookOpen, Eye, EyeOff, Mail, Wand2, Cpu, Globe, Database, Folder, ArrowRight, RefreshCw, FileText, X, Trash2, Lock, Settings
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
 import IntelligenceBridge from '../components/IntelligenceBridge';
