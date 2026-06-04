@@ -1420,6 +1420,14 @@ const ProjectWorkspace = ({
     }
   };
 
+  const sendChatMessage = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim() || sendingChat) return;
+    const userMessage = chatInput;
+    setChatInput('');
+    await triggerProgrammaticChatSend(userMessage);
+  };
+
   const renderTabNavigation = () => {
     const tabs = [
       { id: 'logs',      label: 'Saved Chats',      icon: <Layers size={14} /> },
