@@ -8,6 +8,60 @@ const EventEmitter = require('events');
 const zlib = require('zlib');
 const { sendEmail, sendWelcomeEmail, sendPromotionEmail } = require('./emailService');
 
+/**
+ * Helper to call Groq API with fallback to Pollinations
+ */
+async function callGroq(messages, options = {}) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY is not set in environment variables.");
+  }
+  const model = options.model || 'llama-3.3-70b-versatile';
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        messages,
+        model,
+        temperature: options.temperature !== undefined ? options.temperature : 0.2,
+        max_tokens: options.max_tokens || 1024,
+        ...(options.jsonMode ? { response_format: { type: "json_object" } } : {})
+      })
+    });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Groq API Error: ${response.status} ${response.statusText} - ${errText}`);
+    }
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || "";
+  } catch (error) {
+    console.error("Groq API call failed, falling back to Pollinations:", error.message);
+    try {
+      const response = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY || 'sk_M5IjtRCEG0eC7SeKI0zDw44jPPuHAdWO'}`
+        },
+        body: JSON.stringify({
+          messages,
+          model: 'openai',
+          seed: 42
+        })
+      });
+      const data = await response.json();
+      return data.choices?.[0]?.message?.content || "";
+    } catch (fallbackError) {
+      console.error("Fallback also failed:", fallbackError.message);
+      throw error;
+    }
+  }
+}
+
 const app = express();
 const hubEmitter = new EventEmitter();
 // Sovereign Extension Protocol: Enable universal handshake
@@ -334,24 +388,10 @@ app.post('/api/summarize', async (req, res) => {
       project:   'Summarize as project update: 1. Current Status 2. Milestone Progress 3. Risks 4. Next Actions.'
     };
 
-    const distillationResponse = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: `You are an expert intelligence analyst. ${PROMPTS[finalMode] || PROMPTS.quick} Output ONLY the summary in professional markdown.` },
-          { role: 'user', content: formattedChat.substring(0, 120000) }
-        ],
-        model: 'openai',
-        seed: Math.floor(Math.random() * 1000000)
-      })
-    });
-
-    const distillationData = await distillationResponse.json();
-    const aiSummary = distillationData.choices?.[0]?.message?.content || "Protocol Error: Intelligence could not be distilled.";
+    const aiSummary = await callGroq([
+      { role: 'system', content: `You are an expert intelligence analyst. ${PROMPTS[finalMode] || PROMPTS.quick} Output ONLY the summary in professional markdown.` },
+      { role: 'user', content: formattedChat.substring(0, 120000) }
+    ]);
     const summaryHeader = `### ${finalMode.toUpperCase()} INTELLIGENCE LOG [${platform.toUpperCase()}]\n\n`;
     const summary = `${summaryHeader}${aiSummary.trim()}`;
     
@@ -387,56 +427,10 @@ app.post('/api/optimize', async (req, res) => {
     const { summary } = req.body;
     if (!summary) return res.status(400).json({ success: false, error: "No summary provided" });
 
-    const nvdiaApiKey = process.env.NVIDIA_API_KEY || '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';
-
-    let optimized = null;
-    try {
-      const nvResponse = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${nvdiaApiKey}`
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'You are an expert prompt engineer. Turn the following context into a highly efficient, professional system prompt for another AI. Be structured and authoritative.' },
-            { role: 'user', content: summary }
-          ],
-          model: 'meta/llama3-70b-instruct',
-          temperature: 0.2,
-          max_tokens: 1024
-        })
-      });
-      if (!nvResponse.ok) {
-        throw new Error(`NVIDIA API Error: ${nvResponse.statusText}`);
-      }
-      const nvData = await nvResponse.json();
-      if (nvData.choices && nvData.choices[0] && nvData.choices[0].message) {
-        optimized = nvData.choices[0].message.content;
-      } else {
-        throw new Error('NVIDIA API Response malformed');
-      }
-    } catch (nvError) {
-      console.error('NVIDIA API failed, falling back to Pollinations:', nvError.message);
-      const response = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'You are an expert prompt engineer. Turn the following context into a highly efficient, professional system prompt for another AI. Be structured and authoritative.' },
-            { role: 'user', content: summary }
-          ],
-          model: 'openai',
-          seed: 42
-        })
-      });
-
-      const data = await response.json();
-      optimized = data.choices?.[0]?.message?.content || "Optimization Failed.";
-    }
+    const optimized = await callGroq([
+      { role: 'system', content: 'You are an expert prompt engineer. Turn the following context into a highly efficient, professional system prompt for another AI. Be structured and authoritative.' },
+      { role: 'user', content: summary }
+    ], { temperature: 0.2, max_tokens: 1024 });
 
     res.json({ success: true, optimized: optimized.trim() });
   } catch (err) {
@@ -449,53 +443,10 @@ app.post('/api/rename', async (req, res) => {
     const { summary } = req.body;
     if (!summary) return res.status(400).json({ success: false, error: "No summary provided" });
 
-    const nvdiaApiKey = process.env.NVIDIA_API_KEY || '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';
-    let title = "Unnamed Bridge";
-
-    try {
-      const nvResponse = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${nvdiaApiKey}`
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'Generate a short, professional, authoritative title (max 5 words) for the following context. Output ONLY the title.' },
-            { role: 'user', content: summary }
-          ],
-          model: 'meta/llama3-70b-instruct',
-          temperature: 0.2,
-          max_tokens: 50
-        })
-      });
-      if (!nvResponse.ok) throw new Error(`NVIDIA API Error: ${nvResponse.statusText}`);
-      const nvData = await nvResponse.json();
-      if (nvData.choices && nvData.choices[0] && nvData.choices[0].message) {
-        title = nvData.choices[0].message.content;
-      } else {
-        throw new Error('NVIDIA API Response malformed');
-      }
-    } catch (nvError) {
-      console.error('NVIDIA API failed, falling back to Pollinations:', nvError.message);
-      const response = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'Generate a short, professional, authoritative title (max 5 words) for the following context. Output ONLY the title.' },
-            { role: 'user', content: summary }
-          ],
-          model: 'openai',
-          seed: 7
-        })
-      });
-      const data = await response.json();
-      title = data.choices?.[0]?.message?.content || "Unnamed Bridge";
-    }
+    const title = await callGroq([
+      { role: 'system', content: 'Generate a short, professional, authoritative title (max 5 words) for the following context. Output ONLY the title.' },
+      { role: 'user', content: summary }
+    ], { temperature: 0.2, max_tokens: 50 });
 
     res.json({ success: true, title: title.replace(/"/g, '').trim() });
   } catch (err) {
@@ -508,53 +459,10 @@ app.post('/api/regenerate', async (req, res) => {
     const { chat_log } = req.body;
     if (!chat_log) return res.status(400).json({ success: false, error: "No chat log provided" });
 
-    const nvdiaApiKey = process.env.NVIDIA_API_KEY || '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';
-    let summary = "Regeneration failed.";
-
-    try {
-      const nvResponse = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${nvdiaApiKey}`
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'You are an expert AI context summarizer. Be concise, structured, and accurate. Output only the summary.' },
-            { role: 'user', content: `Give a brief TL;DR summary (3-5 bullet points) of the following text:\n\n${chat_log}` }
-          ],
-          model: 'meta/llama3-70b-instruct',
-          temperature: 0.2,
-          max_tokens: 500
-        })
-      });
-      if (!nvResponse.ok) throw new Error(`NVIDIA API Error: ${nvResponse.statusText}`);
-      const nvData = await nvResponse.json();
-      if (nvData.choices && nvData.choices[0] && nvData.choices[0].message) {
-        summary = nvData.choices[0].message.content;
-      } else {
-        throw new Error('NVIDIA API Response malformed');
-      }
-    } catch (nvError) {
-      console.error('NVIDIA API failed for regenerate, falling back to Pollinations:', nvError.message);
-      const response = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'You are an expert AI context summarizer. Be concise, structured, and accurate. Output only the summary.' },
-            { role: 'user', content: `Give a brief TL;DR summary (3-5 bullet points) of the following text:\n\n${chat_log}` }
-          ],
-          model: 'openai',
-          seed: Math.floor(Math.random() * 1000000)
-        })
-      });
-      const data = await response.json();
-      summary = data.choices?.[0]?.message?.content || "Regeneration failed.";
-    }
+    const summary = await callGroq([
+      { role: 'system', content: 'You are an expert AI context summarizer. Be concise, structured, and accurate. Output only the summary.' },
+      { role: 'user', content: `Give a brief TL;DR summary (3-5 bullet points) of the following text:\n\n${chat_log}` }
+    ], { temperature: 0.2, max_tokens: 500 });
 
     res.json({ success: true, summary });
   } catch (err) {
@@ -1035,28 +943,10 @@ Format:
   ]
 }`;
 
-    const apiResponse = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Here are the intelligence logs for project "${project_id}":\n\n${logsContext.substring(0, 100000)}` }
-        ],
-        model: 'openai',
-        seed: Math.floor(Math.random() * 1000000)
-      })
-    });
-
-    if (!apiResponse.ok) {
-      throw new Error(`AI compiler service returned error status: ${apiResponse.statusText}`);
-    }
-
-    const aiData = await apiResponse.json();
-    let responseText = aiData.choices?.[0]?.message?.content || "";
+    let responseText = await callGroq([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `Here are the intelligence logs for project "${project_id}":\n\n${logsContext.substring(0, 100000)}` }
+    ], { jsonMode: true });
     
     // Clean up markdown markers if any
     responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -1125,8 +1015,17 @@ app.post('/api/projects/chat', async (req, res) => {
       return `- [${d.decision_type.toUpperCase()}] ${d.title}\n  Rationale: ${d.rationale}\n  Alternatives considered: ${d.alternatives || 'None'}`;
     }).join('\n');
 
+    // RAG: Retrieve all saved chats (bridges) for the project to provide context
+    const bridgesRes = await pool.query(
+      'SELECT title, summary, source, created_at FROM bridges WHERE user_email = $1 AND project_id = $2 ORDER BY created_at DESC LIMIT 15',
+      [email, project_id]
+    );
+    const bridgesText = bridgesRes.rows.map((b, idx) => {
+      return `[Saved Chat #${idx + 1}] Title: ${b.title}\nSource: ${b.source} (Created: ${b.created_at})\nSummary: ${b.summary}`;
+    }).join('\n\n');
+
     const systemPrompt = `You are the Project Memory Assistant for the project "${project_id}".
-Your purpose is to answer questions, generate documentation, draft system prompts, or summarize findings based on the compiled Project Memory Layer below.
+Your purpose is to answer questions, generate documentation, draft system prompts, or summarize findings based on the compiled Project Memory Layer and Saved Chats below.
 
 ### PROJECT MEMORY LAYER
 1. TECH STACK:
@@ -1141,10 +1040,14 @@ ${context.rules || "Not specified."}
 4. DECISION LEDGER:
 ${decisionsText || "No decisions logged yet."}
 
+### SAVED CHATS / UPLOADED CONTEXTS (RAG)
+${bridgesText || "No saved chats uploaded for this project yet."}
+
 ### INSTRUCTIONS:
-- Answer questions accurately using ONLY the project memory layer details.
-- If the user asks you to write code, design guides, or onboarding docs, tailor them exactly to the stack, rules, and decisions above.
-- If information is not present in memory, note that explicitly, but suggest general software engineering best practices that align with their stack.
+- Answer questions accurately using ONLY the project memory layer and the saved chats/uploaded contexts details.
+- When the user asks about what context they have uploaded or saved, consult the "SAVED CHATS / UPLOADED CONTEXTS" section above and list the titles, sources, dates, and summaries of what has been saved.
+- If the user asks you to write code, design guides, or onboarding docs, tailor them exactly to the stack, rules, decisions, and saved chats above.
+- If information is not present in memory or saved chats, note that explicitly, but suggest general software engineering best practices that align with their stack.
 - Be concise, professional, and clear. Use clean Markdown formatting.`;
 
     const messages = [
@@ -1153,25 +1056,7 @@ ${decisionsText || "No decisions logged yet."}
       { role: 'user', content: message }
     ];
 
-    const apiResponse = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.POLLINATIONS_API_KEY}`
-      },
-      body: JSON.stringify({
-        messages,
-        model: 'openai',
-        seed: 42
-      })
-    });
-
-    if (!apiResponse.ok) {
-      throw new Error(`AI assistant service returned error status: ${apiResponse.statusText}`);
-    }
-
-    const data = await apiResponse.json();
-    const responseText = data.choices?.[0]?.message?.content || "No response received from memory assistant.";
+    const responseText = await callGroq(messages);
     res.json({ success: true, text: responseText });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
