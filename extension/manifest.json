@@ -38,18 +38,14 @@
         "https://chat.mistral.ai/*",
         "https://mail.google.com/*",
         "https://bridgeai-realworld-problem.vercel.app/*",
-        "https://*.vercel.app/*",
-        "http://localhost:5173/*",
-        "http://localhost:5001/*"
+        "https://*.vercel.app/*"
       ],
       "js": ["content.js"]
     }
   ],
   "host_permissions": [
     "https://bridgeai-realworld-problem.vercel.app/*",
-    "https://*.vercel.app/*",
-    "http://localhost:5001/*",
-    "http://localhost:5173/*"
+    "https://*.vercel.app/*"
   ],
   "externally_connectable": {
     "matches": [
