@@ -1032,11 +1032,17 @@ const ProjectWorkspace = ({
   const [techStack, setTechStack] = useState('');
   const [goals, setGoals] = useState('');
   const [rules, setRules] = useState('');
+  const [problemStatement, setProblemStatement] = useState('');
   const [loadingContext, setLoadingContext] = useState(false);
   const [savingContext, setSavingContext] = useState(false);
   const [isCompiling, setIsCompiling] = useState(false);
 
   const [decisions, setDecisions] = useState([]);
+  
+  // Decision Elaboration States
+  const [elaboratingDecision, setElaboratingDecision] = useState(null);
+  const [aiElaboration, setAiElaboration] = useState('');
+  const [loadingElaboration, setLoadingElaboration] = useState(false);
   const [loadingDecisions, setLoadingDecisions] = useState(false);
   const [showDecModal, setShowDecModal] = useState(false);
   const [decTitle, setDecTitle] = useState('');
@@ -1088,6 +1094,7 @@ const ProjectWorkspace = ({
         setTechStack(data.data.tech_stack || '');
         setGoals(data.data.goals || '');
         setRules(data.data.rules || '');
+        setProblemStatement(data.data.problem_statement || '');
       }
     } catch (err) {
       triggerToast('Error loading project context.');
@@ -1129,7 +1136,8 @@ const ProjectWorkspace = ({
           project_id: projectId,
           tech_stack: techStack,
           goals,
-          rules
+          rules,
+          problem_statement: problemStatement
         })
       });
       const data = await res.json();
@@ -1162,13 +1170,14 @@ const ProjectWorkspace = ({
         setTechStack(data.data.tech_stack || '');
         setGoals(data.data.goals || '');
         setRules(data.data.rules || '');
+        setProblemStatement(data.data.problem_statement || '');
         fetchDecisions(); // Fetch updated decisions compiled by AI
         triggerToast('AI Distillation Complete: Memory Layer synthesized!');
       } else {
         triggerToast(data.error || 'Compilation failed.');
       }
     } catch (err) {
-      triggerToast('AI compiler protocol offline.');
+      triggerToast('Could not compile memory layer.');
     } finally {
       setIsCompiling(false);
     }
@@ -1234,6 +1243,114 @@ const ProjectWorkspace = ({
       }
     } catch (err) {
       triggerToast('Could not delete decision.');
+    }
+  };
+
+  const handleElaborateDecision = async (decision) => {
+    setElaboratingDecision(decision);
+    setAiElaboration('');
+    setLoadingElaboration(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/decisions/elaborate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          project_id: projectId,
+          title: decision.title,
+          decision_type: decision.decision_type,
+          rationale: decision.rationale,
+          alternatives: decision.alternatives
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAiElaboration(data.elaboration);
+      } else {
+        setAiElaboration('Failed to generate elaboration: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      setAiElaboration('Failed to generate elaboration: ' + err.message);
+    } finally {
+      setLoadingElaboration(false);
+    }
+  };
+
+  const moveDecisionToChat = async (decision, elaborationText) => {
+    setElaboratingDecision(null);
+    setProjectTab('chat');
+    
+    const statusLabel = decision.decision_type === 'accepted' ? 'Accepted Decision' : 
+                        decision.decision_type === 'rejected' ? 'Rejected Option' : 'Open Question';
+    
+    let promptText = `Let's discuss the project context regarding the ${statusLabel}: "${decision.title}".
+    
+- **Rationale**: ${decision.rationale || 'None provided'}
+- **Alternatives/Options Considered**: ${decision.alternatives || 'None provided'}
+
+`;
+
+    if (elaborationText && !elaborationText.startsWith('Failed to')) {
+      promptText += `AI Elaboration & Analysis:\n${elaborationText}\n\n`;
+    }
+    
+    promptText += `Let's analyze this decision in detail: what are the next concrete implementation steps, risk mitigations, or things we should watch out for?`;
+
+    setTimeout(() => {
+      setChatInput(promptText);
+      triggerProgrammaticChatSend(promptText);
+    }, 200);
+  };
+
+  const triggerProgrammaticChatSend = async (messageText) => {
+    if (!messageText.trim() || sendingChat) return;
+    setSendingChat(true);
+    const userMsgObj = { role: 'user', text: messageText };
+    const updatedWithUser = [...chatHistory, userMsgObj];
+    setChatHistory(updatedWithUser);
+    
+    let currentSessionId = activeSessionId;
+    let title = 'New Chat';
+    if (!currentSessionId) {
+      currentSessionId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      setActiveSessionId(currentSessionId);
+      title = messageText.length > 35 ? messageText.substring(0, 35).replace(/\n/g, ' ') + '...' : messageText.replace(/\n/g, ' ');
+    } else {
+      const existingSession = chatSessions.find(s => s.id === currentSessionId);
+      if (existingSession) {
+        title = existingSession.title || 'New Chat';
+      }
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          project_id: projectId,
+          message: messageText,
+          history: chatHistory
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const updatedWithAssistant = [...updatedWithUser, { role: 'assistant', text: data.text }];
+        setChatHistory(updatedWithAssistant);
+        await saveChatSessionToServer(currentSessionId, title, updatedWithAssistant);
+      } else {
+        const errorMsg = "Error: " + (data.error || 'Failed to query memory assistant.');
+        const updatedWithError = [...updatedWithUser, { role: 'assistant', text: errorMsg }];
+        setChatHistory(updatedWithError);
+        await saveChatSessionToServer(currentSessionId, title, updatedWithError);
+      }
+    } catch (err) {
+      const updatedWithFail = [...updatedWithUser, { role: 'assistant', text: 'Error connecting to the orchestrator: ' + err.message }];
+      setChatHistory(updatedWithFail);
+      await saveChatSessionToServer(currentSessionId, title, updatedWithFail);
+    } finally {
+      setSendingChat(false);
+      setChatInput('');
     }
   };
 
@@ -1303,65 +1420,10 @@ const ProjectWorkspace = ({
     }
   };
 
-  const sendChatMessage = async (e) => {
-    e.preventDefault();
-    if (!chatInput.trim() || sendingChat) return;
-    const userMessage = chatInput;
-    setChatInput('');
-    const userMsgObj = { role: 'user', text: userMessage };
-    const updatedWithUser = [...chatHistory, userMsgObj];
-    setChatHistory(updatedWithUser);
-    setSendingChat(true);
-
-    let currentSessionId = activeSessionId;
-    let title = 'New Chat';
-    if (!currentSessionId) {
-      currentSessionId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      setActiveSessionId(currentSessionId);
-      title = userMessage.length > 35 ? userMessage.substring(0, 35) + '...' : userMessage;
-    } else {
-      const existingSession = chatSessions.find(s => s.id === currentSessionId);
-      if (existingSession) {
-        title = existingSession.title || 'New Chat';
-      }
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/api/projects/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          project_id: projectId,
-          message: userMessage,
-          history: chatHistory
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        const updatedWithAssistant = [...updatedWithUser, { role: 'assistant', text: data.text }];
-        setChatHistory(updatedWithAssistant);
-        await saveChatSessionToServer(currentSessionId, title, updatedWithAssistant);
-      } else {
-        const errorMsg = "Error: " + (data.error || 'Failed to query memory assistant.');
-        const updatedWithError = [...updatedWithUser, { role: 'assistant', text: errorMsg }];
-        setChatHistory(updatedWithError);
-        await saveChatSessionToServer(currentSessionId, title, updatedWithError);
-      }
-    } catch (err) {
-      const connectErrorMsg = "Failed to connect to AI server. Check connection.";
-      const updatedWithFail = [...updatedWithUser, { role: 'assistant', text: connectErrorMsg }];
-      setChatHistory(updatedWithFail);
-      await saveChatSessionToServer(currentSessionId, title, updatedWithFail);
-    } finally {
-      setSendingChat(false);
-    }
-  };
-
   const renderTabNavigation = () => {
     const tabs = [
       { id: 'logs',      label: 'Saved Chats',      icon: <Layers size={14} /> },
-      { id: 'memory',    label: 'Project Rules',    icon: <Database size={14} /> },
+      { id: 'memory',    label: 'Problem & Rules',    icon: <BookOpen size={14} /> },
       { id: 'decisions', label: 'Decisions Made',   icon: <Settings size={14} /> },
       { id: 'chat',      label: 'AI Assistant',     icon: <MessageSquare size={14} /> },
     ];
@@ -1508,11 +1570,25 @@ const ProjectWorkspace = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ padding: '20px', borderRadius: '16px', background: 'rgba(222, 106, 57, 0.02)', border: '1px solid rgba(222, 106, 57, 0.1)', marginBottom: '4px' }}>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Cpu size={14} /> Project Rules
+                  <Cpu size={14} /> Problem Statement & Rules
                 </h4>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.5' }}>
-                  This section lists the active tech tools, goals, and coding rules for your project. Click <strong>Compile Memory</strong> above to let the AI automatically fill these details using your saved chat logs.
+                  This section lists the core problem statement, tech tools, goals, and coding rules for your project. Click <strong>Compile Memory</strong> above to let the AI automatically fill these details using your saved chat logs.
                 </p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>PROBLEM STATEMENT</label>
+                <textarea
+                  value={problemStatement}
+                  onChange={(e) => setProblemStatement(e.target.value)}
+                  placeholder="e.g. - Developers waste hours manually copy-pasting code context across AI models.&#10;- Need an automated, secure context sync solution to preserve development state."
+                  style={{
+                    height: '120px', padding: '16px', borderRadius: '12px', background: 'rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(255,255,255,0.06)', color: 'white', fontFamily: 'monospace',
+                    fontSize: '0.85rem', resize: 'vertical', outline: 'none'
+                  }}
+                />
               </div>
 
               <div className="grid-responsive-2" style={{ gap: '20px' }}>
@@ -1615,6 +1691,20 @@ const ProjectWorkspace = ({
                           <strong>Alternatives:</strong> {d.alternatives}
                         </div>
                       )}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
+                        <button
+                          onClick={() => handleElaborateDecision(d)}
+                          style={{
+                            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '6px', color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', padding: '4px 8px',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'white'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                        >
+                          <Cpu size={10} /> Elaborate &amp; See
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {acceptedDecisions.length === 0 && (
@@ -1641,6 +1731,20 @@ const ProjectWorkspace = ({
                           <strong>Preferred Choice:</strong> {d.alternatives}
                         </div>
                       )}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
+                        <button
+                          onClick={() => handleElaborateDecision(d)}
+                          style={{
+                            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '6px', color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', padding: '4px 8px',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'white'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                        >
+                          <Cpu size={10} /> Elaborate &amp; See
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {rejectedDecisions.length === 0 && (
@@ -1667,6 +1771,20 @@ const ProjectWorkspace = ({
                           <strong>Options Considered:</strong> {d.alternatives}
                         </div>
                       )}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
+                        <button
+                          onClick={() => handleElaborateDecision(d)}
+                          style={{
+                            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '6px', color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', padding: '4px 8px',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'white'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                        >
+                          <Cpu size={10} /> Elaborate &amp; See
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {openQuestions.length === 0 && (
@@ -1700,39 +1818,41 @@ const ProjectWorkspace = ({
                     <select
                       value={decType}
                       onChange={(e) => setDecType(e.target.value)}
-                      style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(13,13,13,1)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', cursor: 'pointer', outline: 'none' }}
+                      style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', outline: 'none' }}
                     >
-                      <option value="accepted">Accepted (Decided and implemented)</option>
-                      <option value="rejected">Rejected (Considered but discarded)</option>
-                      <option value="open">Open Question (Still deciding)</option>
+                      <option value="accepted">Accepted Decision</option>
+                      <option value="rejected">Rejected Option</option>
+                      <option value="open">Open Question</option>
                     </select>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>WHY THIS CHOICE? (REASONING)</label>
+                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>RATIONALE &amp; DESCRIPTION</label>
                     <textarea
                       required
-                      placeholder="Explain why this choice was made, or why it was rejected, or what details are currently under debate."
+                      placeholder="Why was this chosen? What criteria did it meet? E.g., Neon Postgres provides instant branching..."
                       value={decRationale}
                       onChange={(e) => setDecRationale(e.target.value)}
-                      style={{ height: '90px', padding: '10px 14px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', resize: 'vertical', outline: 'none', fontSize: '0.85rem' }}
+                      style={{ height: '80px', padding: '10px 14px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', outline: 'none', resize: 'vertical' }}
                     />
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>OTHER OPTIONS CONSIDERED</label>
+                    <label style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '0.5px' }}>ALTERNATIVES CONSIDERED</label>
                     <input
                       type="text"
-                      placeholder="e.g. MongoDB, Redis, LevelDB"
+                      placeholder="e.g. SQLite, MongoDB (comma separated)"
                       value={decAlternatives}
                       onChange={(e) => setDecAlternatives(e.target.value)}
                       style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', color: 'white', outline: 'none' }}
                     />
                   </div>
 
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                    <button type="button" onClick={() => setShowDecModal(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
-                    <button type="submit" disabled={savingDecision} className="btn-primary" style={{ flex: 1, padding: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                    <button type="button" onClick={() => setShowDecModal(false)} className="btn-secondary" style={{ padding: '10px 18px', fontSize: '0.85rem' }}>
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={savingDecision} className="btn-primary" style={{ padding: '10px 18px', fontSize: '0.85rem' }}>
                       {savingDecision ? 'Saving...' : 'Save Decision'}
                     </button>
                   </div>

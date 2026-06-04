@@ -227,6 +227,7 @@ const initDB = async () => {
     await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS mode VARCHAR(20) DEFAULT \'quick\'');
     await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS project_id TEXT');
     await pool.query("ALTER TABLE project_contexts ADD COLUMN IF NOT EXISTS chat_history JSON DEFAULT '[]'");
+    await pool.query("ALTER TABLE project_contexts ADD COLUMN IF NOT EXISTS problem_statement TEXT");
     // Deduplicate existing project decisions
     await pool.query(`
       DELETE FROM project_decisions 
@@ -845,7 +846,7 @@ app.get('/api/projects/context', async (req, res) => {
       [email, project_id]
     );
     if (result.rowCount === 0) {
-      return res.json({ success: true, data: { project_id, user_email: email, tech_stack: '', goals: '', rules: '', chat_history: [] } });
+      return res.json({ success: true, data: { project_id, user_email: email, tech_stack: '', goals: '', rules: '', problem_statement: '', chat_history: [] } });
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -856,15 +857,15 @@ app.get('/api/projects/context', async (req, res) => {
 // Update Project Context
 app.post('/api/projects/context', async (req, res) => {
   try {
-    const { email, project_id, tech_stack, goals, rules } = req.body;
+    const { email, project_id, tech_stack, goals, rules, problem_statement } = req.body;
     if (!email || !project_id) return res.status(400).json({ error: "Email and project_id required" });
     const result = await pool.query(
-      `INSERT INTO project_contexts (project_id, user_email, tech_stack, goals, rules, updated_at)
-       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+      `INSERT INTO project_contexts (project_id, user_email, tech_stack, goals, rules, problem_statement, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
        ON CONFLICT (project_id, user_email)
-       DO UPDATE SET tech_stack = $3, goals = $4, rules = $5, updated_at = CURRENT_TIMESTAMP
+       DO UPDATE SET tech_stack = $3, goals = $4, rules = $5, problem_statement = $6, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [project_id, email, tech_stack || '', goals || '', rules || '']
+      [project_id, email, tech_stack || '', goals || '', rules || '', problem_statement || '']
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -994,6 +995,58 @@ app.delete('/api/projects/decisions/:id', async (req, res) => {
   }
 });
 
+// Elaborate a Decision via AI
+app.post('/api/projects/decisions/elaborate', async (req, res) => {
+  try {
+    const { email, project_id, title, decision_type, rationale, alternatives } = req.body;
+    if (!email || !project_id || !title || !decision_type) {
+      return res.status(400).json({ error: "Email, project_id, decision_type, and title required" });
+    }
+
+    // Fetch context to ground the response
+    const contextRes = await pool.query(
+      'SELECT * FROM project_contexts WHERE user_email = $1 AND project_id = $2',
+      [email, project_id]
+    );
+    const context = contextRes.rows[0] || { tech_stack: '', goals: '', rules: '', problem_statement: '' };
+
+    const promptMessages = [
+      {
+        role: 'system',
+        content: `You are an expert Senior Principal Software Architect and AI Engineer.
+Your job is to write a highly detailed, professional, and practical architectural elaboration and impact analysis for a project decision.
+
+Use the project context below to make your elaboration specific and relevant:
+- Problem Statement: ${context.problem_statement || 'Not specified'}
+- Tech Stack: ${context.tech_stack || 'Not specified'}
+- Goals: ${context.goals || 'Not specified'}
+- Rules: ${context.rules || 'Not specified'}
+
+Write the elaboration in clean Markdown with the following sections:
+1. **Overview & Context**: A brief summary of the decision and why it's relevant to our goals and problem statement.
+2. **Architectural Implications**: Analyze the impact on performance, security, complexity, maintenance, and scalability.
+3. **Integration & Tech Details**: Explain how this is implemented using the specific tech stack and rules.
+4. **Concrete Action Plan**: Give a checklist (using [ ] markdown checkboxes) of implementation tasks to execute this decision.
+
+Be precise, highly technical, and avoid generic boilerplate. Format all code snippets or commands cleanly.`
+      },
+      {
+        role: 'user',
+        content: `Please elaborate on this project decision:
+- **Title**: ${title}
+- **Status/Type**: ${decision_type.toUpperCase()}
+- **Rationale**: ${rationale || 'None provided'}
+- **Alternatives/Options Considered**: ${alternatives || 'None provided'}`
+      }
+    ];
+
+    const elaboration = await callGroq(promptMessages);
+    res.json({ success: true, elaboration });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Compile Project Memory via AI
 app.post('/api/projects/compile', async (req, res) => {
   try {
@@ -1018,10 +1071,11 @@ app.post('/api/projects/compile', async (req, res) => {
 Your task is to analyze multiple conversation summaries and chat logs from a developer project and distill them into a single, unified "Shared Memory Layer" JSON object.
 
 Analyze the input logs and extract:
-1. "tech_stack": Bullet points of languages, frameworks, databases, libraries, tools, and platforms actively being used.
-2. "goals": Bullet points of the project's core objectives and current focus.
-3. "rules": Bullet points of project constraints, guidelines, style rules, or environment details.
-4. "decisions": An array of architectural or business decision objects, each having:
+1. "problem_statement": A concise summary of the core business or technical problem(s) this project is trying to solve (e.g. real-world challenges, inefficiencies, target user pain points).
+2. "tech_stack": Bullet points of languages, frameworks, databases, libraries, tools, and platforms actively being used.
+3. "goals": Bullet points of the project's core objectives and current focus.
+4. "rules": Bullet points of project constraints, guidelines, style rules, or environment details.
+5. "decisions": An array of architectural or business decision objects, each having:
    - "title": A short title (e.g. "Use Tailwind CSS", "Muted Postgres DB setup").
    - "decision_type": Strictly one of "accepted", "rejected", or "open".
    - "rationale": Why this path was chosen, or why it was rejected, or what is being discussed.
@@ -1030,6 +1084,7 @@ Analyze the input logs and extract:
 Output strictly valid JSON and nothing else. Do NOT surround it in backticks, markdown code fences, or any other wrapper.
 Format:
 {
+  "problem_statement": "A description of the real-world problem being solved...",
   "tech_stack": "- React 19\\n- Postgres\\n...",
   "goals": "- Build scalable API\\n...",
   "rules": "- 100% test coverage\\n...",
@@ -1057,6 +1112,7 @@ Format:
     } catch (parseErr) {
       console.error("JSON parse failure on AI compiler response:", responseText);
       compiledJson = {
+        problem_statement: "Distillation Parse Error. Check raw logs.",
         tech_stack: "Distillation Parse Error. Check raw logs.",
         goals: "Check raw logs",
         rules: "Check raw logs",
@@ -1066,11 +1122,11 @@ Format:
 
     // Save project context
     await pool.query(
-      `INSERT INTO project_contexts (project_id, user_email, tech_stack, goals, rules, updated_at)
-       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+      `INSERT INTO project_contexts (project_id, user_email, tech_stack, goals, rules, problem_statement, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
        ON CONFLICT (project_id, user_email)
-       DO UPDATE SET tech_stack = $3, goals = $4, rules = $5, updated_at = CURRENT_TIMESTAMP`,
-      [project_id, email, compiledJson.tech_stack || '', compiledJson.goals || '', compiledJson.rules || '']
+       DO UPDATE SET tech_stack = $3, goals = $4, rules = $5, problem_statement = $6, updated_at = CURRENT_TIMESTAMP`,
+      [project_id, email, compiledJson.tech_stack || '', compiledJson.goals || '', compiledJson.rules || '', compiledJson.problem_statement || '']
     );
 
     // Save project decisions (upsert to avoid duplicates by checking title)
@@ -1118,7 +1174,7 @@ app.post('/api/projects/chat', async (req, res) => {
       'SELECT * FROM project_contexts WHERE user_email = $1 AND project_id = $2',
       [email, project_id]
     );
-    const context = contextRes.rows[0] || { tech_stack: '', goals: '', rules: '' };
+    const context = contextRes.rows[0] || { tech_stack: '', goals: '', rules: '', problem_statement: '' };
 
     // Fetch decisions
     const decisionsRes = await pool.query(
@@ -1142,6 +1198,9 @@ app.post('/api/projects/chat', async (req, res) => {
 Your purpose is to answer questions, generate documentation, draft system prompts, or summarize findings based on the compiled Project Memory Layer and Saved Chats below.
 
 ### PROJECT MEMORY LAYER
+0. CORE PROBLEM STATEMENT:
+${context.problem_statement || "Not specified."}
+
 1. TECH STACK:
 ${context.tech_stack || "Not specified."}
 
