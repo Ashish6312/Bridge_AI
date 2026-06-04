@@ -116,7 +116,7 @@ function App() {
       <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-main)' }}>
         <GlobalBackground />
         <Navbar />
-        <main style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+        <main style={{ flex: 1, position: 'relative' }}>
           <BridgeRoutes />
         </main>
         <Footer />
