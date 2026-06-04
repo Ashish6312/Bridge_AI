@@ -1596,74 +1596,83 @@ const ProjectWorkspace = ({
               <p style={{ fontSize: '0.85rem' }}>Fetching decision ledger records...</p>
             </div>
           ) : (
-            <div className="grid-responsive-3" style={{ gap: '20px', alignItems: 'flex-start' }}>
-              <div style={{ flex: 1, minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px' }}>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', overflowX: 'auto', paddingBottom: '10px' }}>
+              {/* Decisions Made Column */}
+              <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', height: '480px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '16px', padding: '16px', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#10b981', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px', marginBottom: '12px' }}>
                   <CheckCircle2 size={12} /> DECISIONS MADE ({acceptedDecisions.length})
                 </div>
-                {acceptedDecisions.map(d => (
-                  <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(16, 185, 129, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
-                    <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
-                      <Trash2 size={12} />
-                    </button>
-                    <h5 style={{ margin: 0, fontSize: '0.9rem', color: 'white', paddingRight: '20px' }}>{d.title}</h5>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>{d.rationale}</p>
-                    {d.alternatives && (
-                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
-                        <strong>Alternatives:</strong> {d.alternatives}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {acceptedDecisions.length === 0 && (
-                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No decisions saved yet</div>
-                )}
+                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                  {acceptedDecisions.map(d => (
+                    <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(16, 185, 129, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+                      <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
+                        <Trash2 size={12} />
+                      </button>
+                      <h5 style={{ margin: 0, fontSize: '0.9rem', color: 'white', paddingRight: '20px', lineHeight: '1.4' }}>{d.title}</h5>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>{d.rationale}</p>
+                      {d.alternatives && (
+                        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
+                          <strong>Alternatives:</strong> {d.alternatives}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {acceptedDecisions.length === 0 && (
+                    <div style={{ padding: '24px 16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', fontStyle: 'italic' }}>No decisions saved yet</div>
+                  )}
+                </div>
               </div>
 
-              <div style={{ flex: 1, minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', color: '#ef4444', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px' }}>
+              {/* Rejected Options Column */}
+              <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', height: '480px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '16px', padding: '16px', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#ef4444', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px', marginBottom: '12px' }}>
                   <X size={12} /> REJECTED OPTIONS ({rejectedDecisions.length})
                 </div>
-                {rejectedDecisions.map(d => (
-                  <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
-                    <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
-                      <Trash2 size={12} />
-                    </button>
-                    <h5 style={{ margin: 0, fontSize: '0.9rem', color: 'white', paddingRight: '20px' }}>{d.title}</h5>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>{d.rationale}</p>
-                    {d.alternatives && (
-                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
-                        <strong>Preferred Choice:</strong> {d.alternatives}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {rejectedDecisions.length === 0 && (
-                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No rejected options yet</div>
-                )}
+                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                  {rejectedDecisions.map(d => (
+                    <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+                      <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
+                        <Trash2 size={12} />
+                      </button>
+                      <h5 style={{ margin: 0, fontSize: '0.9rem', color: 'white', paddingRight: '20px', lineHeight: '1.4' }}>{d.title}</h5>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>{d.rationale}</p>
+                      {d.alternatives && (
+                        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
+                          <strong>Preferred Choice:</strong> {d.alternatives}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {rejectedDecisions.length === 0 && (
+                    <div style={{ padding: '24px 16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', fontStyle: 'italic' }}>No rejected options yet</div>
+                  )}
+                </div>
               </div>
 
-              <div style={{ flex: 1, minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.15)', color: '#f59e0b', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px' }}>
+              {/* Open Questions Column */}
+              <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', height: '480px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '16px', padding: '16px', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#f59e0b', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px', marginBottom: '12px' }}>
                   <HelpCircleIcon size={12} /> OPEN QUESTIONS ({openQuestions.length})
                 </div>
-                {openQuestions.map(d => (
-                  <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(245, 158, 11, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
-                    <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
-                      <Trash2 size={12} />
-                    </button>
-                    <h5 style={{ margin: 0, fontSize: '0.9rem', color: 'white', paddingRight: '20px' }}>{d.title}</h5>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>{d.rationale}</p>
-                    {d.alternatives && (
-                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
-                        <strong>Options Considered:</strong> {d.alternatives}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {openQuestions.length === 0 && (
-                  <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>No pending questions</div>
-                )}
+                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                  {openQuestions.map(d => (
+                    <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(245, 158, 11, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+                      <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
+                        <Trash2 size={12} />
+                      </button>
+                      <h5 style={{ margin: 0, fontSize: '0.9rem', color: 'white', paddingRight: '20px', lineHeight: '1.4' }}>{d.title}</h5>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>{d.rationale}</p>
+                      {d.alternatives && (
+                        <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
+                          <strong>Options Considered:</strong> {d.alternatives}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {openQuestions.length === 0 && (
+                    <div style={{ padding: '24px 16px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255, 255, 255, 0.3)', fontSize: '0.75rem', fontStyle: 'italic' }}>No pending questions</div>
+                  )}
+                </div>
               </div>
             </div>
           )}
