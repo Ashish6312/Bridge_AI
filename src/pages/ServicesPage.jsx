@@ -117,6 +117,14 @@ const ServicesPage = () => {
       navigate('/login?redirect=services');
       return;
     }
+    if (planKey === 'pro' && isPostTrial) {
+      const subject = encodeURIComponent(`[Upgrade Request] PRO Plan`);
+      const body = encodeURIComponent(
+        `Hi BridgeAI Team,\n\nI would like to upgrade my account to the PRO plan ($5/month).\n\nMy Registered Email: ${user.email}\n\nPlease let me know how to complete the payment.\n\nThank you!`
+      );
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=business@entrext.in&su=${subject}&body=${body}`, '_blank');
+      return;
+    }
     setConfirmModal({ show: true, planKey, amount });
   };
 
@@ -343,7 +351,7 @@ const ServicesPage = () => {
                   : (user?.plan === 'infinite')
                   ? 'Current Plan'
                   : isPostTrial
-                  ? 'Upgrade — $5/mo'
+                  ? 'Contact Support to Upgrade'
                   : 'Start 7-Day Free Trial'}
               </button>
               <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
