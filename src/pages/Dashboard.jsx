@@ -1048,7 +1048,8 @@ const NavItem = ({ active, icon, label, count, status, onClick }) => (
 );
 
 const ProjectWorkspace = ({ 
-  projectId, 
+  projectId,
+  userEmail,
   projects, 
   bridges, 
   filteredBridges, 
@@ -1104,14 +1105,13 @@ const ProjectWorkspace = ({
   const [chatSessions, setChatSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([
-    { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
+    { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for this project. Ask me any questions, generate system prompts, or request onboarding docs!` }
   ]);
   const [sendingChat, setSendingChat] = useState(false);
   const chatContainerRef = useRef(null);
 
-  const userStr = localStorage.getItem('bridge_user');
-  const user = userStr ? JSON.parse(userStr) : null;
-  const email = user?.email || '';
+  // Use email from props (passed from Dashboard) so it's reactive across login/logout cycles
+  const email = userEmail || '';
 
   // Scroll to bottom of chat (container only, no page scrolling)
   useEffect(() => {
@@ -1121,6 +1121,7 @@ const ProjectWorkspace = ({
   }, [chatHistory]);
 
   // Load context and decisions on project/tab changes
+  // Re-fetch whenever email or projectId changes (handles login/logout cycles)
   useEffect(() => {
     if (!email || !projectId) return;
     fetchContext();
@@ -2418,6 +2419,10 @@ const Dashboard = () => {
   const [toast, setToast] = useState(null);
   const [stats, setStats] = useState({ totalBridges: 0, totalTokens: 0, plan: 'free', usageCount: 0 });
   const [scrollProgress, setScrollProgress] = useState(0);
+  // Reactive user email - updates when user logs in/out so child components re-fetch data
+  const [currentUserEmail, setCurrentUserEmail] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('bridge_user') || '{}').email || ''; } catch(e) { return ''; }
+  });
 
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
   const [promptModal, setPromptModal] = useState({ isOpen: false });
@@ -2506,6 +2511,9 @@ const Dashboard = () => {
       const userStr = localStorage.getItem('bridge_user');
       const user = userStr ? JSON.parse(userStr) : null;
       const email = user?.email || '';
+
+      // Keep reactive email state in sync
+      setCurrentUserEmail(email);
 
       if (!email) {
         setLoading(false);
@@ -2876,8 +2884,9 @@ const Dashboard = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {activeProject ? (
                 <ProjectWorkspace 
-                  key={activeProject}
+                  key={`${activeProject}-${currentUserEmail}`}
                   projectId={activeProject}
+                  userEmail={currentUserEmail}
                   projects={projects}
                   bridges={bridges}
                   filteredBridges={filteredBridges}
