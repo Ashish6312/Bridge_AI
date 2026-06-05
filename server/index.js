@@ -246,6 +246,7 @@ const initDB = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS devices JSONB DEFAULT \'[]\'');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE');
+    await pool.query('ALTER TABLE feedbacks ADD COLUMN IF NOT EXISTS admin_response TEXT');
     // Deduplicate existing project decisions
     await pool.query(`
       DELETE FROM project_decisions 
@@ -473,12 +474,19 @@ app.get('/api/admin/feedbacks', verifyAdmin, async (req, res) => {
 
 app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!['pending', 'in_progress', 'resolved'].includes(status)) {
+    const { status, admin_response } = req.body;
+    if (status && !['pending', 'in_progress', 'resolved'].includes(status)) {
       return res.status(400).json({ success: false, error: 'Invalid status' });
     }
-    await pool.query('UPDATE feedbacks SET status = $1 WHERE id = $2', [status, req.params.id]);
-    res.json({ success: true, message: 'Feedback status updated successfully.' });
+    
+    if (status && admin_response !== undefined) {
+      await pool.query('UPDATE feedbacks SET status = $1, admin_response = $2 WHERE id = $3', [status, admin_response, req.params.id]);
+    } else if (status) {
+      await pool.query('UPDATE feedbacks SET status = $1 WHERE id = $2', [status, req.params.id]);
+    } else if (admin_response !== undefined) {
+      await pool.query('UPDATE feedbacks SET admin_response = $1 WHERE id = $2', [admin_response, req.params.id]);
+    }
+    res.json({ success: true, message: 'Feedback updated successfully.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -540,72 +548,12 @@ app.delete('/api/admin/users/:email', verifyAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/bridges', verifyAdmin, async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT id, user_email, title, source, summary, snippets, mode, created_at FROM bridges ORDER BY created_at DESC LIMIT 500'
-    );
-    res.json({ success: true, bridges: result.rows });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.delete('/api/admin/bridges/:id', verifyAdmin, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM bridges WHERE id = $1', [req.params.id]);
-    res.json({ success: true, message: 'Bridge deleted successfully.' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
 app.get('/api/admin/invoices', verifyAdmin, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM invoices ORDER BY created_at DESC');
     res.json({ success: true, invoices: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.get('/api/admin/subscribers', verifyAdmin, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM subscribers ORDER BY created_at DESC');
-    res.json({ success: true, subscribers: result.rows });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.delete('/api/admin/subscribers/:email', verifyAdmin, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM subscribers WHERE email = $1', [req.params.email]);
-    res.json({ success: true, message: 'Subscriber deleted successfully.' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.post('/api/admin/db-query', verifyAdmin, async (req, res) => {
-  try {
-    const { query } = req.body;
-    if (!query) {
-      return res.status(400).json({ success: false, error: 'SQL Query is required.' });
-    }
-    
-    // Execute query
-    const result = await pool.query(query);
-    res.json({
-      success: true,
-      result: {
-        rows: result.rows,
-        rowCount: result.rowCount,
-        fields: result.fields ? result.fields.map(f => f.name) : []
-      }
-    });
-  } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
   }
 });
 

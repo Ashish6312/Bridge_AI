@@ -2668,7 +2668,12 @@ const Dashboard = () => {
       setLocalProjects([]);
     }
   }, [currentUserEmail]);
-
+  useEffect(() => {
+    document.body.classList.add('dashboard-active');
+    return () => {
+      document.body.classList.remove('dashboard-active');
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -2999,8 +3004,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container" style={{ padding: '120px 0 100px 0', background: 'transparent' }}>
-      <div className="dashboard-layout mobile-col" style={{ display: 'flex', gap: '32px' }}>
+    <div className="container dashboard-container" style={{ background: 'transparent' }}>
+      <div className="dashboard-layout mobile-col">
         
         {/* Elite Dashboard Sidebar */}
         <motion.aside 
@@ -3008,21 +3013,20 @@ const Dashboard = () => {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="dashboard-sidebar" 
-          style={{ 
-            width: '280px', flexShrink: 0, position: 'sticky', top: '100px', 
-            height: 'fit-content', paddingRight: '4px' 
-          }}
         >
           <div style={{ 
             borderRadius: '16px', overflow: 'hidden', 
             border: '1px solid rgba(255, 255, 255, 0.05)', 
             background: 'rgba(13, 13, 13, 0.55)',
             backdropFilter: 'blur(16px)',
-            marginBottom: '24px'
+            marginBottom: '24px',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             
             {/* Hub Identity & Status */}
-            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -3061,7 +3065,13 @@ const Dashboard = () => {
             </div>
 
             {/* Navigation Engine */}
-            <div style={{ padding: '20px' }}>
+            <div style={{ 
+              padding: '20px', 
+              flex: 1, 
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
               
               {/* Group: Vault Ops */}
               <div style={{ marginBottom: '24px' }}>
@@ -3222,7 +3232,7 @@ const Dashboard = () => {
             </div>
 
             {/* Sidebar Footer */}
-            <div style={{ padding: '14px 20px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ padding: '14px 20px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Activity size={12} color="#10b981" />
                   <span style={{ fontSize: '0.6rem', fontWeight: '500', color: 'rgba(255,255,255,0.3)' }}>SYNC ACTIVE</span>
@@ -3236,7 +3246,7 @@ const Dashboard = () => {
         </motion.aside>
 
         {/* Main Content */}
-        <main style={{ flex: 1, minWidth: 0 }}>
+        <main className="dashboard-main" style={{ flex: 1, minWidth: 0 }}>
           {activeTab === 'saved' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {activeProject ? (
