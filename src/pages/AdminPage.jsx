@@ -100,6 +100,7 @@ const AdminPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isPasswordResetModalOpen, setIsPasswordResetModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null, isWarning: false });
   
   const [selectedUserEmail, setSelectedUserEmail] = useState('');
   const [selectedUserDetails, setSelectedUserDetails] = useState(null);
@@ -113,6 +114,10 @@ const AdminPage = () => {
     plan: 'free'
   });
   const [resetPasswordValue, setResetPasswordValue] = useState('');
+
+  const showConfirm = (title, message, onConfirm, isWarning = false) => {
+    setConfirmModal({ isOpen: true, title, message, onConfirm, isWarning });
+  };
 
   // Check login and portal authorization key on mount
   useEffect(() => {
@@ -241,38 +246,49 @@ const AdminPage = () => {
   };
 
   const handleUpdateUserPlan = async (userEmail, newPlan) => {
-    if (!window.confirm(`Are you sure you want to change plan for ${userEmail} to ${newPlan.toUpperCase()}?`)) return;
-    try {
-      const res = await adminFetch(`/api/admin/users/${userEmail}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ plan: newPlan })
-      });
-      if (res.ok) {
-        fetchTabContent('users');
-        fetchStats();
-      } else {
-        alert('Failed to update plan');
+    showConfirm(
+      'Change Plan Level',
+      `Are you sure you want to change plan for ${userEmail} to ${newPlan.toUpperCase()}?`,
+      async () => {
+        try {
+          const res = await adminFetch(`/api/admin/users/${userEmail}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ plan: newPlan })
+          });
+          if (res.ok) {
+            fetchTabContent('users');
+            fetchStats();
+          } else {
+            alert('Failed to update plan');
+          }
+        } catch (err) {
+          console.error(err);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    );
   };
 
   const handleDeleteUser = async (userEmail) => {
-    if (!window.confirm(`⚠️ WARNING: Deleting user ${userEmail} will permanently erase all associated bridges, context layers, project history, and invoices. This action CANNOT be undone. Proceed?`)) return;
-    try {
-      const res = await adminFetch(`/api/admin/users/${userEmail}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) {
-        fetchTabContent('users');
-        fetchStats();
-      } else {
-        alert('Failed to delete user');
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    showConfirm(
+      'Delete User Account',
+      `⚠️ WARNING: Deleting user ${userEmail} will permanently erase all associated bridges, context layers, project history, and invoices. This action CANNOT be undone. Proceed?`,
+      async () => {
+        try {
+          const res = await adminFetch(`/api/admin/users/${userEmail}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            fetchTabContent('users');
+            fetchStats();
+          } else {
+            alert('Failed to delete user');
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      },
+      true // isWarning
+    );
   };
 
   const handleCreateUserSubmit = async (e) => {
@@ -307,27 +323,32 @@ const AdminPage = () => {
 
   const handleToggleUserStatus = async (userEmail, currentSuspensionStatus) => {
     const action = currentSuspensionStatus ? 're-activate' : 'suspend';
-    if (!window.confirm(`Are you sure you want to ${action} the account for ${userEmail}?`)) return;
-    
-    setLoadingUserOperation(true);
-    try {
-      const res = await adminFetch(`/api/admin/users/${userEmail}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ is_suspended: !currentSuspensionStatus })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        alert(data.message);
-        fetchTabContent('users');
-      } else {
-        alert(data.error || 'Failed to update account status.');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Network or server error updating account status.');
-    } finally {
-      setLoadingUserOperation(false);
-    }
+    showConfirm(
+      currentSuspensionStatus ? 'Re-activate Account' : 'Suspend Account',
+      `Are you sure you want to ${action} the account for ${userEmail}?`,
+      async () => {
+        setLoadingUserOperation(true);
+        try {
+          const res = await adminFetch(`/api/admin/users/${userEmail}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_suspended: !currentSuspensionStatus })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            alert(data.message);
+            fetchTabContent('users');
+          } else {
+            alert(data.error || 'Failed to update account status.');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Network or server error updating account status.');
+        } finally {
+          setLoadingUserOperation(false);
+        }
+      },
+      !currentSuspensionStatus // isWarning
+    );
   };
 
   const handleResetPasswordSubmit = async (e) => {
@@ -406,24 +427,30 @@ const AdminPage = () => {
   };
 
   const handleDeleteFeedback = async (id) => {
-    if (!window.confirm('Delete this feedback?')) return;
-    try {
-      const res = await adminFetch(`/api/admin/feedbacks/${id}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) {
-        // Reset selection if deleted the active one
-        if (selectedFeedbackId === id) {
-          setSelectedFeedbackId(null);
+    showConfirm(
+      'Delete Support Ticket',
+      'Are you sure you want to delete this feedback ticket? This action cannot be undone.',
+      async () => {
+        try {
+          const res = await adminFetch(`/api/admin/feedbacks/${id}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            // Reset selection if deleted the active one
+            if (selectedFeedbackId === id) {
+              setSelectedFeedbackId(null);
+            }
+            fetchTabContent('feedbacks');
+            fetchStats();
+          } else {
+            alert('Failed to delete feedback');
+          }
+        } catch (err) {
+          console.error(err);
         }
-        fetchTabContent('feedbacks');
-        fetchStats();
-      } else {
-        alert('Failed to delete feedback');
-      }
-    } catch (err) {
-      console.error(err);
-    }
+      },
+      true // isWarning
+    );
   };
 
   const handleSaveResolution = async (id, status = 'resolved') => {
@@ -1141,31 +1168,35 @@ const AdminPage = () => {
                                 <KeyRound size={14} />
                               </button>
 
-                              <button 
-                                onClick={() => handleToggleUserStatus(u.email, u.is_suspended)}
-                                style={{
-                                  background: u.is_suspended ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
-                                  border: u.is_suspended ? '1px solid rgba(16, 185, 129, 0.15)' : '1px solid rgba(239, 68, 68, 0.15)',
-                                  color: u.is_suspended ? '#34d399' : '#f87171',
-                                  cursor: 'pointer',
-                                  padding: '6px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center'
-                                }}
-                                title={u.is_suspended ? 'Re-activate Account' : 'Suspend Account'}
-                              >
-                                {u.is_suspended ? <Unlock size={14} /> : <Lock size={14} />}
-                              </button>
+                              {!u.is_admin && u.email !== 'entrext1@gmail.com' && (
+                                <button 
+                                  onClick={() => handleToggleUserStatus(u.email, u.is_suspended)}
+                                  style={{
+                                    background: u.is_suspended ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                    border: u.is_suspended ? '1px solid rgba(16, 185, 129, 0.15)' : '1px solid rgba(239, 68, 68, 0.15)',
+                                    color: u.is_suspended ? '#34d399' : '#f87171',
+                                    cursor: 'pointer',
+                                    padding: '6px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center'
+                                  }}
+                                  title={u.is_suspended ? 'Re-activate Account' : 'Suspend Account'}
+                                >
+                                  {u.is_suspended ? <Unlock size={14} /> : <Lock size={14} />}
+                                </button>
+                              )}
 
-                              <button 
-                                onClick={() => handleDeleteUser(u.email)}
-                                style={{
-                                  background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.08)',
-                                  color: '#f87171', cursor: 'pointer',
-                                  padding: '6px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center'
-                                }}
-                                title="Permanently Delete User"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                              {!u.is_admin && u.email !== 'entrext1@gmail.com' && (
+                                <button 
+                                  onClick={() => handleDeleteUser(u.email)}
+                                  style={{
+                                    background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.08)',
+                                    color: '#f87171', cursor: 'pointer',
+                                    padding: '6px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center'
+                                  }}
+                                  title="Permanently Delete User"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1671,6 +1702,102 @@ const AdminPage = () => {
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
                 >
                   Close Ledger
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 4: CUSTOM CONFIRMATION DIALOG */}
+        {confirmModal.isOpen && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(16px)',
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'center', zIndex: 1100, padding: '20px'
+          }}>
+            <div className="glass-card" style={{
+              maxWidth: '440px', width: '100%',
+              background: 'rgba(15, 15, 15, 0.96)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '24px', padding: '32px',
+              boxShadow: '0 24px 50px rgba(0,0,0,0.6)',
+              position: 'relative',
+              textAlign: 'center'
+            }}>
+              <button
+                onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                style={{
+                  position: 'absolute', right: '20px', top: '20px',
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+                  color: 'var(--text-muted)', cursor: 'pointer', borderRadius: '50%',
+                  width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+              >
+                <X size={14} />
+              </button>
+
+              <div style={{ 
+                width: '56px', height: '56px', borderRadius: '16px', 
+                background: confirmModal.isWarning ? 'rgba(239, 68, 68, 0.08)' : 'rgba(222, 106, 57, 0.08)', 
+                display: 'inline-flex',
+                alignItems: 'center', justifyContent: 'center', 
+                color: confirmModal.isWarning ? '#ef4444' : 'var(--primary)',
+                border: confirmModal.isWarning ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(222, 106, 57, 0.2)',
+                marginBottom: '20px'
+              }}>
+                {confirmModal.isWarning ? <ShieldAlert size={28} /> : <AlertCircle size={28} />}
+              </div>
+
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '10px', color: 'white' }}>
+                {confirmModal.title}
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '28px' }}>
+                {confirmModal.message}
+              </p>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '14px' }}>
+                <button
+                  onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                  style={{
+                    flex: 1,
+                    padding: '11px 20px', borderRadius: '10px', 
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', cursor: 'pointer',
+                    fontSize: '0.9rem', fontWeight: '700',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                    e.currentTarget.style.color = 'var(--text-muted)';
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmModal({ ...confirmModal, isOpen: false });
+                    if (confirmModal.onConfirm) confirmModal.onConfirm();
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '11px 20px', borderRadius: '10px', border: 'none',
+                    background: confirmModal.isWarning ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, var(--primary) 0%, #ff8038 100%)',
+                    color: 'white', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '700',
+                    boxShadow: confirmModal.isWarning ? '0 4px 14px rgba(239, 68, 68, 0.2)' : '0 4px 14px rgba(222, 106, 57, 0.2)',
+                    transition: 'transform 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  Confirm
                 </button>
               </div>
             </div>

@@ -536,7 +536,7 @@ app.delete('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
 app.get('/api/admin/users', verifyAdmin, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT email, name, picture, plan, created_at, trial_ends_at, two_factor_enabled, is_suspended FROM users ORDER BY created_at DESC'
+      'SELECT email, name, picture, plan, created_at, trial_ends_at, two_factor_enabled, is_suspended, is_admin FROM users ORDER BY created_at DESC'
     );
     res.json({ success: true, users: result.rows });
   } catch (err) {
