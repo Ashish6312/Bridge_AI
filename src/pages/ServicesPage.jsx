@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
@@ -106,6 +106,25 @@ const ServicesPage = () => {
     return stored ? JSON.parse(stored) : null;
   });
   const navigate = useNavigate();
+
+  // Sync user status on mount to avoid stale localStorage issues (e.g. trial expired)
+  useEffect(() => {
+    const syncStatus = async () => {
+      if (!user?.email) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/user/status?email=${user.email}`);
+        const data = await res.json();
+        if (data.success) {
+          const updatedUser = { ...user, plan: data.plan, trial_ends_at: data.trial_ends_at || null };
+          localStorage.setItem('bridge_user', JSON.stringify(updatedUser));
+          setUser(updatedUser);
+        }
+      } catch (err) {
+        console.error('Failed to sync user plan:', err);
+      }
+    };
+    syncStatus();
+  }, []);
 
   // Derive trial state from the user object (populated by /api/user/status sync in Dashboard)
   const trialEndsAt = user?.trial_ends_at ? new Date(user.trial_ends_at) : null;
