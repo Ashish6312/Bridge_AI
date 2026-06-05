@@ -2463,36 +2463,6 @@ const Dashboard = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Live Countdown Timer for Pro Trial
-  useEffect(() => {
-    if (!stats.trialEndsAt) {
-      setTrialTimeLeft('');
-      return;
-    }
-    const updateTimer = () => {
-      const msLeft = new Date(stats.trialEndsAt) - new Date();
-      if (msLeft <= 0) {
-        setTrialTimeLeft('Expired');
-        // Force reload status to trigger downgrade / popup
-        loadData(true);
-      } else {
-        const days = Math.floor(msLeft / 86400000);
-        const hours = Math.floor((msLeft % 86400000) / 3600000);
-        const minutes = Math.floor((msLeft % 3600000) / 60000);
-        const seconds = Math.floor((msLeft % 60000) / 1000);
-        
-        let timerStr = '';
-        if (days > 0) timerStr += `${days}d `;
-        timerStr += `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-        setTrialTimeLeft(timerStr);
-      }
-    };
-    
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [stats.trialEndsAt, loadData]);
-
   const [hubStatus, setHubStatus] = useState('connecting'); // 'online' | 'offline'
   const retryCountRef = React.useRef(0);
   const retryTimerRef = React.useRef(null);
@@ -2646,6 +2616,36 @@ const Dashboard = () => {
       isFetchingRef.current = false;
     }
   }, [bridges.length]);
+
+  // Live Countdown Timer for Pro Trial
+  useEffect(() => {
+    if (!stats.trialEndsAt) {
+      setTrialTimeLeft('');
+      return;
+    }
+    const updateTimer = () => {
+      const msLeft = new Date(stats.trialEndsAt) - new Date();
+      if (msLeft <= 0) {
+        setTrialTimeLeft('Expired');
+        // Force reload status to trigger downgrade / popup
+        loadData(true);
+      } else {
+        const days = Math.floor(msLeft / 86400000);
+        const hours = Math.floor((msLeft % 86400000) / 3600000);
+        const minutes = Math.floor((msLeft % 3600000) / 60000);
+        const seconds = Math.floor((msLeft % 60000) / 1000);
+        
+        let timerStr = '';
+        if (days > 0) timerStr += `${days}d `;
+        timerStr += `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+        setTrialTimeLeft(timerStr);
+      }
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [stats.trialEndsAt, loadData]);
 
   const refreshVault = async () => {
     setIsRefreshing(true);
