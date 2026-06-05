@@ -2,49 +2,71 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, MessageSquare, CreditCard, Mail, Database, 
   TrendingUp, Search, Trash2, Key, LogOut, CheckCircle, 
-  XCircle, ArrowRight, RefreshCw, Activity, Shield
+  XCircle, ArrowRight, RefreshCw, Activity, Shield,
+  Plus, Eye, Lock, Unlock, KeyRound, ShieldAlert, X, AlertCircle
 } from 'lucide-react';
 import { apiFetch } from '../apiConfig';
 import SEOHelmet from '../components/SEOHelmet';
 
-const PageNotFound = () => (
-  <div style={{
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'transparent',
-    color: 'var(--text-main)',
-    fontFamily: "'Outfit', 'Inter', sans-serif",
-    padding: '20px',
-    textAlign: 'center',
-    position: 'relative',
-    zIndex: 10
-  }}>
-    <h1 style={{ fontSize: '6rem', fontWeight: '900', color: 'var(--primary)', margin: 0, letterSpacing: '-0.05em' }}>404</h1>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '10px 0 20px', color: '#fff' }}>Page Not Found</h2>
-    <p style={{ color: 'var(--text-muted)', maxWidth: '400px', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '30px' }}>
-      The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
-    </p>
-    <a href="/" style={{
-      padding: '12px 24px',
-      borderRadius: '8px',
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      color: 'white',
-      textDecoration: 'none',
-      fontWeight: '600',
-      fontSize: '0.9rem',
-      transition: 'all 0.2s'
-    }}
-    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-    >
-      Return Home
-    </a>
-  </div>
-);
+const PageNotFound = () => {
+  const [seconds, setSeconds] = useState(5);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          window.location.href = '/';
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'transparent',
+      color: 'var(--text-main)',
+      fontFamily: "'Outfit', 'Inter', sans-serif",
+      padding: '20px',
+      textAlign: 'center',
+      position: 'relative',
+      zIndex: 10
+    }}>
+      <h1 style={{ fontSize: '6rem', fontWeight: '900', color: 'var(--primary)', margin: 0, letterSpacing: '-0.05em' }}>404</h1>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '10px 0 20px', color: '#fff' }}>Page Not Found</h2>
+      <p style={{ color: 'var(--text-muted)', maxWidth: '400px', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '30px' }}>
+        The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+      </p>
+      <p style={{ color: 'var(--primary)', fontSize: '0.9rem', marginBottom: '30px', fontWeight: '600' }}>
+        Automatically redirecting to Home in {seconds} seconds...
+      </p>
+      <a href="/" style={{
+        padding: '12px 24px',
+        borderRadius: '8px',
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        color: 'white',
+        textDecoration: 'none',
+        fontWeight: '600',
+        fontSize: '0.9rem',
+        transition: 'all 0.2s'
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+      >
+        Return Home
+      </a>
+    </div>
+  );
+};
 
 const AdminPage = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -73,6 +95,24 @@ const AdminPage = () => {
   // Resolution inputs state
   const [resolutionNotes, setResolutionNotes] = useState({});
   const [loadingData, setLoadingData] = useState(false);
+
+  // Modals & User Operations State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isPasswordResetModalOpen, setIsPasswordResetModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  
+  const [selectedUserEmail, setSelectedUserEmail] = useState('');
+  const [selectedUserDetails, setSelectedUserDetails] = useState(null);
+  const [loadingUserOperation, setLoadingUserOperation] = useState(false);
+  
+  // Forms state
+  const [createUserForm, setCreateUserForm] = useState({
+    email: '',
+    name: '',
+    password: '',
+    plan: 'free'
+  });
+  const [resetPasswordValue, setResetPasswordValue] = useState('');
 
   // Check login and portal authorization key on mount
   useEffect(() => {
@@ -142,11 +182,30 @@ const AdminPage = () => {
     };
   };
 
+  const adminFetch = async (endpoint, options = {}) => {
+    const res = await apiFetch(endpoint, {
+      ...options,
+      headers: {
+        ...getAdminHeaders(),
+        ...options.headers
+      }
+    });
+    if (res.status === 403) {
+      sessionStorage.removeItem('bridge_admin_token');
+      setIsAdmin(false);
+      if (!window.hasShownSessionExpiryAlert) {
+        window.hasShownSessionExpiryAlert = true;
+        alert('Admin session expired or unauthorized. Please authenticate again.');
+        setTimeout(() => { window.hasShownSessionExpiryAlert = false; }, 2000);
+      }
+      throw new Error('Unauthorized');
+    }
+    return res;
+  };
+
   const fetchStats = async () => {
     try {
-      const res = await apiFetch('/api/admin/stats', {
-        headers: getAdminHeaders()
-      });
+      const res = await adminFetch('/api/admin/stats');
       const data = await res.json();
       if (res.ok) {
         setStats(data.stats);
@@ -159,9 +218,8 @@ const AdminPage = () => {
   const fetchTabContent = async (tab) => {
     setLoadingData(true);
     try {
-      const headers = getAdminHeaders();
       if (tab === 'feedbacks') {
-        const res = await apiFetch('/api/admin/feedbacks', { headers });
+        const res = await adminFetch('/api/admin/feedbacks');
         const data = await res.json();
         if (res.ok) {
           setFeedbacks(data.feedbacks);
@@ -171,7 +229,7 @@ const AdminPage = () => {
           }
         }
       } else if (tab === 'users') {
-        const res = await apiFetch('/api/admin/users', { headers });
+        const res = await adminFetch('/api/admin/users');
         const data = await res.json();
         if (res.ok) setUsers(data.users);
       }
@@ -185,12 +243,8 @@ const AdminPage = () => {
   const handleUpdateUserPlan = async (userEmail, newPlan) => {
     if (!window.confirm(`Are you sure you want to change plan for ${userEmail} to ${newPlan.toUpperCase()}?`)) return;
     try {
-      const res = await apiFetch(`/api/admin/users/${userEmail}`, {
+      const res = await adminFetch(`/api/admin/users/${userEmail}`, {
         method: 'PATCH',
-        headers: {
-          ...getAdminHeaders(),
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ plan: newPlan })
       });
       if (res.ok) {
@@ -207,9 +261,8 @@ const AdminPage = () => {
   const handleDeleteUser = async (userEmail) => {
     if (!window.confirm(`⚠️ WARNING: Deleting user ${userEmail} will permanently erase all associated bridges, context layers, project history, and invoices. This action CANNOT be undone. Proceed?`)) return;
     try {
-      const res = await apiFetch(`/api/admin/users/${userEmail}`, {
-        method: 'DELETE',
-        headers: getAdminHeaders()
+      const res = await adminFetch(`/api/admin/users/${userEmail}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         fetchTabContent('users');
@@ -222,14 +275,123 @@ const AdminPage = () => {
     }
   };
 
+  const handleCreateUserSubmit = async (e) => {
+    e.preventDefault();
+    if (!createUserForm.email || !createUserForm.password) {
+      alert('Email and Password are required.');
+      return;
+    }
+    setLoadingUserOperation(true);
+    try {
+      const res = await adminFetch('/api/admin/users', {
+        method: 'POST',
+        body: JSON.stringify(createUserForm)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert('User account provisioned successfully.');
+        setIsCreateModalOpen(false);
+        setCreateUserForm({ email: '', name: '', password: '', plan: 'free' });
+        fetchTabContent('users');
+        fetchStats();
+      } else {
+        alert(data.error || 'Failed to provision user');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network or server error provisioning user.');
+    } finally {
+      setLoadingUserOperation(false);
+    }
+  };
+
+  const handleToggleUserStatus = async (userEmail, currentSuspensionStatus) => {
+    const action = currentSuspensionStatus ? 're-activate' : 'suspend';
+    if (!window.confirm(`Are you sure you want to ${action} the account for ${userEmail}?`)) return;
+    
+    setLoadingUserOperation(true);
+    try {
+      const res = await adminFetch(`/api/admin/users/${userEmail}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_suspended: !currentSuspensionStatus })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(data.message);
+        fetchTabContent('users');
+      } else {
+        alert(data.error || 'Failed to update account status.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network or server error updating account status.');
+    } finally {
+      setLoadingUserOperation(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!resetPasswordValue) {
+      alert('Password cannot be empty.');
+      return;
+    }
+    setLoadingUserOperation(true);
+    try {
+      const res = await adminFetch(`/api/admin/users/${selectedUserEmail}/reset-password`, {
+        method: 'POST',
+        body: JSON.stringify({ password: resetPasswordValue })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert('Password reset successfully.');
+        setIsPasswordResetModalOpen(false);
+        setResetPasswordValue('');
+      } else {
+        alert(data.error || 'Failed to reset password.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network or server error resetting password.');
+    } finally {
+      setLoadingUserOperation(false);
+    }
+  };
+
+  const handleFetchUserDetails = async (userEmail) => {
+    setLoadingUserOperation(true);
+    setSelectedUserEmail(userEmail);
+    setSelectedUserDetails(null);
+    try {
+      const res = await adminFetch(`/api/admin/users/${userEmail}/details`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSelectedUserDetails(data.details);
+        setIsDetailsModalOpen(true);
+      } else {
+        alert(data.error || 'Failed to fetch user details.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network or server error fetching user details.');
+    } finally {
+      setLoadingUserOperation(false);
+    }
+  };
+
+  const generateRandomPassword = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
+    let pass = '';
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pass;
+  };
+
   const handleUpdateFeedbackStatus = async (id, newStatus) => {
     try {
-      const res = await apiFetch(`/api/admin/feedbacks/${id}`, {
+      const res = await adminFetch(`/api/admin/feedbacks/${id}`, {
         method: 'PATCH',
-        headers: {
-          ...getAdminHeaders(),
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ status: newStatus })
       });
       if (res.ok) {
@@ -246,9 +408,8 @@ const AdminPage = () => {
   const handleDeleteFeedback = async (id) => {
     if (!window.confirm('Delete this feedback?')) return;
     try {
-      const res = await apiFetch(`/api/admin/feedbacks/${id}`, {
-        method: 'DELETE',
-        headers: getAdminHeaders()
+      const res = await adminFetch(`/api/admin/feedbacks/${id}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         // Reset selection if deleted the active one
@@ -268,12 +429,8 @@ const AdminPage = () => {
   const handleSaveResolution = async (id, status = 'resolved') => {
     const note = resolutionNotes[id] !== undefined ? resolutionNotes[id] : '';
     try {
-      const res = await apiFetch(`/api/admin/feedbacks/${id}`, {
+      const res = await adminFetch(`/api/admin/feedbacks/${id}`, {
         method: 'PATCH',
-        headers: {
-          ...getAdminHeaders(),
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ admin_response: note, status })
       });
       if (res.ok) {
@@ -836,18 +993,43 @@ const AdminPage = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>User Directories</h3>
                 
-                <div style={{ position: 'relative' }}>
-                  <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input 
-                    type="text" 
-                    placeholder="Search users..."
-                    value={userSearch}
-                    onChange={e => setUserSearch(e.target.value)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
                     style={{
-                      padding: '8px 12px 8px 36px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)',
-                      background: 'rgba(13, 13, 13, 0.4)', color: 'var(--text-main)', outline: 'none', fontSize: '0.85rem'
+                      background: 'linear-gradient(135deg, var(--primary) 0%, #ff8038 100%)',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '8px 16px',
+                      color: 'white',
+                      fontWeight: '700',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'transform 0.2s, opacity 0.2s'
                     }}
-                  />
+                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                  >
+                    <Plus size={14} />
+                    <span>Provision User</span>
+                  </button>
+
+                  <div style={{ position: 'relative' }}>
+                    <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <input 
+                      type="text" 
+                      placeholder="Search users..."
+                      value={userSearch}
+                      onChange={e => setUserSearch(e.target.value)}
+                      style={{
+                        padding: '8px 12px 8px 36px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)',
+                        background: 'rgba(13, 13, 13, 0.4)', color: 'var(--text-main)', outline: 'none', fontSize: '0.85rem'
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -861,6 +1043,7 @@ const AdminPage = () => {
                         <th style={{ padding: '12px 8px' }}>User</th>
                         <th style={{ padding: '12px 8px' }}>Email</th>
                         <th style={{ padding: '12px 8px' }}>Plan Level</th>
+                        <th style={{ padding: '12px 8px' }}>Status</th>
                         <th style={{ padding: '12px 8px' }}>Created</th>
                         <th style={{ padding: '12px 8px', textAlign: 'right' }}>Actions</th>
                       </tr>
@@ -894,20 +1077,96 @@ const AdminPage = () => {
                               <option value="infinite">Infinite</option>
                             </select>
                           </td>
+                          <td style={{ padding: '14px 8px' }}>
+                            {u.is_suspended ? (
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '4px 10px',
+                                borderRadius: '12px',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                color: '#f87171',
+                                fontSize: '0.75rem',
+                                fontWeight: '700'
+                              }}>
+                                Suspended
+                              </span>
+                            ) : (
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '4px 10px',
+                                borderRadius: '12px',
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                border: '1px solid rgba(16, 185, 129, 0.2)',
+                                color: '#34d399',
+                                fontSize: '0.75rem',
+                                fontWeight: '700'
+                              }}>
+                                Active
+                              </span>
+                            )}
+                          </td>
                           <td style={{ padding: '14px 8px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                             {new Date(u.created_at).toLocaleDateString()}
                           </td>
                           <td style={{ padding: '14px 8px', textAlign: 'right' }}>
-                            <button 
-                              onClick={() => handleDeleteUser(u.email)}
-                              style={{
-                                background: 'none', border: 'none', color: '#f87171', cursor: 'pointer',
-                                padding: '6px', borderRadius: '6px', transition: 'background 0.2s'
-                              }}
-                              title="Delete user data"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                              <button 
+                                onClick={() => handleFetchUserDetails(u.email)}
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255,255,255,0.05)',
+                                  color: 'var(--text-main)', cursor: 'pointer',
+                                  padding: '6px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center'
+                                }}
+                                title="View User Diagnostics & Logs"
+                              >
+                                <Eye size={14} />
+                              </button>
+
+                              <button 
+                                onClick={() => {
+                                  setSelectedUserEmail(u.email);
+                                  setResetPasswordValue('');
+                                  setIsPasswordResetModalOpen(true);
+                                }}
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255,255,255,0.05)',
+                                  color: 'var(--text-main)', cursor: 'pointer',
+                                  padding: '6px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center'
+                                }}
+                                title="Reset Password"
+                              >
+                                <KeyRound size={14} />
+                              </button>
+
+                              <button 
+                                onClick={() => handleToggleUserStatus(u.email, u.is_suspended)}
+                                style={{
+                                  background: u.is_suspended ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                  border: u.is_suspended ? '1px solid rgba(16, 185, 129, 0.15)' : '1px solid rgba(239, 68, 68, 0.15)',
+                                  color: u.is_suspended ? '#34d399' : '#f87171',
+                                  cursor: 'pointer',
+                                  padding: '6px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center'
+                                }}
+                                title={u.is_suspended ? 'Re-activate Account' : 'Suspend Account'}
+                              >
+                                {u.is_suspended ? <Unlock size={14} /> : <Lock size={14} />}
+                              </button>
+
+                              <button 
+                                onClick={() => handleDeleteUser(u.email)}
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.08)',
+                                  color: '#f87171', cursor: 'pointer',
+                                  padding: '6px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center'
+                                }}
+                                title="Permanently Delete User"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -917,6 +1176,504 @@ const AdminPage = () => {
               )}
             </div>
 
+          </div>
+        )}
+
+        {/* MODAL 1: PROVISION USER */}
+        {isCreateModalOpen && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'center', zIndex: 1000, padding: '20px'
+          }}>
+            <div className="glass-card" style={{
+              maxWidth: '500px', width: '100%',
+              background: 'rgba(15, 15, 15, 0.95)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '24px', padding: '36px',
+              boxShadow: '0 24px 50px rgba(0,0,0,0.6)',
+              position: 'relative'
+            }}>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                style={{
+                  position: 'absolute', right: '24px', top: '24px',
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+                  color: 'var(--text-muted)', cursor: 'pointer', borderRadius: '50%',
+                  width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                <X size={16} />
+              </button>
+
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: '8px', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Plus size={20} style={{ color: 'var(--primary)' }} />
+                Provision Account
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '24px' }}>
+                Manually spawn a new user credentials record in Neon PostgreSQL.
+              </p>
+
+              <form onSubmit={handleCreateUserSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                     Full Name
+                   </label>
+                   <input 
+                     type="text"
+                     placeholder="e.g. John Doe"
+                     value={createUserForm.name}
+                     onChange={e => setCreateUserForm({ ...createUserForm, name: e.target.value })}
+                     style={{
+                       width: '100%', padding: '10px 14px', borderRadius: '10px',
+                       border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)',
+                       color: 'var(--text-main)', outline: 'none', fontSize: '0.9rem'
+                     }}
+                   />
+                </div>
+
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                     Email Address *
+                   </label>
+                   <input 
+                     type="email"
+                     required
+                     placeholder="name@example.com"
+                     value={createUserForm.email}
+                     onChange={e => setCreateUserForm({ ...createUserForm, email: e.target.value })}
+                     style={{
+                       width: '100%', padding: '10px 14px', borderRadius: '10px',
+                       border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)',
+                       color: 'var(--text-main)', outline: 'none', fontSize: '0.9rem'
+                     }}
+                   />
+                </div>
+
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                     Access Password *
+                   </label>
+                   <div style={{ display: 'flex', gap: '8px' }}>
+                     <input 
+                       type="text"
+                       required
+                       placeholder="••••••••••••"
+                       value={createUserForm.password}
+                       onChange={e => setCreateUserForm({ ...createUserForm, password: e.target.value })}
+                       style={{
+                         flex: 1, padding: '10px 14px', borderRadius: '10px',
+                         border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)',
+                         color: 'var(--text-main)', outline: 'none', fontSize: '0.9rem'
+                       }}
+                     />
+                     <button
+                       type="button"
+                       onClick={() => setCreateUserForm({ ...createUserForm, password: generateRandomPassword() })}
+                       style={{
+                         padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)',
+                         background: 'rgba(255,255,255,0.03)', color: 'white', cursor: 'pointer', fontSize: '0.85rem'
+                       }}
+                     >
+                       Generate
+                     </button>
+                   </div>
+                </div>
+
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                     Plan Level
+                   </label>
+                   <select 
+                     value={createUserForm.plan}
+                     onChange={e => setCreateUserForm({ ...createUserForm, plan: e.target.value })}
+                     style={{
+                       width: '100%', padding: '10px 14px', borderRadius: '10px',
+                       border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15,15,15,0.9)',
+                       color: 'var(--text-main)', outline: 'none', fontSize: '0.9rem', fontWeight: '700'
+                     }}
+                   >
+                     <option value="free">Free Tier</option>
+                     <option value="pro">Pro Subscription</option>
+                     <option value="infinite">Infinite Admin Plan</option>
+                   </select>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+                   <button
+                     type="button"
+                     onClick={() => setIsCreateModalOpen(false)}
+                     style={{
+                       padding: '10px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)',
+                       background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', cursor: 'pointer',
+                       fontSize: '0.9rem', fontWeight: '700'
+                     }}
+                   >
+                     Cancel
+                   </button>
+                   <button
+                     type="submit"
+                     disabled={loadingUserOperation}
+                     style={{
+                       padding: '10px 20px', borderRadius: '10px', border: 'none',
+                       background: 'linear-gradient(135deg, var(--primary) 0%, #ff8038 100%)',
+                       color: 'white', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '700'
+                     }}
+                   >
+                     {loadingUserOperation ? 'Provisioning...' : 'Provision User'}
+                   </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 2: RESET PASSWORD */}
+        {isPasswordResetModalOpen && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'center', zIndex: 1000, padding: '20px'
+          }}>
+            <div className="glass-card" style={{
+              maxWidth: '440px', width: '100%',
+              background: 'rgba(15, 15, 15, 0.95)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '24px', padding: '36px',
+              boxShadow: '0 24px 50px rgba(0,0,0,0.6)',
+              position: 'relative'
+            }}>
+              <button
+                onClick={() => setIsPasswordResetModalOpen(false)}
+                style={{
+                  position: 'absolute', right: '24px', top: '24px',
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+                  color: 'var(--text-muted)', cursor: 'pointer', borderRadius: '50%',
+                  width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                <X size={16} />
+              </button>
+
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 900, marginBottom: '8px', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <KeyRound size={20} style={{ color: 'var(--primary)' }} />
+                Reset Password
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '24px', wordBreak: 'break-all' }}>
+                Configure a new password query for <span style={{ color: 'white', fontWeight: 600 }}>{selectedUserEmail}</span>.
+              </p>
+
+              <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                     New Password *
+                   </label>
+                   <div style={{ display: 'flex', gap: '8px' }}>
+                     <input 
+                       type="text"
+                       required
+                       placeholder="Enter or generate new password"
+                       value={resetPasswordValue}
+                       onChange={e => setResetPasswordValue(e.target.value)}
+                       style={{
+                         flex: 1, padding: '10px 14px', borderRadius: '10px',
+                         border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)',
+                         color: 'var(--text-main)', outline: 'none', fontSize: '0.9rem'
+                       }}
+                     />
+                     <button
+                       type="button"
+                       onClick={() => setResetPasswordValue(generateRandomPassword())}
+                       style={{
+                         padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)',
+                         background: 'rgba(255,255,255,0.03)', color: 'white', cursor: 'pointer', fontSize: '0.85rem'
+                       }}
+                     >
+                       Generate
+                     </button>
+                   </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+                   <button
+                     type="button"
+                     onClick={() => setIsPasswordResetModalOpen(false)}
+                     style={{
+                       padding: '10px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)',
+                       background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', cursor: 'pointer',
+                       fontSize: '0.9rem', fontWeight: '700'
+                     }}
+                   >
+                     Cancel
+                   </button>
+                   <button
+                     type="submit"
+                     disabled={loadingUserOperation}
+                     style={{
+                       padding: '10px 20px', borderRadius: '10px', border: 'none',
+                       background: 'linear-gradient(135deg, var(--primary) 0%, #ff8038 100%)',
+                       color: 'white', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '700'
+                     }}
+                   >
+                     {loadingUserOperation ? 'Updating...' : 'Save Password'}
+                   </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 3: USER DIAGNOSTICS LEDGER */}
+        {isDetailsModalOpen && selectedUserDetails && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(16px)',
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'center', zIndex: 1000, padding: '20px'
+          }}>
+            <div className="glass-card" style={{
+              maxWidth: '850px', width: '100%', maxHeight: '90vh',
+              background: 'rgba(15, 15, 15, 0.96)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '24px', padding: '36px',
+              boxShadow: '0 32px 64px rgba(0,0,0,0.7)',
+              position: 'relative', display: 'flex', flexDirection: 'column',
+              overflow: 'hidden'
+            }}>
+              <button
+                onClick={() => setIsDetailsModalOpen(false)}
+                style={{
+                  position: 'absolute', right: '24px', top: '24px',
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+                  color: 'var(--text-muted)', cursor: 'pointer', borderRadius: '50%',
+                  width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                <X size={16} />
+              </button>
+
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  <Shield size={22} style={{ color: 'var(--primary)' }} />
+                  <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'white', margin: 0 }}>
+                    User Diagnostics Ledger
+                  </h3>
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
+                  Live database integration and synchronization logs for auditing.
+                </p>
+              </div>
+
+              {/* Scrollable details container */}
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '28px', paddingRight: '8px' }}>
+                
+                {/* Profile Card & KPIs */}
+                <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px', alignItems: 'stretch' }}>
+                  
+                  {/* Profile Overview */}
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.04)',
+                    borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    textAlign: 'center'
+                  }}>
+                    {selectedUserDetails.user.picture ? (
+                      <img 
+                        src={selectedUserDetails.user.picture} 
+                        alt="" 
+                        style={{ width: '64px', height: '64px', borderRadius: '50%', marginBottom: '12px', border: '2px solid rgba(222,106,57,0.3)' }} 
+                      />
+                    ) : (
+                      <div style={{ 
+                        width: '64px', height: '64px', borderRadius: '50%', 
+                        background: 'rgba(222, 106, 57, 0.1)', display: 'flex', 
+                        alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', 
+                        fontWeight: '800', color: 'var(--primary)', marginBottom: '12px' 
+                      }}>
+                        {selectedUserDetails.user.name ? selectedUserDetails.user.name.substring(0, 2).toUpperCase() : 'US'}
+                      </div>
+                    )}
+                    <h4 style={{ fontSize: '1rem', fontWeight: '800', color: 'white', margin: '0 0 4px' }}>
+                      {selectedUserDetails.user.name || 'Anonymous User'}
+                    </h4>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', wordBreak: 'break-all', marginBottom: '14px' }}>
+                      {selectedUserDetails.user.email}
+                    </span>
+
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '14px', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Plan Level:</span>
+                        <span style={{ color: 'var(--primary)', fontWeight: '800', textTransform: 'uppercase' }}>
+                          {selectedUserDetails.user.plan}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Status:</span>
+                        <span style={{ color: selectedUserDetails.user.is_suspended ? '#f87171' : '#34d399', fontWeight: '800' }}>
+                          {selectedUserDetails.user.is_suspended ? 'Suspended' : 'Active'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Member Since:</span>
+                        <span style={{ color: 'white', fontWeight: '600' }}>
+                          {new Date(selectedUserDetails.user.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* KPIs Grid */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flex: 1 }}>
+                      {[
+                        { label: 'Sync Extractions', value: selectedUserDetails.stats.totalBridges, color: 'var(--primary)', subtitle: 'Bridges recorded' },
+                        { label: 'Workspaces', value: selectedUserDetails.stats.totalProjects, color: '#7c3aed', subtitle: 'Distinct projects' },
+                        { label: 'Billing Invoices', value: selectedUserDetails.stats.totalInvoices, color: '#10b981', subtitle: 'Ledger items' },
+                        { label: 'Support Tickets', value: selectedUserDetails.stats.totalFeedbacks, color: '#cd6b6b', subtitle: 'Feedbacks submitted' }
+                      ].map((item, idx) => (
+                        <div key={idx} style={{
+                          background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.03)',
+                          borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'center'
+                        }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>{item.label}</span>
+                          <span style={{ fontSize: '1.4rem', fontWeight: '900', color: 'white', margin: '4px 0 2px' }}>{item.value}</span>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{item.subtitle}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Sync Bridges Activity */}
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'white', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Recent Sync Bridges
+                  </h4>
+                  {selectedUserDetails.bridges.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                      No sync bridges logged for this user.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {selectedUserDetails.bridges.map(br => (
+                        <div key={br.id} style={{
+                          background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.03)',
+                          borderRadius: '12px', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'white' }}>{br.title}</span>
+                              <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(222,106,57,0.1)', color: 'var(--primary)', textTransform: 'uppercase' }}>{br.source}</span>
+                            </div>
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '4px 0 0', maxWidth: '450px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {br.summary ? br.summary.replace(/###.*?\n/g, '').trim() : 'No summary context.'}
+                            </p>
+                          </div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                            {new Date(br.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Invoices ledger */}
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'white', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Billing Invoices History
+                  </h4>
+                  {selectedUserDetails.invoices.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                      No invoice transactions logged for this user.
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
+                            <th style={{ padding: '10px 16px' }}>Invoice ID</th>
+                            <th style={{ padding: '10px 16px' }}>Tier</th>
+                            <th style={{ padding: '10px 16px' }}>Amount</th>
+                            <th style={{ padding: '10px 16px' }}>Status</th>
+                            <th style={{ padding: '10px 16px' }}>Billing Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedUserDetails.invoices.map(inv => (
+                            <tr key={inv.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                              <td style={{ padding: '10px 16px', color: 'white', fontFamily: 'monospace' }}>{inv.id}</td>
+                              <td style={{ padding: '10px 16px', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: '700' }}>{inv.plan}</td>
+                              <td style={{ padding: '10px 16px', color: 'white' }}>{parseFloat(inv.amount).toFixed(2)} {inv.currency}</td>
+                              <td style={{ padding: '10px 16px' }}>
+                                <span style={{
+                                  color: inv.status === 'paid' ? '#34d399' : '#f87171',
+                                  background: inv.status === 'paid' ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+                                  padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '700'
+                                }}>
+                                  {inv.status}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 16px', color: 'var(--text-muted)' }}>{new Date(inv.created_at).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Feedbacks History */}
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'white', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Submitted Feedback Tickets
+                  </h4>
+                  {selectedUserDetails.feedbacks.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                      No feedback tickets logged for this user.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {selectedUserDetails.feedbacks.map(fb => (
+                        <div key={fb.id} style={{
+                          background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.03)',
+                          borderRadius: '12px', padding: '12px 16px'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'white' }}>{fb.title}</span>
+                            <span style={{
+                              color: fb.status === 'resolved' ? '#34d399' : fb.status === 'in_progress' ? '#fbbf24' : '#f87171',
+                              background: fb.status === 'resolved' ? 'rgba(16,185,129,0.08)' : fb.status === 'in_progress' ? 'rgba(251,191,36,0.08)' : 'rgba(239,68,68,0.08)',
+                              padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: '700', textTransform: 'uppercase'
+                            }}>{fb.status.replace('_', ' ')}</span>
+                          </div>
+                          <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: '1.4' }}>{fb.description}</p>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Submitted: {new Date(fb.created_at).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+              <div style={{ marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setIsDetailsModalOpen(false)}
+                  style={{
+                    padding: '10px 24px', borderRadius: '10px', border: 'none',
+                    background: 'rgba(255, 255, 255, 0.04)', color: 'white', cursor: 'pointer',
+                    fontSize: '0.9rem', fontWeight: '700', transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
+                >
+                  Close Ledger
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

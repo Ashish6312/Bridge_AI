@@ -246,6 +246,7 @@ const initDB = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS devices JSONB DEFAULT \'[]\'');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_suspended BOOLEAN DEFAULT FALSE');
     await pool.query('ALTER TABLE feedbacks ADD COLUMN IF NOT EXISTS admin_response TEXT');
     // Deduplicate existing project decisions
     await pool.query(`
@@ -319,6 +320,7 @@ app.post('/api/login', async (req, res) => {
     if (result.rowCount === 0) return res.status(404).json({ error: 'User not found' });
     
     const user = result.rows[0];
+    if (user.is_suspended) return res.status(403).json({ error: 'This account has been suspended by the administrator.' });
     if (!user.password) return res.status(400).json({ error: 'Please use Google Login for this account' });
     
     const valid = await bcrypt.compare(password, user.password);
@@ -351,6 +353,7 @@ app.post('/api/auth/google', async (req, res) => {
       [email, name, picture, google_id]
     );
     const row = result.rows[0];
+    if (row.is_suspended) return res.status(403).json({ error: 'This account has been suspended by the administrator.' });
     const isNewUser = row.is_new_user;
 
     delete row.password;
@@ -377,6 +380,7 @@ app.get('/api/auth/me', async (req, res) => {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (result.rowCount === 0) return res.status(404).json({ error: 'User not found' });
     const user = result.rows[0];
+    if (user.is_suspended) return res.status(403).json({ error: 'This account has been suspended by the administrator.' });
     delete user.password;
     res.json(user);
   } catch (error) {
@@ -520,7 +524,7 @@ app.delete('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
 app.get('/api/admin/users', verifyAdmin, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT email, name, picture, plan, created_at, trial_ends_at, two_factor_enabled FROM users ORDER BY created_at DESC'
+      'SELECT email, name, picture, plan, created_at, trial_ends_at, two_factor_enabled, is_suspended FROM users ORDER BY created_at DESC'
     );
     res.json({ success: true, users: result.rows });
   } catch (err) {
@@ -561,6 +565,150 @@ app.delete('/api/admin/users/:email', verifyAdmin, async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   } finally {
     client.release();
+  }
+});
+
+// POST /api/admin/users - Provision User
+app.post('/api/admin/users', verifyAdmin, async (req, res) => {
+  try {
+    const { email, password, name, plan } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Email and password required.' });
+    }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Default trial fields or default configurations
+    const result = await pool.query(
+      `INSERT INTO users (email, password, name, plan, created_at)
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+       ON CONFLICT (email) DO NOTHING
+       RETURNING *`,
+      [email, hashedPassword, name || email.split('@')[0], plan || 'free']
+    );
+    
+    if (result.rowCount === 0) {
+      return res.status(400).json({ success: false, error: 'User already exists.' });
+    }
+    
+    const user = { ...result.rows[0] };
+    delete user.password;
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /api/admin/users/:email/status - Suspend/Unsuspend
+app.patch('/api/admin/users/:email/status', verifyAdmin, async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { is_suspended } = req.body;
+    if (is_suspended === undefined) {
+      return res.status(400).json({ success: false, error: 'is_suspended status required.' });
+    }
+    
+    // Lock down to prevent admin from suspending themselves
+    const adminEmail = process.env.ADMIN_EMAIL || 'entrext1@gmail.com';
+    if (email === adminEmail && is_suspended) {
+      return res.status(400).json({ success: false, error: 'Cannot suspend the primary administrator account.' });
+    }
+    
+    const result = await pool.query(
+      'UPDATE users SET is_suspended = $1 WHERE email = $2 RETURNING email, is_suspended',
+      [!!is_suspended, email]
+    );
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'User not found.' });
+    }
+    
+    res.json({ success: true, user: result.rows[0], message: `User account has been ${is_suspended ? 'suspended' : 're-activated'} successfully.` });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/users/:email/reset-password - Reset Password
+app.post('/api/admin/users/:email/reset-password', verifyAdmin, async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ success: false, error: 'New password is required.' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      'UPDATE users SET password = $1 WHERE email = $2 RETURNING email',
+      [hashedPassword, email]
+    );
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'User not found.' });
+    }
+    
+    res.json({ success: true, message: 'User password reset successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/admin/users/:email/details - Diagnostics Details
+app.get('/api/admin/users/:email/details', verifyAdmin, async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    // 1. Fetch user base info (excluding password hash)
+    const userRes = await pool.query(
+      'SELECT email, name, picture, plan, created_at, trial_ends_at, two_factor_enabled, is_suspended, is_admin FROM users WHERE email = $1',
+      [email]
+    );
+    if (userRes.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'User not found.' });
+    }
+    const user = userRes.rows[0];
+    
+    // 2. Fetch user's bridges (recent 10)
+    const bridgesRes = await pool.query(
+      'SELECT id, title, source, mode, snippets, created_at FROM bridges WHERE user_email = $1 ORDER BY created_at DESC LIMIT 10',
+      [email]
+    );
+    
+    // 3. Fetch user's invoices
+    const invoicesRes = await pool.query(
+      'SELECT id, plan, amount, currency, status, created_at FROM invoices WHERE user_email = $1 ORDER BY created_at DESC',
+      [email]
+    );
+    
+    // 4. Fetch user's feedbacks
+    const feedbacksRes = await pool.query(
+      'SELECT id, title, type, description, status, created_at FROM feedbacks WHERE user_email = $1 ORDER BY created_at DESC',
+      [email]
+    );
+    
+    // 5. Gather counts
+    const countBridges = await pool.query('SELECT COUNT(*) FROM bridges WHERE user_email = $1', [email]);
+    const countProjects = await pool.query('SELECT COUNT(DISTINCT project_id) FROM bridges WHERE user_email = $1 AND project_id IS NOT NULL', [email]);
+    
+    res.json({
+      success: true,
+      details: {
+        user,
+        bridges: bridgesRes.rows,
+        invoices: invoicesRes.rows,
+        feedbacks: feedbacksRes.rows,
+        stats: {
+          totalBridges: parseInt(countBridges.rows[0].count),
+          totalProjects: parseInt(countProjects.rows[0].count),
+          totalInvoices: invoicesRes.rowCount,
+          totalFeedbacks: feedbacksRes.rowCount
+        }
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -608,8 +756,9 @@ app.post('/api/summarize', async (req, res) => {
     }
 
     // ── Plan Quota Enforcement ───────────────────────────────
-    const userRes = await pool.query('SELECT plan, trial_ends_at FROM users WHERE email = $1', [email]);
+    const userRes = await pool.query('SELECT plan, trial_ends_at, is_suspended FROM users WHERE email = $1', [email]);
     if (userRes.rowCount === 0) return res.status(404).json({ error: 'User not found' });
+    if (userRes.rows[0].is_suspended) return res.status(403).json({ error: 'This account has been suspended by the administrator.' });
     let userPlan = userRes.rows[0].plan || 'free';
     const trialEndsAt = userRes.rows[0].trial_ends_at;
 
@@ -791,8 +940,9 @@ app.get('/api/user/status', async (req, res) => {
     const { email } = req.query;
     if (!email) return res.status(400).json({ error: "Email required" });
     
-    const userRes = await pool.query('SELECT plan, trial_ends_at FROM users WHERE email = $1', [email]);
+    const userRes = await pool.query('SELECT plan, trial_ends_at, is_suspended FROM users WHERE email = $1', [email]);
     if (userRes.rowCount === 0) return res.status(404).json({ error: "User not found" });
+    if (userRes.rows[0].is_suspended) return res.status(403).json({ error: "This account has been suspended by the administrator." });
     
     const { plan, trial_ends_at } = userRes.rows[0];
     
