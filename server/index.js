@@ -651,12 +651,25 @@ app.get('/api/admin/users', verifyAdmin, async (req, res) => {
 
 app.patch('/api/admin/users/:email', verifyAdmin, async (req, res) => {
   try {
-    const { plan } = req.body;
+    const { plan, amount, currency = 'USD', generateInvoice = true } = req.body;
     if (!['free', 'pro', 'infinite'].includes(plan)) {
       return res.status(400).json({ success: false, error: 'Invalid plan' });
     }
+    
+    // 1. Update plan and clear trial status
     await pool.query('UPDATE users SET plan = $1, trial_ends_at = NULL WHERE email = $2', [plan, req.params.email]);
-    res.json({ success: true, message: 'User plan updated successfully.' });
+    
+    // 2. Insert manual paid invoice if amount is entered
+    if (plan !== 'free' && generateInvoice && parseFloat(amount) > 0) {
+      const invoiceId = 'inv_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+      await pool.query(
+        `INSERT INTO invoices (id, user_email, plan, amount, currency, status)
+         VALUES ($1, $2, $3, $4, $5, 'paid')`,
+        [invoiceId, req.params.email, plan, parseFloat(amount), currency]
+      );
+    }
+    
+    res.json({ success: true, message: 'User billing and plan updated successfully.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

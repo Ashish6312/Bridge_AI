@@ -3,7 +3,7 @@ import {
   Users, MessageSquare, CreditCard, Mail, Database, 
   TrendingUp, Search, Trash2, Key, LogOut, CheckCircle, 
   XCircle, ArrowRight, RefreshCw, Activity, Shield,
-  Plus, Eye, Lock, Unlock, KeyRound, ShieldAlert, X, AlertCircle
+  Plus, Eye, Lock, Unlock, KeyRound, ShieldAlert, X, AlertCircle, MessageCircle
 } from 'lucide-react';
 import { apiFetch } from '../apiConfig';
 import SEOHelmet from '../components/SEOHelmet';
@@ -102,6 +102,8 @@ const AdminPage = () => {
   const [isPasswordResetModalOpen, setIsPasswordResetModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null, isWarning: false });
+  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+  const [billingForm, setBillingForm] = useState({ plan: 'free', amount: '0.00', currency: 'USD', generateInvoice: true });
   
   const [selectedUserEmail, setSelectedUserEmail] = useState('');
   const [selectedUserDetails, setSelectedUserDetails] = useState(null);
@@ -251,27 +253,29 @@ const AdminPage = () => {
     }
   };
 
-  const handleUpdateUserPlan = async (userEmail, newPlan) => {
-    showConfirm(
-      'Change Plan Level',
-      `Are you sure you want to change plan for ${userEmail} to ${newPlan.toUpperCase()}?`,
-      async () => {
-        try {
-          const res = await adminFetch(`/api/admin/users/${userEmail}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ plan: newPlan })
-          });
-          if (res.ok) {
-            fetchTabContent('users');
-            fetchStats();
-          } else {
-            alert('Failed to update plan');
-          }
-        } catch (err) {
-          console.error(err);
-        }
+  const handleUpdateBillingSubmit = async (e) => {
+    e.preventDefault();
+    setLoadingUserOperation(true);
+    try {
+      const res = await adminFetch(`/api/admin/users/${selectedUserEmail}`, {
+        method: 'PATCH',
+        body: JSON.stringify(billingForm)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Billing and plan updated successfully.');
+        setIsBillingModalOpen(false);
+        fetchTabContent('users');
+        fetchStats();
+      } else {
+        alert(data.error || 'Failed to update billing.');
       }
-    );
+    } catch (err) {
+      console.error(err);
+      alert('Error updating user billing.');
+    } finally {
+      setLoadingUserOperation(false);
+    }
   };
 
   const handleDeleteUser = async (userEmail) => {
@@ -1149,7 +1153,20 @@ const AdminPage = () => {
                           <td style={{ padding: '14px 8px' }}>
                             <select 
                               value={u.plan}
-                              onChange={e => handleUpdateUserPlan(u.email, e.target.value)}
+                              onChange={e => {
+                                const newPlan = e.target.value;
+                                setSelectedUserEmail(u.email);
+                                let defaultAmount = '0.00';
+                                if (newPlan === 'pro') defaultAmount = '15.00';
+                                if (newPlan === 'infinite') defaultAmount = '99.00';
+                                setBillingForm({
+                                  plan: newPlan,
+                                  amount: defaultAmount,
+                                  currency: 'USD',
+                                  generateInvoice: newPlan !== 'free'
+                                });
+                                setIsBillingModalOpen(true);
+                              }}
                               style={{
                                 padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.08)',
                                 background: 'rgba(13, 13, 13, 0.6)', color: 'var(--text-main)', fontSize: '0.8rem',
@@ -1970,6 +1987,149 @@ const AdminPage = () => {
                   Confirm
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 5: UPDATE USER BILLING & PLAN */}
+        {isBillingModalOpen && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'center', zIndex: 1000, padding: '20px'
+          }}>
+            <div className="glass-card" style={{
+              maxWidth: '460px', width: '100%',
+              background: 'rgba(15, 15, 15, 0.95)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '24px', padding: '36px',
+              boxShadow: '0 24px 50px rgba(0,0,0,0.6)',
+              position: 'relative'
+            }}>
+              <button
+                onClick={() => setIsBillingModalOpen(false)}
+                style={{
+                  position: 'absolute', right: '24px', top: '24px',
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+                  color: 'var(--text-muted)', cursor: 'pointer', borderRadius: '50%',
+                  width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                <X size={16} />
+              </button>
+
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: '8px', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CreditCard size={20} style={{ color: 'var(--primary)' }} />
+                Update Plan &amp; Billing
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '24px', wordBreak: 'break-all' }}>
+                Manually configure plan level and payment records for <span style={{ color: 'white', fontWeight: 600 }}>{selectedUserEmail}</span>.
+              </p>
+
+              <form onSubmit={handleUpdateBillingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                     Subscription Plan Level
+                   </label>
+                   <select 
+                     value={billingForm.plan}
+                     onChange={e => {
+                       const plan = e.target.value;
+                       let amount = '0.00';
+                       if (plan === 'pro') amount = '15.00';
+                       if (plan === 'infinite') amount = '99.00';
+                       setBillingForm({ ...billingForm, plan, amount, generateInvoice: plan !== 'free' });
+                     }}
+                     style={{
+                       width: '100%', padding: '10px 14px', borderRadius: '10px',
+                       border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15,15,15,0.9)',
+                       color: 'var(--text-main)', outline: 'none', fontSize: '0.9rem', fontWeight: '700'
+                     }}
+                   >
+                     <option value="free">Free Tier</option>
+                     <option value="pro">Pro Subscription</option>
+                     <option value="infinite">Infinite Admin Plan</option>
+                   </select>
+                </div>
+
+                {billingForm.plan !== 'free' && (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '12px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                          Invoice Amount (USD)
+                        </label>
+                        <input 
+                          type="number"
+                          step="0.01"
+                          required
+                          value={billingForm.amount}
+                          onChange={e => setBillingForm({ ...billingForm, amount: e.target.value })}
+                          style={{
+                            width: '100%', padding: '10px 14px', borderRadius: '10px',
+                            border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)',
+                            color: 'var(--text-main)', outline: 'none', fontSize: '0.9rem'
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                          Currency
+                        </label>
+                        <input 
+                          type="text"
+                          disabled
+                          value={billingForm.currency}
+                          style={{
+                            width: '100%', padding: '10px 14px', borderRadius: '10px',
+                            border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)',
+                            color: 'var(--text-muted)', outline: 'none', fontSize: '0.9rem', textAlign: 'center', fontWeight: '700'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                      <input 
+                        type="checkbox"
+                        id="generateInvoice"
+                        checked={billingForm.generateInvoice}
+                        onChange={e => setBillingForm({ ...billingForm, generateInvoice: e.target.checked })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <label htmlFor="generateInvoice" style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none' }}>
+                        Generate paid invoice record in revenue logs
+                      </label>
+                    </div>
+                  </>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+                   <button
+                     type="button"
+                     onClick={() => setIsBillingModalOpen(false)}
+                     style={{
+                       padding: '10px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)',
+                       background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', cursor: 'pointer',
+                       fontSize: '0.9rem', fontWeight: '700'
+                     }}
+                   >
+                     Cancel
+                   </button>
+                   <button
+                     type="submit"
+                     disabled={loadingUserOperation}
+                     style={{
+                       padding: '10px 20px', borderRadius: '10px', border: 'none',
+                       background: 'linear-gradient(135deg, var(--primary) 0%, #ff8038 100%)',
+                       color: 'white', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '700'
+                     }}
+                   >
+                     {loadingUserOperation ? 'Updating...' : 'Save Billing'}
+                   </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
