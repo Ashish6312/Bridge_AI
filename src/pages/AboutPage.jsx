@@ -100,7 +100,7 @@ const AboutPage = () => {
       <section style={{ padding: '120px 0', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="container">
           <div style={{ maxWidth: '800px', marginBottom: '80px' }}>
-            <h2 style={{ fontSize: '3rem', fontWeight: '900', color: 'var(--text-main)', marginBottom: '24px', letterSpacing: '-0.04em' }}>Our Core Principles</h2>
+            <h2 style={{ fontSize: '3rem', fontWeight: '900', color: 'var(--text-main)', marginBottom: '24px', letterSpacing: '-0.04em', lineHeight: 1.25 }}>Our Core Principles</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', lineHeight: 1.6 }}>We believe AI should make people more productive—not force them to repeat the same instructions over and over.</p>
           </div>
           <div className="grid-responsive-2" style={{ gap: '32px' }}>
@@ -115,7 +115,7 @@ const AboutPage = () => {
                 whileHover={{ y: -8, borderColor: 'var(--primary)', boxShadow: 'var(--shadow-hover)' }}
               >
                 <div style={{ color: 'var(--primary)', background: 'var(--primary-soft)', width: '64px', height: '64px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>{v.icon}</div>
-                <h3 style={{ color: 'var(--text-main)', fontWeight: '900', fontSize: '1.5rem', marginBottom: '20px', letterSpacing: '-0.02em' }}>{v.title}</h3>
+                <h3 style={{ color: 'var(--text-main)', fontWeight: '900', fontSize: '1.5rem', marginBottom: '20px', letterSpacing: '-0.02em', lineHeight: 1.3 }}>{v.title}</h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', lineHeight: '1.7' }}>{v.desc}</p>
               </motion.div>
             ))}
@@ -131,7 +131,7 @@ const AboutPage = () => {
           >
              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.03, background: 'var(--primary-soft)' }} />
              <div style={{ position: 'relative', zIndex: 1 }}>
-                <h2 style={{ fontSize: '3.5rem', fontWeight: '900', marginBottom: '24px', letterSpacing: '-0.05em', color: 'var(--text-main)' }}>Trusted by thousands of AI users worldwide.</h2>
+                <h2 style={{ fontSize: '3.5rem', fontWeight: '900', marginBottom: '24px', letterSpacing: '-0.05em', color: 'var(--text-main)', lineHeight: 1.25 }}>Trusted by thousands of AI users worldwide.</h2>
                 <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', maxWidth: '700px', margin: '0 auto', lineHeight: 1.7 }}>
                    BridgeAI exists so you can focus on creating, learning, building, and researching instead of managing context.
                 </p>
@@ -148,7 +148,7 @@ const AboutPage = () => {
               <Layers size={14} color="var(--primary)" />
               <span style={{ fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)' }}>The Workflow</span>
             </div>
-            <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', fontWeight: '900', color: 'var(--text-main)', marginBottom: '24px', letterSpacing: '-0.04em' }}>How BridgeAI Works</h2>
+            <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', fontWeight: '900', color: 'var(--text-main)', marginBottom: '24px', letterSpacing: '-0.04em', lineHeight: 1.25 }}>How BridgeAI Works</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
               A seamless, zero-friction pipeline that moves your active logic across any LLM in seconds.
             </p>
@@ -198,7 +198,7 @@ const AboutPage = () => {
                   </div>
 
                   <div style={{ flex: 1, padding: '32px', background: 'var(--bg-secondary)', borderRadius: '32px', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow)' }}>
-                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '16px', letterSpacing: '-0.02em' }}>{step.title}</h3>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '16px', letterSpacing: '-0.02em', lineHeight: 1.3 }}>{step.title}</h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.7', margin: 0 }}>{step.desc}</p>
                   </div>
                 </motion.div>
@@ -212,7 +212,7 @@ const AboutPage = () => {
       <section style={{ padding: '120px 0', borderTop: '1px solid var(--border-subtle)' }}>
         <div className="container">
           <div style={{ textAlign: 'center' }}>
-            <h2 style={{ fontSize: '3rem', fontWeight: '900', color: 'var(--text-main)', marginBottom: '24px', letterSpacing: '-0.02em' }}>Ready to Scale Your Project Memory?</h2>
+            <h2 style={{ fontSize: '3rem', fontWeight: '900', color: 'var(--text-main)', marginBottom: '24px', letterSpacing: '-0.02em', lineHeight: 1.25 }}>Ready to Scale Your Project Memory?</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 48px' }}>
               Empower your software engineers and AI coding agents with a unified, searchable source of truth that preserves context and reasoning automatically.
             </p>

@@ -4,6 +4,7 @@ import { ArrowRight, ChevronDown, Check, X, Star, Layers, Copy, ClipboardX, Fold
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../apiConfig';
 import { useToast } from '../components/ToastContext';
+import { Capacitor } from '@capacitor/core';
 
 /* ── palette ── */
 const P = '#DE6A39';       // Primary Soft Copper
@@ -99,6 +100,14 @@ const LandingPage = () => {
   const isOnboarding = searchParams.get('onboarding') === 'true';
   const [openFaq, setOpenFaq] = useState(null);
   const [activeSection, setActiveSection] = useState('hero');
+
+  const isNative = Capacitor.isNativePlatform();
+  const [showMobileIntro, setShowMobileIntro] = useState(isNative && !localStorage.getItem('bridge_mobile_intro_shown'));
+
+  const closeMobileIntro = () => {
+    localStorage.setItem('bridge_mobile_intro_shown', 'true');
+    setShowMobileIntro(false);
+  };
 
   // Feedback states
   const [feedbackLiked, setFeedbackLiked] = useState(null); // true = Love it, false = Needs work
@@ -225,6 +234,20 @@ const LandingPage = () => {
             <Link to="/dashboard" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'14px 28px', background:`linear-gradient(135deg,${P},${SEC_P})`, color:'#050505', borderRadius:12, fontWeight:800, textDecoration:'none', boxShadow:`0 0 20px rgba(255,107,44,0.35)` }}>
               I've Pinned It — Take me to Dashboard <ArrowRight size={16} />
             </Link>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* ── MOBILE INTRO ── */}
+      {showMobileIntro && (
+        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} style={{ position:'fixed', inset:0, background:'rgba(5,5,5,0.96)', backdropFilter:'blur(16px)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <motion.div initial={{ scale:0.9, y:40 }} animate={{ scale:1, y:0 }} style={{ maxWidth:520, width:'90%', ...glassCard, borderRadius:24, padding:40, textAlign:'center', boxShadow:'0 0 60px rgba(255,107,44,0.2)' }}>
+            <div style={{ width:60, height:60, background:'rgba(255,107,44,0.15)', border:'1px solid rgba(255,107,44,0.4)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 24px', fontSize:26 }}>📱</div>
+            <h2 style={{ fontSize:'2.2rem', fontWeight:900, marginBottom:12, color:TEXT, lineHeight:1.25 }}>Welcome to BridgeAI Mobile! 🚀</h2>
+            <p style={{ color:MUTED, marginBottom:28, lineHeight:1.75, fontWeight:500, opacity:0.85 }}>Your project memory, chats, and decision log are now synced and accessible on the go.</p>
+            <button onClick={closeMobileIntro} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'14px 28px', background:`linear-gradient(135deg,${P},${SEC_P})`, color:'#050505', border:'none', borderRadius:12, fontWeight:800, cursor:'pointer', boxShadow:`0 0 20px rgba(255,107,44,0.35)`, fontSize:'0.95rem' }}>
+              Let's Go to Dashboard <ArrowRight size={16} />
+            </button>
           </motion.div>
         </motion.div>
       )}
