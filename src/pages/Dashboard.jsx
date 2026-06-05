@@ -3010,7 +3010,7 @@ const Dashboard = () => {
           className="dashboard-sidebar" 
           style={{ 
             width: '280px', flexShrink: 0, position: 'sticky', top: '100px', 
-            maxHeight: 'calc(100vh - 120px)', overflowY: 'auto', paddingRight: '4px' 
+            height: 'fit-content', paddingRight: '4px' 
           }}
         >
           <div style={{ 
