@@ -1720,7 +1720,7 @@ const AdminPage = () => {
             }}
           >
             <div className="glass-card" style={{
-              maxWidth: '850px', width: '100%', maxHeight: '90vh',
+              maxWidth: '850px', width: '100%', height: '90vh',
               background: 'rgba(15, 15, 15, 0.96)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '24px', padding: '36px',
@@ -1740,7 +1740,7 @@ const AdminPage = () => {
                 <X size={16} />
               </button>
 
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: '24px', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                   <Shield size={22} style={{ color: 'var(--primary)' }} />
                   <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'white', margin: 0 }}>
@@ -1753,7 +1753,7 @@ const AdminPage = () => {
               </div>
 
               {/* Scrollable details container */}
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '28px', paddingRight: '8px' }}>
+              <div style={{ flex: 1, overflowY: 'scroll', display: 'flex', flexDirection: 'column', gap: '28px', paddingRight: '8px', minHeight: 0 }}>
                 
                 {/* Profile Card & KPIs */}
                 <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px', alignItems: 'stretch' }}>
@@ -1986,7 +1986,7 @@ const AdminPage = () => {
 
               </div>
 
-              <div style={{ marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
                 <button
                   onClick={() => setIsDetailsModalOpen(false)}
                   style={{
