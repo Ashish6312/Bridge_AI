@@ -965,7 +965,24 @@ const AdminPage = () => {
                         </div>
                         <div>
                           <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Account Email</span>
-                          <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>{selectedUserDiagnostic.email}</span>
+                          <button
+                            onClick={() => handleFetchUserDetails(selectedUserDiagnostic.email)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--primary)',
+                              padding: 0,
+                              cursor: 'pointer',
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              textDecoration: 'underline',
+                              textAlign: 'left'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#ff8038'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--primary)'}
+                          >
+                            {selectedUserDiagnostic.email}
+                          </button>
                         </div>
                         <div>
                           <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Plan Level</span>
@@ -1151,7 +1168,25 @@ const AdminPage = () => {
                             )}
                             <span style={{ fontWeight: '700' }}>{u.name || 'Anonymous'}</span>
                           </td>
-                          <td style={{ padding: '14px 8px', color: 'var(--text-secondary)' }}>{u.email}</td>
+                          <td style={{ padding: '14px 8px' }}>
+                            <button
+                              onClick={() => handleFetchUserDetails(u.email)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--primary)',
+                                padding: 0,
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                textDecoration: 'underline',
+                                textAlign: 'left'
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.color = '#ff8038'}
+                              onMouseLeave={e => e.currentTarget.style.color = 'var(--primary)'}
+                            >
+                              {u.email}
+                            </button>
+                          </td>
                           <td style={{ padding: '14px 8px' }}>
                             <select 
                               value={u.plan}
@@ -1318,8 +1353,24 @@ const AdminPage = () => {
                   <tbody>
                     {chatbotQueries.map(q => (
                       <tr key={q.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.02)', verticalAlign: 'top' }}>
-                        <td style={{ padding: '14px 8px', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>
-                          {q.user_email}
+                        <td style={{ padding: '14px 8px', fontSize: '0.85rem' }}>
+                          <button
+                            onClick={() => handleFetchUserDetails(q.user_email)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--primary)',
+                              padding: 0,
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              textDecoration: 'underline',
+                              textAlign: 'left'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#ff8038'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--primary)'}
+                          >
+                            {q.user_email}
+                          </button>
                         </td>
                         <td style={{ padding: '14px 8px', color: 'white', maxWidth: '250px', wordBreak: 'break-word', fontSize: '0.85rem' }}>
                           {q.query}
