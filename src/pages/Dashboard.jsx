@@ -2681,7 +2681,7 @@ const Dashboard = () => {
       const progress = (window.scrollY / height) * 100;
       setScrollProgress(progress);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
