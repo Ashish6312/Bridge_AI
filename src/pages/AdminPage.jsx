@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '../apiConfig';
 import SEOHelmet from '../components/SEOHelmet';
+import { useToast } from '../components/ToastContext';
 
 const PageNotFound = () => {
   const [seconds, setSeconds] = useState(5);
@@ -69,6 +70,7 @@ const PageNotFound = () => {
 };
 
 const AdminPage = () => {
+  const { showToast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -204,7 +206,7 @@ const AdminPage = () => {
       setIsAdmin(false);
       if (!window.hasShownSessionExpiryAlert) {
         window.hasShownSessionExpiryAlert = true;
-        alert('Admin session expired or unauthorized. Please authenticate again.');
+        showToast('Admin session expired or unauthorized. Please authenticate again.', 'error');
         setTimeout(() => { window.hasShownSessionExpiryAlert = false; }, 2000);
       }
       throw new Error('Unauthorized');
@@ -263,16 +265,16 @@ const AdminPage = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        alert('Billing and plan updated successfully.');
+        showToast('Billing and plan updated successfully.', 'success');
         setIsBillingModalOpen(false);
         fetchTabContent('users');
         fetchStats();
       } else {
-        alert(data.error || 'Failed to update billing.');
+        showToast(data.error || 'Failed to update billing.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Error updating user billing.');
+      showToast('Error updating user billing.', 'error');
     } finally {
       setLoadingUserOperation(false);
     }
@@ -291,7 +293,7 @@ const AdminPage = () => {
             fetchTabContent('users');
             fetchStats();
           } else {
-            alert('Failed to delete user');
+            showToast('Failed to delete user', 'error');
           }
         } catch (err) {
           console.error(err);
@@ -304,7 +306,7 @@ const AdminPage = () => {
   const handleCreateUserSubmit = async (e) => {
     e.preventDefault();
     if (!createUserForm.email || !createUserForm.password) {
-      alert('Email and Password are required.');
+      showToast('Email and Password are required.', 'warning');
       return;
     }
     setLoadingUserOperation(true);
@@ -315,17 +317,17 @@ const AdminPage = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        alert('User account provisioned successfully.');
+        showToast('User account provisioned successfully.', 'success');
         setIsCreateModalOpen(false);
         setCreateUserForm({ email: '', name: '', password: '', plan: 'free' });
         fetchTabContent('users');
         fetchStats();
       } else {
-        alert(data.error || 'Failed to provision user');
+        showToast(data.error || 'Failed to provision user', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network or server error provisioning user.');
+      showToast('Network or server error provisioning user.', 'error');
     } finally {
       setLoadingUserOperation(false);
     }
@@ -345,14 +347,14 @@ const AdminPage = () => {
           });
           const data = await res.json();
           if (res.ok && data.success) {
-            alert(data.message);
+            showToast(data.message, 'success');
             fetchTabContent('users');
           } else {
-            alert(data.error || 'Failed to update account status.');
+            showToast(data.error || 'Failed to update account status.', 'error');
           }
         } catch (err) {
           console.error(err);
-          alert('Network or server error updating account status.');
+          showToast('Network or server error updating account status.', 'error');
         } finally {
           setLoadingUserOperation(false);
         }
@@ -364,7 +366,7 @@ const AdminPage = () => {
   const handleResetPasswordSubmit = async (e) => {
     e.preventDefault();
     if (!resetPasswordValue) {
-      alert('Password cannot be empty.');
+      showToast('Password cannot be empty.', 'warning');
       return;
     }
     setLoadingUserOperation(true);
@@ -375,15 +377,15 @@ const AdminPage = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        alert('Password reset successfully.');
+        showToast('Password reset successfully.', 'success');
         setIsPasswordResetModalOpen(false);
         setResetPasswordValue('');
       } else {
-        alert(data.error || 'Failed to reset password.');
+        showToast(data.error || 'Failed to reset password.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network or server error resetting password.');
+      showToast('Network or server error resetting password.', 'error');
     } finally {
       setLoadingUserOperation(false);
     }
@@ -400,11 +402,11 @@ const AdminPage = () => {
         setSelectedUserDetails(data.details);
         setIsDetailsModalOpen(true);
       } else {
-        alert(data.error || 'Failed to fetch user details.');
+        showToast(data.error || 'Failed to fetch user details.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network or server error fetching user details.');
+      showToast('Network or server error fetching user details.', 'error');
     } finally {
       setLoadingUserOperation(false);
     }
@@ -429,7 +431,7 @@ const AdminPage = () => {
         fetchTabContent('feedbacks');
         fetchStats();
       } else {
-        alert('Failed to update feedback status');
+        showToast('Failed to update feedback status', 'error');
       }
     } catch (err) {
       console.error(err);
@@ -453,7 +455,7 @@ const AdminPage = () => {
             fetchTabContent('feedbacks');
             fetchStats();
           } else {
-            alert('Failed to delete feedback');
+            showToast('Failed to delete feedback', 'error');
           }
         } catch (err) {
           console.error(err);
@@ -472,7 +474,7 @@ const AdminPage = () => {
       if (res.ok) {
         fetchTabContent('chatbot');
       } else {
-        alert('Failed to update chatbot query status');
+        showToast('Failed to update chatbot query status', 'error');
       }
     } catch (err) {
       console.error(err);
@@ -491,7 +493,7 @@ const AdminPage = () => {
           if (res.ok) {
             fetchTabContent('chatbot');
           } else {
-            alert('Failed to delete chatbot query log');
+            showToast('Failed to delete chatbot query log', 'error');
           }
         } catch (err) {
           console.error(err);
@@ -509,10 +511,10 @@ const AdminPage = () => {
         body: JSON.stringify({ admin_response: note, status })
       });
       if (res.ok) {
-        alert('Resolution updated successfully.');
+        showToast('Resolution updated successfully.', 'success');
         fetchTabContent('feedbacks');
       } else {
-        alert('Failed to update resolution.');
+        showToast('Failed to update resolution.', 'error');
       }
     } catch (err) {
       console.error(err);
@@ -1743,12 +1745,13 @@ const AdminPage = () => {
 
                   {/* KPIs Grid */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flex: 1 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px', flex: 1 }}>
                       {[
                         { label: 'Sync Extractions', value: selectedUserDetails.stats.totalBridges, color: 'var(--primary)', subtitle: 'Bridges recorded' },
                         { label: 'Workspaces', value: selectedUserDetails.stats.totalProjects, color: '#7c3aed', subtitle: 'Distinct projects' },
                         { label: 'Billing Invoices', value: selectedUserDetails.stats.totalInvoices, color: '#10b981', subtitle: 'Ledger items' },
-                        { label: 'Support Tickets', value: selectedUserDetails.stats.totalFeedbacks, color: '#cd6b6b', subtitle: 'Feedbacks submitted' }
+                        { label: 'Support Tickets', value: selectedUserDetails.stats.totalFeedbacks, color: '#cd6b6b', subtitle: 'Feedbacks submitted' },
+                        { label: 'Chatbot Queries', value: selectedUserDetails.stats.totalChatbotQueries || 0, color: '#60a5fa', subtitle: 'Support interactions' }
                       ].map((item, idx) => (
                         <div key={idx} style={{
                           background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.03)',
@@ -1869,6 +1872,46 @@ const AdminPage = () => {
                           </div>
                           <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: '1.4' }}>{fb.description}</p>
                           <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Submitted: {new Date(fb.created_at).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Support Chatbot Query History */}
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'white', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Support Chatbot Query History
+                  </h4>
+                  {!selectedUserDetails.chatbotQueries || selectedUserDetails.chatbotQueries.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                      No chatbot queries logged for this user.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {selectedUserDetails.chatbotQueries.map(q => (
+                        <div key={q.id} style={{
+                          background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.03)',
+                          borderRadius: '12px', padding: '16px'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--primary)' }}>Query:</span>
+                            <span style={{
+                              color: q.status === 'resolved' ? '#34d399' : q.status === 'issue_faced' ? '#f87171' : 'var(--text-muted)',
+                              background: q.status === 'resolved' ? 'rgba(16,185,129,0.08)' : q.status === 'issue_faced' ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.03)',
+                              padding: '2px 8px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: '700', textTransform: 'uppercase'
+                            }}>{q.status ? q.status.replace('_', ' ') : 'N/A'}</span>
+                          </div>
+                          <p style={{ fontSize: '0.8rem', color: 'white', margin: '0 0 10px', lineHeight: '1.4', fontWeight: 600 }}>{q.query}</p>
+                          
+                          <div style={{ borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '10px', marginTop: '10px' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Chatbot Response:</span>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.5' }}>{q.response}</p>
+                          </div>
+                          
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Asked: {new Date(q.created_at).toLocaleString()}</span>
+                          </div>
                         </div>
                       ))}
                     </div>

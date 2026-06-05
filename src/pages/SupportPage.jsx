@@ -7,6 +7,7 @@ import {
 import { Link } from 'react-router-dom';
 import SEOHelmet from '../components/SEOHelmet';
 import { apiFetch } from '../apiConfig';
+import { useToast } from '../components/ToastContext';
 
 const PlatformLogo = ({ name }) => {
   const logos = {
@@ -94,6 +95,7 @@ const FAQS = [
 ];
 
 const SupportPage = () => {
+  const { showToast } = useToast();
   const [openFaq, setOpenFaq] = useState(null);
   const [bugForm, setBugForm] = useState({ title: '', platform: 'ChatGPT', description: '', email: '' });
   const [featureForm, setFeatureForm] = useState({ title: '', details: '', impact: 'medium', email: '' });
@@ -133,10 +135,10 @@ const SupportPage = () => {
         setTimeout(() => setSubmittedBug(false), 4000);
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to submit bug report');
+        showToast(data.error || 'Failed to submit bug report', 'error');
       }
     } catch (err) {
-      alert(err.message || 'Error submitting bug report');
+      showToast(err.message || 'Error submitting bug report', 'error');
     } finally {
       setLoadingBug(false);
     }
@@ -165,10 +167,10 @@ const SupportPage = () => {
         setTimeout(() => setSubmittedFeature(false), 4000);
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to submit feature request');
+        showToast(data.error || 'Failed to submit feature request', 'error');
       }
     } catch (err) {
-      alert(err.message || 'Error submitting feature request');
+      showToast(err.message || 'Error submitting feature request', 'error');
     } finally {
       setLoadingFeature(false);
     }

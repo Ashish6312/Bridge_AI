@@ -3,8 +3,10 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Clock, ChevronDown, Award, Share2, Shield, Zap, Puzzle, Volume2, VolumeX, Play, Pause, Square, BookOpen } from 'lucide-react';
 import { BLOGS } from '../data/blogsData';
+import { useToast } from '../components/ToastContext';
 
 const BlogDetailPage = () => {
+  const { showToast } = useToast();
   const { slug } = useParams();
   const navigate = useNavigate();
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -33,7 +35,7 @@ const BlogDetailPage = () => {
 
   const handlePlayVoice = () => {
     if (!window.speechSynthesis) {
-      alert("Text-to-speech is not supported in this browser.");
+      showToast("Text-to-speech is not supported in this browser.", 'warning');
       return;
     }
 

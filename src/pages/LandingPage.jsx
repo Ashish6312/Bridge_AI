@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown, Check, X, Star, Layers, Copy, ClipboardX, FolderOpen, FileText, RefreshCw, BrainCircuit, Zap, Lock, Globe, FolderArchive } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../apiConfig';
+import { useToast } from '../components/ToastContext';
 
 /* ── palette ── */
 const P = '#DE6A39';       // Primary Soft Copper
@@ -93,6 +94,7 @@ const FloatCard = ({ style, blurLevel = 0, delay = 0, children }) => (
 );
 
 const LandingPage = () => {
+  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const isOnboarding = searchParams.get('onboarding') === 'true';
   const [openFaq, setOpenFaq] = useState(null);
@@ -112,7 +114,7 @@ const LandingPage = () => {
   const handleGeneralFeedbackSubmit = async (e) => {
     e.preventDefault();
     if (feedbackLiked === null) {
-      alert('Please select if you like it or not!');
+      showToast('Please select if you like it or not!', 'warning');
       return;
     }
     const finalEmail = userEmail || feedbackEmail || 'guest';
@@ -140,10 +142,10 @@ const LandingPage = () => {
         setTimeout(() => setSubmittedFeedback(false), 5000);
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to submit feedback');
+        showToast(data.error || 'Failed to submit feedback', 'error');
       }
     } catch (err) {
-      alert(err.message || 'Error submitting feedback');
+      showToast(err.message || 'Error submitting feedback', 'error');
     } finally {
       setSubmittingFeedback(false);
     }

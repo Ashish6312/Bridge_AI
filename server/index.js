@@ -817,6 +817,12 @@ app.get('/api/admin/users/:email/details', verifyAdmin, async (req, res) => {
       'SELECT id, title, type, description, status, created_at FROM feedbacks WHERE user_email = $1 ORDER BY created_at DESC',
       [email]
     );
+
+    // 4.5. Fetch user's chatbot queries
+    const chatbotQueriesRes = await pool.query(
+      'SELECT id, query, response, status, created_at FROM chatbot_queries WHERE user_email = $1 ORDER BY created_at DESC',
+      [email]
+    );
     
     // 5. Gather counts
     const countBridges = await pool.query('SELECT COUNT(*) FROM bridges WHERE user_email = $1', [email]);
@@ -829,11 +835,13 @@ app.get('/api/admin/users/:email/details', verifyAdmin, async (req, res) => {
         bridges: bridgesRes.rows,
         invoices: invoicesRes.rows,
         feedbacks: feedbacksRes.rows,
+        chatbotQueries: chatbotQueriesRes.rows,
         stats: {
           totalBridges: parseInt(countBridges.rows[0].count),
           totalProjects: parseInt(countProjects.rows[0].count),
           totalInvoices: invoicesRes.rowCount,
-          totalFeedbacks: feedbacksRes.rowCount
+          totalFeedbacks: feedbacksRes.rowCount,
+          totalChatbotQueries: chatbotQueriesRes.rowCount
         }
       }
     });

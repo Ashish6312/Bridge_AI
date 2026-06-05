@@ -9,6 +9,9 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import GlobalBackground from './components/GlobalBackground';
 import ChatWidget from './components/ChatWidget';
+import { ToastProvider } from './components/ToastContext';
+import { ReactLenis } from 'lenis/react';
+import 'lenis/dist/lenis.css';
 
 // Lazy Loaded Pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -157,17 +160,21 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      {!isAdminPage && <ChatWidget />}
-      <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-main)' }}>
-        <GlobalBackground />
-        {!isAdminPage && <Navbar />}
-        <main style={{ flex: 1, position: 'relative' }}>
-          <Suspense fallback={<PageLoader />}>
-            <BridgeRoutes />
-          </Suspense>
-        </main>
-        {!isAdminPage && location.pathname !== '/dashboard' && <Footer />}
-      </div>
+      <ReactLenis root>
+        <ToastProvider>
+          {!isAdminPage && <ChatWidget />}
+          <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-main)' }}>
+            <GlobalBackground />
+            {!isAdminPage && <Navbar />}
+            <main style={{ flex: 1, position: 'relative' }}>
+              <Suspense fallback={<PageLoader />}>
+                <BridgeRoutes />
+              </Suspense>
+            </main>
+            {!isAdminPage && location.pathname !== '/dashboard' && <Footer />}
+          </div>
+        </ToastProvider>
+      </ReactLenis>
     </GoogleOAuthProvider>
   );
 }
