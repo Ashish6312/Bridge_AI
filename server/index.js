@@ -312,16 +312,12 @@ const initDB = async () => {
       );
     `);
 
-    // Seed default global notifications if none exist
-    const countGlobal = await pool.query("SELECT COUNT(*) FROM notifications WHERE user_email IS NULL");
-    if (parseInt(countGlobal.rows[0].count) === 0) {
-      await pool.query(`
-        INSERT INTO notifications (user_email, title, message, type) VALUES 
-        (NULL, 'New Feature: Smooth Scrolling', 'We have integrated Vercel/Linear-style Lenis smooth scrolling for an ultra-smooth experience!', 'feature'),
-        (NULL, 'Special Offer: Pro Subscription', 'Upgrade today and get 2 months free on the Pro annual plan. Cancel anytime.', 'offer')
-      `);
-      console.log("[DB] Seeded default global notifications.");
-    }
+    // Remove any outdated generic global notifications (old seeds)
+    await pool.query(`
+      DELETE FROM notifications 
+      WHERE user_email IS NULL 
+      AND title IN ('New Feature: Smooth Scrolling', 'Special Offer: Pro Subscription')
+    `);
   } catch (err) {
     console.error("DB Init Error:", err);
   }

@@ -6,14 +6,12 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 import posthog from 'posthog-js'
 
 if (import.meta.env.VITE_POSTHOG_KEY && import.meta.env.VITE_POSTHOG_KEY !== 'phc_YOUR_PROJECT_API_KEY') {
-  console.log("PostHog: Initializing SDK with key:", import.meta.env.VITE_POSTHOG_KEY);
   posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
     api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
     person_profiles: 'identified_only',
-    capture_pageview: true
+    capture_pageview: true,
+    loaded: () => {} // suppress default PostHog console output
   })
-} else {
-  console.warn("PostHog: Key not set or using placeholder, tracking disabled.");
 }
 
 createRoot(document.getElementById('root')).render(
