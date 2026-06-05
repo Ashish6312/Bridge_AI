@@ -13,8 +13,18 @@ const LoginPage = () => {
   const navigate = useNavigate();
   
   React.useEffect(() => {
-    if (localStorage.getItem('bridge_user')) {
-      navigate('/dashboard');
+    const userStr = localStorage.getItem('bridge_user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.is_admin) {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (e) {
+        navigate('/dashboard');
+      }
     }
   }, [navigate]);
 
@@ -41,11 +51,24 @@ const LoginPage = () => {
         const data = await res.json();
         if (data.success) {
           localStorage.setItem('bridge_user', JSON.stringify(data.user));
+          if (data.adminToken) {
+            sessionStorage.setItem('bridge_admin_token', data.adminToken);
+          }
           if (data.trialActivated) {
             setTrialBanner(true);
-            setTimeout(() => navigate('/dashboard'), 2200);
+            setTimeout(() => {
+              if (data.adminToken) {
+                navigate('/admin');
+              } else {
+                navigate('/dashboard');
+              }
+            }, 2200);
           } else {
-            navigate('/dashboard');
+            if (data.adminToken) {
+              navigate('/admin');
+            } else {
+              navigate('/dashboard');
+            }
           }
         } else {
           throw new Error(data.error || 'Database sync failed');
@@ -87,11 +110,24 @@ const LoginPage = () => {
       const data = await res.json();
       if (data.success) {
         localStorage.setItem('bridge_user', JSON.stringify(data.user));
+        if (data.adminToken) {
+          sessionStorage.setItem('bridge_admin_token', data.adminToken);
+        }
         if (data.trialActivated) {
           setTrialBanner(true);
-          setTimeout(() => navigate('/dashboard'), 2200);
+          setTimeout(() => {
+            if (data.adminToken) {
+              navigate('/admin');
+            } else {
+              navigate('/dashboard');
+            }
+          }, 2200);
         } else {
-          navigate('/dashboard');
+          if (data.adminToken) {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard');
+          }
         }
       } else {
         throw new Error(data.error || 'Authentication failed');

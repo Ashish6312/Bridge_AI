@@ -323,7 +323,14 @@ app.post('/api/login', async (req, res) => {
     if (!valid) return res.status(401).json({ error: 'Invalid password' });
     
     delete user.password;
-    res.json({ success: true, user });
+
+    let adminToken = null;
+    if (user.is_admin) {
+      adminToken = 'admin_sess_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+      activeAdminSessions.set(adminToken, user.email);
+    }
+
+    res.json({ success: true, user, adminToken });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -343,10 +350,16 @@ app.post('/api/auth/google', async (req, res) => {
     );
     const row = result.rows[0];
     const isNewUser = row.is_new_user;
-    const user = { ...row };
-    delete user.password;
-    delete user.is_new_user;
-    res.json({ success: true, user, trialActivated: isNewUser });
+
+    delete row.password;
+
+    let adminToken = null;
+    if (row.is_admin) {
+      adminToken = 'admin_sess_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+      activeAdminSessions.set(adminToken, row.email);
+    }
+
+    res.json({ success: true, user: row, trialActivated: isNewUser, adminToken });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
