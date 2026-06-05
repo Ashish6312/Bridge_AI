@@ -1354,23 +1354,29 @@ const AdminPage = () => {
                     {chatbotQueries.map(q => (
                       <tr key={q.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.02)', verticalAlign: 'top' }}>
                         <td style={{ padding: '14px 8px', fontSize: '0.85rem' }}>
-                          <button
-                            onClick={() => handleFetchUserDetails(q.user_email)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: 'var(--primary)',
-                              padding: 0,
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                              textDecoration: 'underline',
-                              textAlign: 'left'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.color = '#ff8038'}
-                            onMouseLeave={e => e.currentTarget.style.color = 'var(--primary)'}
-                          >
-                            {q.user_email}
-                          </button>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <button
+                              onClick={() => handleFetchUserDetails(q.user_email)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--primary)',
+                                padding: 0,
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                textDecoration: 'underline',
+                                textAlign: 'left',
+                                display: 'inline-block'
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.color = '#ff8038'}
+                              onMouseLeave={e => e.currentTarget.style.color = 'var(--primary)'}
+                            >
+                              {q.user_email}
+                            </button>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                              ({q.total_queries || 1} queries total)
+                            </span>
+                          </div>
                         </td>
                         <td style={{ padding: '14px 8px', color: 'white', maxWidth: '250px', wordBreak: 'break-word', fontSize: '0.85rem' }}>
                           {q.query}

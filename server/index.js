@@ -609,7 +609,28 @@ If the user is facing a bug, error, or system problem (e.g. extraction failing, 
 
 app.get('/api/admin/chatbot-queries', verifyAdmin, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM chatbot_queries ORDER BY created_at DESC');
+    const result = await pool.query(`
+      SELECT 
+        q.id,
+        q.user_email,
+        q.query,
+        q.response,
+        q.status,
+        q.created_at,
+        c.total_queries,
+        c.unresolved_issues
+      FROM chatbot_queries q
+      JOIN (
+        SELECT 
+          user_email,
+          MAX(created_at) as max_created_at,
+          COUNT(*) as total_queries,
+          SUM(CASE WHEN status = 'issue_faced' THEN 1 ELSE 0 END) as unresolved_issues
+        FROM chatbot_queries
+        GROUP BY user_email
+      ) c ON q.user_email = c.user_email AND q.created_at = c.max_created_at
+      ORDER BY q.created_at DESC
+    `);
     res.json({ success: true, queries: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
