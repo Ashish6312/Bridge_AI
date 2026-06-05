@@ -19,7 +19,7 @@ const SmoothScroll = ({ children }) => {
     let targetScrollY = window.scrollY;
     let currentScrollY = window.scrollY;
     let isMoving = false;
-    const speed = 0.08; // Interpolation speed (lower = smoother/longer scroll)
+    const speed = 0.12; // Interpolation speed (higher = more responsive)
 
     const onWheel = (e) => {
       // Traverse parents to see if wheel is inside a scrollable container
@@ -38,8 +38,17 @@ const SmoothScroll = ({ children }) => {
       // Prevent default page jump
       e.preventDefault();
       
-      // Calculate target position
-      targetScrollY += e.deltaY;
+      // Calculate target position, responding instantly to direction changes
+      const isMovingDown = targetScrollY > currentScrollY;
+      const isScrollingUp = e.deltaY < 0;
+      const isMovingUp = targetScrollY < currentScrollY;
+      const isScrollingDown = e.deltaY > 0;
+
+      if ((isMovingDown && isScrollingUp) || (isMovingUp && isScrollingDown)) {
+        targetScrollY = currentScrollY + e.deltaY;
+      } else {
+        targetScrollY += e.deltaY;
+      }
       
       // Keep within document limits
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
