@@ -3,7 +3,7 @@ import {
   Users, MessageSquare, CreditCard, Mail, Database, 
   TrendingUp, Search, Trash2, Key, LogOut, CheckCircle, 
   XCircle, ArrowRight, RefreshCw, Activity, Shield,
-  Plus, Eye, Lock, Unlock, KeyRound, ShieldAlert, X, AlertCircle, MessageCircle
+  Plus, Eye, Lock, Unlock, KeyRound, ShieldAlert, X, AlertCircle, MessageCircle, Bell, Send, CheckCheck
 } from 'lucide-react';
 import { apiFetch } from '../apiConfig';
 import SEOHelmet from '../components/SEOHelmet';
@@ -119,6 +119,11 @@ const AdminPage = () => {
     plan: 'free'
   });
   const [resetPasswordValue, setResetPasswordValue] = useState('');
+
+  // Notification Sender State
+  const [notifForm, setNotifForm] = useState({ target: 'all', title: '', message: '', type: 'info' });
+  const [sendingNotif, setSendingNotif] = useState(false);
+  const [notifSent, setNotifSent] = useState(false);
 
   const showConfirm = (title, message, onConfirm, isWarning = false) => {
     setConfirmModal({ isOpen: true, title, message, onConfirm, isWarning });
@@ -679,6 +684,34 @@ const AdminPage = () => {
   const selectedFeedback = feedbacks.find(f => f.id === selectedFeedbackId);
   const selectedUserDiagnostic = selectedFeedback ? users.find(u => u.email === selectedFeedback.user_email) : null;
 
+  const handleSendNotification = async (e) => {
+    e.preventDefault();
+    if (!notifForm.title.trim() || !notifForm.message.trim()) {
+      showToast('Title and message are required.', 'error'); return;
+    }
+    try {
+      setSendingNotif(true);
+      const res = await adminFetch('/api/admin/notifications/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notifForm)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, 'success');
+        setNotifForm({ target: 'all', title: '', message: '', type: 'info' });
+        setNotifSent(true);
+        setTimeout(() => setNotifSent(false), 4000);
+      } else {
+        showToast(data.error || 'Failed to send notification', 'error');
+      }
+    } catch (err) {
+      showToast(err.message || 'Network error', 'error');
+    } finally {
+      setSendingNotif(false);
+    }
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -750,6 +783,19 @@ const AdminPage = () => {
               >
                 <MessageCircle size={14} />
                 <span>Chatbot Logs</span>
+              </button>
+              <button
+                onClick={() => { setActiveTab('notifications'); fetchTabContent('users'); }}
+                style={{
+                  padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                  background: activeTab === 'notifications' ? 'rgba(222, 106, 57, 0.15)' : 'transparent',
+                  color: activeTab === 'notifications' ? 'var(--primary)' : 'var(--text-muted)',
+                  fontSize: '0.85rem', fontWeight: '700', transition: 'all 0.2s',
+                  display: 'flex', alignItems: 'center', gap: '6px'
+                }}
+              >
+                <Bell size={14} />
+                <span>Notify Users</span>
               </button>
             </div>
 
@@ -1708,9 +1754,147 @@ const AdminPage = () => {
           </div>
         )}
 
+        {/* TAB 4: SEND NOTIFICATIONS */}
+        {activeTab === 'notifications' && (
+          <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+            <div className="glass-card" style={{
+              background: 'rgba(13,13,13,0.55)', border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '20px', padding: '36px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '28px' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(222,106,57,0.12)', border: '1px solid rgba(222,106,57,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Bell size={20} style={{ color: 'var(--primary)' }} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'white', margin: 0 }}>Send Notification</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: 0 }}>Push a message directly to a user's notification bell or broadcast to everyone</p>
+                </div>
+              </div>
+
+              {notifSent && (
+                <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', padding: '14px 18px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px', color: '#10b981' }}>
+                  <CheckCheck size={16} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>Notification sent successfully!</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSendNotification} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                {/* Target */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Recipient</label>
+                  <select
+                    value={notifForm.target}
+                    onChange={e => setNotifForm(f => ({ ...f, target: e.target.value }))}
+                    style={{
+                      width: '100%', padding: '12px 16px', borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'white', fontSize: '0.9rem', outline: 'none'
+                    }}
+                  >
+                    <option value="all" style={{ background: '#0D0D0D' }}>📢 Broadcast to ALL users</option>
+                    {users.map(u => (
+                      <option key={u.email} value={u.email} style={{ background: '#0D0D0D' }}>
+                        👤 {u.name || u.email} ({u.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Type */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Type</label>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {[{v:'info',l:'ℹ️ Info'},{v:'feature',l:'✨ Feature'},{v:'offer',l:'🎁 Offer'},{v:'resolved',l:'✅ Resolved'}].map(opt => (
+                      <button key={opt.v} type="button"
+                        onClick={() => setNotifForm(f => ({ ...f, type: opt.v }))}
+                        style={{
+                          padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '700',
+                          background: notifForm.type === opt.v ? 'rgba(222,106,57,0.18)' : 'rgba(255,255,255,0.03)',
+                          color: notifForm.type === opt.v ? 'var(--primary)' : 'var(--text-muted)',
+                          border: notifForm.type === opt.v ? '1px solid rgba(222,106,57,0.4)' : '1px solid rgba(255,255,255,0.06)',
+                          transition: 'all 0.18s'
+                        }}
+                      >{opt.l}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Title */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={notifForm.title}
+                    onChange={e => setNotifForm(f => ({ ...f, title: e.target.value }))}
+                    placeholder="e.g. New Feature Available!"
+                    style={{
+                      width: '100%', padding: '12px 16px', borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'white', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                {/* Message */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Message</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={notifForm.message}
+                    onChange={e => setNotifForm(f => ({ ...f, message: e.target.value }))}
+                    placeholder="Write your notification message here..."
+                    style={{
+                      width: '100%', padding: '12px 16px', borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'white', fontSize: '0.9rem', outline: 'none', resize: 'vertical',
+                      fontFamily: 'inherit', lineHeight: '1.5', boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                {/* Preview */}
+                {notifForm.title && (
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px 18px' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Preview</div>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(222,106,57,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Bell size={16} style={{ color: 'var(--primary)' }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: '700', color: 'white', marginBottom: '4px' }}>{notifForm.title}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>{notifForm.message || 'Your message will appear here...'}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={sendingNotif}
+                  style={{
+                    padding: '14px 28px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                    background: 'linear-gradient(135deg, var(--primary) 0%, #ff8038 100%)',
+                    color: 'white', fontSize: '0.95rem', fontWeight: '800',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    opacity: sendingNotif ? 0.7 : 1, transition: 'all 0.2s',
+                    boxShadow: '0 4px 20px rgba(222,106,57,0.3)'
+                  }}
+                >
+                  <Send size={16} />
+                  {sendingNotif ? 'Sending...' : notifForm.target === 'all' ? 'Broadcast to All Users' : 'Send to User'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* MODAL 3: USER DIAGNOSTICS LEDGER */}
         {isDetailsModalOpen && selectedUserDetails && (
           <div 
+            data-lenis-prevent
             onClick={(e) => { if (e.target === e.currentTarget) setIsDetailsModalOpen(false); }}
             style={{
               position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,

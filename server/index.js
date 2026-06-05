@@ -492,6 +492,37 @@ app.post('/api/notifications/read-all', async (req, res) => {
   }
 });
 
+// Admin: Send notification to specific user or all users
+app.post('/api/admin/notifications/send', verifyAdmin, async (req, res) => {
+  try {
+    const { target, title, message, type } = req.body;
+    if (!title || !message) {
+      return res.status(400).json({ success: false, error: 'Title and message are required.' });
+    }
+    const notifType = type || 'info';
+    if (target && target !== 'all') {
+      // Send to specific user
+      await pool.query(
+        `INSERT INTO notifications (user_email, title, message, type) VALUES ($1, $2, $3, $4)`,
+        [target, title, message, notifType]
+      );
+      res.json({ success: true, message: `Notification sent to ${target}.` });
+    } else {
+      // Broadcast to all users
+      const allUsers = await pool.query('SELECT email FROM users');
+      for (const user of allUsers.rows) {
+        await pool.query(
+          `INSERT INTO notifications (user_email, title, message, type) VALUES ($1, $2, $3, $4)`,
+          [user.email, title, message, notifType]
+        );
+      }
+      res.json({ success: true, message: `Notification broadcast to ${allUsers.rows.length} users.` });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ─── ADMIN SYSTEM ───────────────────────────────────────────
 
 // Middleware to verify admin token

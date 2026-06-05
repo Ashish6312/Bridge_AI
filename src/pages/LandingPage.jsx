@@ -918,11 +918,10 @@ const LandingPage = () => {
                 {/* Feedback Textarea */}
                 <div>
                   <label htmlFor="feedback-text-area" style={{ display: 'block', fontSize: '0.8rem', fontWeight: '800', color: MUTED, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    What did you like or dislike?
+                    What did you like or dislike? <span style={{ fontWeight: 400, opacity: 0.6 }}>(Optional)</span>
                   </label>
                   <textarea
                     id="feedback-text-area"
-                    required
                     value={feedbackText}
                     onChange={e => setFeedbackText(e.target.value)}
                     placeholder="Tell us what you think. Your direct experience helps us build a better platform..."
