@@ -258,26 +258,28 @@ const initDB = async () => {
     `);
 
     // Seed default admin user
-    const hashedAdminPassword = await bcrypt.hash('team1@entrext.com', 10);
+    const adminEmail = process.env.ADMIN_EMAIL || 'entrext1@gmail.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'team1@entrext.com';
+    const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
     
     // Revoke admin access for other emails in database init to ensure strict single admin
-    await pool.query('UPDATE users SET is_admin = FALSE WHERE email != $1', ['entrext1@gmail.com']);
+    await pool.query('UPDATE users SET is_admin = FALSE WHERE email != $1', [adminEmail]);
 
-    const adminCheck = await pool.query('SELECT * FROM users WHERE email = $1', ['entrext1@gmail.com']);
+    const adminCheck = await pool.query('SELECT * FROM users WHERE email = $1', [adminEmail]);
     if (adminCheck.rowCount === 0) {
       await pool.query(
         `INSERT INTO users (email, password, name, plan, is_admin)
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (email) DO NOTHING`,
-        ['entrext1@gmail.com', hashedAdminPassword, 'System Admin', 'infinite', true]
+        [adminEmail, hashedAdminPassword, 'System Admin', 'infinite', true]
       );
-      console.log('[DB] Seeded default admin user: entrext1@gmail.com');
+      console.log(`[DB] Seeded default admin user: ${adminEmail}`);
     } else {
       await pool.query(
         `UPDATE users SET password = $1, is_admin = TRUE, plan = 'infinite' WHERE email = $2`,
-        [hashedAdminPassword, 'entrext1@gmail.com']
+        [hashedAdminPassword, adminEmail]
       );
-      console.log('[DB] Refreshed admin credentials for: entrext1@gmail.com');
+      console.log(`[DB] Refreshed admin credentials for: ${adminEmail}`);
     }
   } catch (err) {
     console.error("DB Init Error:", err);
@@ -423,8 +425,9 @@ app.post('/api/admin/login', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Email and password required.' });
     }
 
-    // Lock down to ONLY entrext1@gmail.com
-    if (email !== 'entrext1@gmail.com') {
+    // Lock down to ONLY configured admin email
+    const adminEmail = process.env.ADMIN_EMAIL || 'entrext1@gmail.com';
+    if (email !== adminEmail) {
       return res.status(401).json({ success: false, error: 'Invalid admin credentials.' });
     }
 

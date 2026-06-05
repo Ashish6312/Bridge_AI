@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { API_BASE } from '../apiConfig';
 
+const ADMIN_PORTAL_KEY = import.meta.env.VITE_ADMIN_PORTAL_KEY || 'bridge_admin_gateway_s3cr3t';
+
 const LoginPage = () => {
   const [mode, setMode] = useState('login'); 
   const [loading, setLoading] = useState(false);
@@ -18,7 +20,7 @@ const LoginPage = () => {
       try {
         const user = JSON.parse(userStr);
         if (user.is_admin) {
-          navigate('/admin');
+          navigate(`/admin?key=${ADMIN_PORTAL_KEY}`);
         } else {
           navigate('/dashboard');
         }
@@ -58,14 +60,14 @@ const LoginPage = () => {
             setTrialBanner(true);
             setTimeout(() => {
               if (data.adminToken) {
-                navigate('/admin');
+                navigate(`/admin?key=${ADMIN_PORTAL_KEY}`);
               } else {
                 navigate('/dashboard');
               }
             }, 2200);
           } else {
             if (data.adminToken) {
-              navigate('/admin');
+              navigate(`/admin?key=${ADMIN_PORTAL_KEY}`);
             } else {
               navigate('/dashboard');
             }
@@ -117,14 +119,14 @@ const LoginPage = () => {
           setTrialBanner(true);
           setTimeout(() => {
             if (data.adminToken) {
-              navigate('/admin');
+              navigate(`/admin?key=${ADMIN_PORTAL_KEY}`);
             } else {
               navigate('/dashboard');
             }
           }, 2200);
         } else {
           if (data.adminToken) {
-            navigate('/admin');
+            navigate(`/admin?key=${ADMIN_PORTAL_KEY}`);
           } else {
             navigate('/dashboard');
           }

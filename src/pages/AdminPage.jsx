@@ -7,8 +7,49 @@ import {
 import { apiFetch } from '../apiConfig';
 import SEOHelmet from '../components/SEOHelmet';
 
+const PageNotFound = () => (
+  <div style={{
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'transparent',
+    color: 'var(--text-main)',
+    fontFamily: "'Outfit', 'Inter', sans-serif",
+    padding: '20px',
+    textAlign: 'center',
+    position: 'relative',
+    zIndex: 10
+  }}>
+    <h1 style={{ fontSize: '6rem', fontWeight: '900', color: 'var(--primary)', margin: 0, letterSpacing: '-0.05em' }}>404</h1>
+    <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '10px 0 20px', color: '#fff' }}>Page Not Found</h2>
+    <p style={{ color: 'var(--text-muted)', maxWidth: '400px', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '30px' }}>
+      The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+    </p>
+    <a href="/" style={{
+      padding: '12px 24px',
+      borderRadius: '8px',
+      background: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      color: 'white',
+      textDecoration: 'none',
+      fontWeight: '600',
+      fontSize: '0.9rem',
+      transition: 'all 0.2s'
+    }}
+    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+    >
+      Return Home
+    </a>
+  </div>
+);
+
 const AdminPage = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -33,12 +74,22 @@ const AdminPage = () => {
   const [resolutionNotes, setResolutionNotes] = useState({});
   const [loadingData, setLoadingData] = useState(false);
 
-  // Check login on mount
+  // Check login and portal authorization key on mount
   useEffect(() => {
     const token = sessionStorage.getItem('bridge_admin_token');
+    const queryParams = new URLSearchParams(window.location.search);
+    const key = queryParams.get('key');
+    const expectedKey = import.meta.env.VITE_ADMIN_PORTAL_KEY || 'bridge_admin_gateway_s3cr3t';
+
     if (token) {
       setIsAdmin(true);
+      setIsAuthorized(true);
+    } else if (key === expectedKey) {
+      setIsAuthorized(true);
+    } else {
+      setIsAuthorized(false);
     }
+    setCheckingAuth(false);
   }, []);
 
   // Fetch data when authenticated
@@ -236,6 +287,36 @@ const AdminPage = () => {
     }
   };
 
+  if (checkingAuth) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'transparent'
+      }}>
+        <div style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          border: '3px solid var(--primary-soft)',
+          borderTopColor: 'var(--primary)',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return <PageNotFound />;
+  }
+
   // Render Login Panel
   if (!isAdmin) {
     return (
@@ -291,7 +372,7 @@ const AdminPage = () => {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="entrext1@gmail.com"
+                placeholder="admin@example.com"
                 style={{
                   width: '100%', padding: '12px 16px', borderRadius: '12px',
                   border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)',
