@@ -2432,7 +2432,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toast, setToast] = useState(null);
-  const [stats, setStats] = useState({ totalBridges: 0, totalTokens: 0, plan: 'free', usageCount: 0 });
+  const [stats, setStats] = useState({ totalBridges: 0, totalTokens: 0, plan: 'free', usageCount: 0, trialDaysLeft: null });
   const [scrollProgress, setScrollProgress] = useState(0);
   // Reactive user email - updates when user logs in/out so child components re-fetch data
   const [currentUserEmail, setCurrentUserEmail] = useState(() => {
@@ -2587,8 +2587,17 @@ const Dashboard = () => {
           setStats(prev => ({ 
             ...prev, 
             plan: statusData.plan, 
-            usageCount: statusData.usage 
+            usageCount: statusData.usage,
+            trialDaysLeft: statusData.trial_days_left ?? null
           }));
+          // Sync plan into localStorage if it changed (e.g. trial expired)
+          try {
+            const storedUser = JSON.parse(localStorage.getItem('bridge_user') || '{}');
+            if (storedUser.email && storedUser.plan !== statusData.plan) {
+              const updated = { ...storedUser, plan: statusData.plan };
+              localStorage.setItem('bridge_user', JSON.stringify(updated));
+            }
+          } catch (e) {}
         }
       }
     } catch (err) {
@@ -2619,15 +2628,15 @@ const Dashboard = () => {
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('[REALTIME] Hub update received:', data);
         loadData(true);
       } catch (e) {
-        console.error('[REALTIME] Protocol parse error:', e);
+        // Silently ignore parse errors
       }
     };
 
+    // SSE connections frequently close on serverless platforms — suppress noisy warnings.
+    // The 30s polling interval in the effect below acts as a reliable fallback.
     eventSource.onerror = () => {
-      console.warn('[REALTIME] Protocol link severed. Attempting handshake...');
       eventSource.close();
     };
 
@@ -2845,15 +2854,53 @@ const Dashboard = () => {
               <div style={{ marginTop: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingLeft: '4px' }}>
                   <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px' }}>STORAGE LIMIT</div>
-                  <span style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--primary)' }}>{(stats.plan || 'FREE').toUpperCase()}</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: '700', color: stats.trialDaysLeft > 0 ? '#f59e0b' : 'var(--primary)' }}>
+                    {stats.trialDaysLeft > 0 ? 'TRIAL' : (stats.plan || 'FREE').toUpperCase()}
+                  </span>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                  {String(stats.plan).toLowerCase() === 'infinite' || String(stats.plan).toLowerCase() === 'pro' ? (
+
+                  {/* ── Active Pro Trial ── */}
+                  {stats.trialDaysLeft > 0 && (
+                    <>
+                      {/* Countdown pill */}
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '7px',
+                        background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
+                        borderRadius: '8px', padding: '8px 10px', marginBottom: '10px'
+                      }}>
+                        <div style={{
+                          width: '7px', height: '7px', borderRadius: '50%', background: '#f59e0b',
+                          boxShadow: '0 0 6px rgba(245,158,11,0.7)', flexShrink: 0,
+                          animation: 'trialPulse 1.5s ease-in-out infinite'
+                        }} />
+                        <style>{`@keyframes trialPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}`}</style>
+                        <div>
+                          <div style={{ fontSize: '0.6rem', fontWeight: '800', color: '#f59e0b', letterSpacing: '0.5px' }}>
+                            PRO TRIAL ACTIVE
+                          </div>
+                          <div style={{ fontSize: '0.72rem', fontWeight: '700', color: 'rgba(255,255,255,0.8)', marginTop: '1px' }}>
+                            {stats.trialDaysLeft} day{stats.trialDaysLeft !== 1 ? 's' : ''} remaining
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '2px 0' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'white' }}>Unlimited Storage</div>
+                        <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>All Pro features unlocked</div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* ── Paid Pro / Infinite ── */}
+                  {!stats.trialDaysLeft && (String(stats.plan).toLowerCase() === 'infinite' || String(stats.plan).toLowerCase() === 'pro') && (
                     <div style={{ textAlign: 'center', padding: '4px 0' }}>
                       <div style={{ fontSize: '0.65rem', fontWeight: '700', color: '#f59e0b', letterSpacing: '0.5px', marginBottom: '2px' }}>STATUS</div>
                       <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'white' }}>UNLIMITED STORAGE</div>
                     </div>
-                  ) : (
+                  )}
+
+                  {/* ── Free Plan (trial ended or never started) ── */}
+                  {!stats.trialDaysLeft && String(stats.plan).toLowerCase() === 'free' && (
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px' }}>
                         <span>Usage</span>
@@ -2867,12 +2914,21 @@ const Dashboard = () => {
                           style={{ height: '100%', background: 'var(--primary)' }} 
                         />
                       </div>
+                      <Link to="/services#pricing" style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+                        marginTop: '12px', padding: '9px 6px', borderRadius: '9px',
+                        background: 'linear-gradient(135deg, rgba(222,106,57,0.15), rgba(124,58,237,0.1))',
+                        border: '1px solid rgba(222, 106, 57, 0.3)',
+                        fontSize: '0.72rem', fontWeight: '700', color: 'var(--primary)',
+                        textDecoration: 'none', transition: 'all 0.2s',
+                        boxShadow: '0 0 12px rgba(222,106,57,0.1)'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(222,106,57,0.2)'; e.currentTarget.style.boxShadow = '0 0 18px rgba(222,106,57,0.2)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(222,106,57,0.15), rgba(124,58,237,0.1))'; e.currentTarget.style.boxShadow = '0 0 12px rgba(222,106,57,0.1)'; }}
+                      >
+                        <Zap size={11} fill="currentColor" /> Upgrade to Pro
+                      </Link>
                     </>
-                  )}
-                  {String(stats.plan).toLowerCase() !== 'infinite' && String(stats.plan).toLowerCase() !== 'pro' && (
-                    <Link to="/services" style={{ display: 'block', textAlign: 'center', marginTop: '12px', fontSize: '0.7rem', fontWeight: '600', color: 'var(--primary)', textDecoration: 'none', background: 'rgba(222, 106, 57, 0.08)', padding: '6px', borderRadius: '8px', border: '1px solid rgba(222, 106, 57, 0.12)', transition: 'all 0.2s' }}>
-                      Upgrade Storage
-                    </Link>
                   )}
                 </div>
               </div>

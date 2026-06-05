@@ -106,6 +106,11 @@ const ServicesPage = () => {
   });
   const navigate = useNavigate();
 
+  // Derive trial state from the user object (populated by /api/user/status sync in Dashboard)
+  const trialEndsAt = user?.trial_ends_at ? new Date(user.trial_ends_at) : null;
+  const isTrialActive = trialEndsAt && trialEndsAt > new Date() && user?.plan === 'pro';
+  const isPostTrial = user?.plan === 'free'; // Free after trial expiry (or always-free)
+
   const handlePurchaseClick = (planKey, amount) => {
     if (!user) {
       navigate('/login?redirect=services');
@@ -252,19 +257,31 @@ const ServicesPage = () => {
               <button
                 onClick={() => {
                   if (user) {
-                    if (user.plan !== 'free') handlePurchaseClick('free', 0);
+                    if (isPostTrial) {
+                      // Scroll to Pro card when trial is over
+                      document.getElementById('pro-plan-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (user.plan !== 'free') {
+                      handlePurchaseClick('free', 0);
+                    }
                   } else {
                     navigate('/signup');
                   }
                 }}
-                disabled={user?.plan === 'free'}
-                className="btn-secondary"
-                style={{ width: '100%', padding: '14px', borderRadius: '12px', fontWeight: '700', fontSize: '0.95rem' }}
+                disabled={!isPostTrial && user?.plan === 'free'}
+                className={isPostTrial ? 'btn-primary' : 'btn-secondary'}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: '12px', fontWeight: '700', fontSize: '0.95rem',
+                  ...(isPostTrial ? { background: 'rgba(222,106,57,0.12)', color: 'var(--primary)', border: '1px solid rgba(222,106,57,0.3)' } : {})
+                }}
               >
-                {user?.plan === 'free' ? 'Current Plan' : 'Start Free'}
+                {isPostTrial
+                  ? '✦ Trial Ended — Upgrade Now'
+                  : user?.plan === 'free'
+                  ? 'Current Plan'
+                  : 'Start Free'}
               </button>
               <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                No credit card required.
+                {isPostTrial ? 'Your trial has ended.' : 'No credit card required.'}
               </div>
             </motion.div>
 
@@ -288,7 +305,7 @@ const ServicesPage = () => {
                 letterSpacing: '0.08em', whiteSpace: 'nowrap',
                 boxShadow: '0 4px 16px rgba(222,106,57,0.4)'
               }}>
-                MOST POPULAR
+                {isTrialActive ? '⚡ TRIAL ACTIVE' : 'MOST POPULAR'}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
@@ -320,19 +337,26 @@ const ServicesPage = () => {
               </ul>
 
               <button
+                id="pro-plan-card"
                 onClick={() => handlePurchaseClick('pro', 5)}
-                disabled={upgrading === 'pro' || user?.plan === 'pro' || user?.plan === 'infinite'}
+                disabled={upgrading === 'pro' || isTrialActive || user?.plan === 'infinite'}
                 className="btn-primary"
                 style={{ width: '100%', padding: '15px', borderRadius: '12px', fontWeight: '700', fontSize: '0.97rem' }}
               >
                 {upgrading === 'pro'
                   ? 'Processing...'
-                  : (user?.plan === 'pro' || user?.plan === 'infinite')
+                  : isTrialActive
+                  ? '✦ Current Plan (Trial)'
+                  : (user?.plan === 'infinite')
                   ? 'Current Plan'
+                  : isPostTrial
+                  ? 'Upgrade — $5/mo'
                   : 'Start 7-Day Free Trial'}
               </button>
               <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Cancel anytime.
+                {isTrialActive
+                  ? `Trial ends ${trialEndsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`
+                  : 'Cancel anytime.'}
               </div>
             </motion.div>
           </div>

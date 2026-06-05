@@ -228,6 +228,8 @@ const initDB = async () => {
     await pool.query('ALTER TABLE bridges ADD COLUMN IF NOT EXISTS project_id TEXT');
     await pool.query("ALTER TABLE project_contexts ADD COLUMN IF NOT EXISTS chat_history JSON DEFAULT '[]'");
     await pool.query("ALTER TABLE project_contexts ADD COLUMN IF NOT EXISTS problem_statement TEXT");
+    // Trial column — stores when the 7-day Pro trial expires (NULL = not on trial)
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP');
     // Deduplicate existing project decisions
     await pool.query(`
       DELETE FROM project_decisions 
@@ -251,15 +253,18 @@ app.post('/api/register', async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
     
     const hashedPassword = await bcrypt.hash(password, 10);
+    // New users automatically receive a 7-day Pro trial
     const result = await pool.query(
-      'INSERT INTO users (email, password, name) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING RETURNING *',
+      `INSERT INTO users (email, password, name, plan, trial_ends_at)
+       VALUES ($1, $2, $3, 'pro', NOW() + INTERVAL '7 days')
+       ON CONFLICT (email) DO NOTHING RETURNING *`,
       [email, hashedPassword, name || email.split('@')[0]]
     );
     
     if (result.rowCount === 0) return res.status(400).json({ error: 'User already exists' });
     const user = { ...result.rows[0] };
     delete user.password;
-    res.json({ success: true, user });
+    res.json({ success: true, user, trialActivated: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -287,16 +292,21 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/auth/google', async (req, res) => {
   try {
     const { email, name, picture, google_id } = req.body;
+    // Grant 7-day Pro trial only on brand-new inserts (xmax=0 means it was an INSERT not an UPDATE)
     const result = await pool.query(
-      `INSERT INTO users (email, name, picture, google_id) 
-       VALUES ($1, $2, $3, $4) 
-       ON CONFLICT (email) DO UPDATE SET google_id = $4, picture = $3, name = $2
-       RETURNING *`,
+      `INSERT INTO users (email, name, picture, google_id, plan, trial_ends_at)
+       VALUES ($1, $2, $3, $4, 'pro', NOW() + INTERVAL '7 days')
+       ON CONFLICT (email) DO UPDATE
+         SET google_id = $4, picture = $3, name = $2
+       RETURNING *, (xmax = 0) AS is_new_user`,
       [email, name, picture, google_id]
     );
-    const user = result.rows[0];
+    const row = result.rows[0];
+    const isNewUser = row.is_new_user;
+    const user = { ...row };
     delete user.password;
-    res.json({ success: true, user });
+    delete user.is_new_user;
+    res.json({ success: true, user, trialActivated: isNewUser });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -353,9 +363,15 @@ app.post('/api/summarize', async (req, res) => {
     }
 
     // ── Plan Quota Enforcement ───────────────────────────────
-    const userRes = await pool.query('SELECT plan FROM users WHERE email = $1', [email]);
+    const userRes = await pool.query('SELECT plan, trial_ends_at FROM users WHERE email = $1', [email]);
     if (userRes.rowCount === 0) return res.status(404).json({ error: 'User not found' });
-    const userPlan = userRes.rows[0].plan || 'free';
+    let userPlan = userRes.rows[0].plan || 'free';
+    const trialEndsAt = userRes.rows[0].trial_ends_at;
+
+    // Belt-and-suspenders: treat expired trial users as free even if cron hasn't run yet
+    if (userPlan === 'pro' && trialEndsAt && new Date(trialEndsAt) < new Date()) {
+      userPlan = 'free';
+    }
 
     const countRes = await pool.query(
       "SELECT COUNT(*) FROM bridges WHERE user_email = $1 AND created_at > date_trunc('month', now())",
@@ -523,8 +539,10 @@ app.get('/api/user/status', async (req, res) => {
     const { email } = req.query;
     if (!email) return res.status(400).json({ error: "Email required" });
     
-    const user = await pool.query('SELECT plan FROM users WHERE email = $1', [email]);
-    if (user.rowCount === 0) return res.status(404).json({ error: "User not found" });
+    const userRes = await pool.query('SELECT plan, trial_ends_at FROM users WHERE email = $1', [email]);
+    if (userRes.rowCount === 0) return res.status(404).json({ error: "User not found" });
+    
+    const { plan, trial_ends_at } = userRes.rows[0];
     
     const [countRes, totalRes] = await Promise.all([
       pool.query(
@@ -537,9 +555,18 @@ app.get('/api/user/status', async (req, res) => {
       )
     ]);
     
+    // Calculate days remaining in trial (null if not on trial)
+    let trialDaysLeft = null;
+    if (trial_ends_at) {
+      const msLeft = new Date(trial_ends_at) - new Date();
+      trialDaysLeft = msLeft > 0 ? Math.ceil(msLeft / 86400000) : 0;
+    }
+    
     res.json({ 
       success: true, 
-      plan: user.rows[0].plan || 'free',
+      plan: plan || 'free',
+      trial_ends_at: trial_ends_at || null,
+      trial_days_left: trialDaysLeft,
       usage: parseInt(countRes.rows[0].count),
       total: parseInt(totalRes.rows[0].count)
     });
@@ -708,6 +735,29 @@ app.post('/api/subscribe', async (req, res) => {
     res.json({ success: true, message: "Welcome to the Revolution. Check your inbox!" });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── DAILY TRIAL EXPIRY CRON ─────────────────────────────────
+// Runs every day at midnight — downgrades users whose 7-day trial has ended
+cron.schedule('0 0 * * *', async () => {
+  console.log('[CRON] Running trial expiry check...');
+  try {
+    const result = await pool.query(`
+      UPDATE users
+      SET plan = 'free', trial_ends_at = NULL
+      WHERE plan = 'pro'
+        AND trial_ends_at IS NOT NULL
+        AND trial_ends_at < NOW()
+      RETURNING email
+    `);
+    if (result.rowCount > 0) {
+      console.log(`[CRON] Downgraded ${result.rowCount} expired trial user(s): ${result.rows.map(r => r.email).join(', ')}`);
+    } else {
+      console.log('[CRON] No expired trials found.');
+    }
+  } catch (err) {
+    console.error('[CRON] Trial expiry error:', err);
   }
 });
 

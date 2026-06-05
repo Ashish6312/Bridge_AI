@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { API_BASE } from '../apiConfig';
@@ -9,6 +9,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' });
   const [error, setError] = useState('');
+  const [trialBanner, setTrialBanner] = useState(false);
   const navigate = useNavigate();
   
   React.useEffect(() => {
@@ -40,7 +41,12 @@ const LoginPage = () => {
         const data = await res.json();
         if (data.success) {
           localStorage.setItem('bridge_user', JSON.stringify(data.user));
-          navigate('/dashboard');
+          if (data.trialActivated) {
+            setTrialBanner(true);
+            setTimeout(() => navigate('/dashboard'), 2200);
+          } else {
+            navigate('/dashboard');
+          }
         } else {
           throw new Error(data.error || 'Database sync failed');
         }
@@ -81,7 +87,12 @@ const LoginPage = () => {
       const data = await res.json();
       if (data.success) {
         localStorage.setItem('bridge_user', JSON.stringify(data.user));
-        navigate('/dashboard');
+        if (data.trialActivated) {
+          setTrialBanner(true);
+          setTimeout(() => navigate('/dashboard'), 2200);
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         throw new Error(data.error || 'Authentication failed');
       }
@@ -104,6 +115,65 @@ const LoginPage = () => {
       zIndex: 1,
       fontFamily: "'Outfit', 'Inter', sans-serif"
     }}>
+
+      {/* ── Trial Activation Banner ── */}
+      <AnimatePresence>
+        {trialBanner && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'rgba(0,0,0,0.85)',
+              backdropFilter: 'blur(16px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'column', gap: 24, padding: 32, textAlign: 'center'
+            }}
+          >
+            {/* Glowing orb */}
+            <div style={{
+              position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
+              width: 500, height: 500, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%)',
+              filter: 'blur(80px)', pointerEvents: 'none'
+            }} />
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+              style={{
+                width: 80, height: 80, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #f59e0b, #FF6B2C)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '2.2rem', boxShadow: '0 0 60px rgba(245,158,11,0.5)'
+              }}
+            >
+              🎉
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+              <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', marginBottom: 8 }}>
+                Pro Trial Activated!
+              </div>
+              <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, maxWidth: 380 }}>
+                You have <strong style={{ color: '#f59e0b' }}>7 days of full Pro access</strong> — unlimited bridges,
+                all intelligence modes, project workspaces, and more.
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={{ opacity: 1, scaleX: 1 }}
+              transition={{ delay: 0.5, duration: 1.5 }}
+              style={{
+                width: 200, height: 3, borderRadius: 100,
+                background: 'linear-gradient(90deg, #f59e0b, #FF6B2C)',
+                boxShadow: '0 0 20px rgba(245,158,11,0.6)'
+              }}
+            />
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)' }}>Redirecting to your dashboard...</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <style>{`
         .auth-input::placeholder {
           color: #52525B;

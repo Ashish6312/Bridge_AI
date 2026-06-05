@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useCallback } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Sphere, Stars, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
@@ -101,16 +101,42 @@ const BridgeNodes = () => {
 };
 
 export default function IntelligenceBridge() {
+  const [contextLost, setContextLost] = useState(false);
+
+  const handleCreated = useCallback(({ gl }) => {
+    const canvas = gl.domElement;
+
+    const onLost = (e) => {
+      e.preventDefault();
+      setContextLost(true);
+    };
+    const onRestored = () => {
+      setContextLost(false);
+    };
+
+    canvas.addEventListener('webglcontextlost', onLost, false);
+    canvas.addEventListener('webglcontextrestored', onRestored, false);
+
+    // Store cleanup refs on the canvas element itself
+    canvas._bridgeLostHandler = onLost;
+    canvas._bridgeRestoredHandler = onRestored;
+  }, []);
+
+  if (contextLost) return null;
+
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0, opacity: 0.6 }}>
-      <Canvas 
-        dpr={[1, 1.5]} 
-        gl={{ 
-          antialias: false, 
-          powerPreference: "high-performance",
+      <Canvas
+        dpr={[1, 1.5]}
+        frameloop="always"
+        gl={{
+          antialias: false,
+          powerPreference: 'high-performance',
           alpha: true,
-          preserveDrawingBuffer: false
+          preserveDrawingBuffer: false,
+          failIfMajorPerformanceCaveat: false,
         }}
+        onCreated={handleCreated}
       >
         <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={50} />
         <ambientLight intensity={0.5} />

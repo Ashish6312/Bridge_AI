@@ -596,10 +596,14 @@ Thank you for using Bridge AI!`;
         const d = await statusRes.json();
         if (d.success) {
           setStats({ usage: d.usage, total: d.total });
-          if (u.plan !== d.plan) {
-            const upd = { ...u, plan: d.plan };
-            localStorage.setItem('bridge_user', JSON.stringify(upd));
-            setUser(upd);
+          const newPlan = d.plan;
+          const newTrialEndsAt = d.trial_ends_at || null;
+          const updatedU = { ...u, plan: newPlan, trial_ends_at: newTrialEndsAt };
+          if (u.plan !== newPlan || u.trial_ends_at !== newTrialEndsAt) {
+            localStorage.setItem('bridge_user', JSON.stringify(updatedU));
+            setUser(updatedU);
+          } else {
+            setStats({ usage: d.usage, total: d.total });
           }
         }
       }
@@ -1437,34 +1441,64 @@ Thank you for using Bridge AI!`;
                     <div style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.35)', marginBottom:20 }}>
                       {stats.usage || 0} / {planLimit === Infinity ? '∞' : planLimit} Transfers Used
                     </div>
-                    {user.plan === 'pro' && (
-                      <div style={{ 
-                        marginTop: '16px', padding: '12px 14px', borderRadius: '12px', 
-                        background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)',
-                        fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', textAlign: 'left'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f59e0b', fontWeight: '700', marginBottom: '4px' }}>
-                          <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b' }}></span>
-                          7-Day Free Trial (Active)
+                    {user.plan === 'pro' && (() => {
+                      const trialEndsAt = user.trial_ends_at ? new Date(user.trial_ends_at) : null;
+                      const msLeft = trialEndsAt ? (trialEndsAt - new Date()) : 0;
+                      const daysLeft = msLeft > 0 ? Math.ceil(msLeft / 86400000) : 0;
+                      const isOnTrial = daysLeft > 0 && trialEndsAt;
+                      return (
+                        <div style={{ 
+                          marginTop: '16px', padding: '12px 14px', borderRadius: '12px', 
+                          background: isOnTrial ? 'rgba(245,158,11,0.06)' : 'rgba(245, 158, 11, 0.05)',
+                          border: isOnTrial ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(245, 158, 11, 0.15)',
+                          fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', textAlign: 'left'
+                        }}>
+                          {isOnTrial ? (
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                <div style={{
+                                  width: '7px', height: '7px', borderRadius: '50%', background: '#f59e0b',
+                                  boxShadow: '0 0 6px rgba(245,158,11,0.7)', flexShrink: 0,
+                                  animation: 'trialPulse 1.5s ease-in-out infinite'
+                                }} />
+                                <span style={{ fontWeight: '800', color: '#f59e0b', fontSize: '0.78rem' }}>Pro Trial Active</span>
+                                <span style={{
+                                  marginLeft: 'auto', background: 'rgba(245,158,11,0.12)', color: '#f59e0b',
+                                  padding: '2px 9px', borderRadius: '100px', fontSize: '0.65rem', fontWeight: '800'
+                                }}>{daysLeft} day{daysLeft !== 1 ? 's' : ''} left</span>
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '10px' }}>
+                                Trial ends {trialEndsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.
+                                After that, you'll move to the Free plan.
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f59e0b', fontWeight: '700', marginBottom: '4px' }}>
+                                <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b' }}></span>
+                                Pro Plan (Active)
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '10px' }}>
+                                Renews at $5.00/month. Cancel anytime.
+                              </div>
+                            </>
+                          )}
+                          <button 
+                            onClick={() => setShowCancelConfirm(true)}
+                            disabled={cancelling}
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.08)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.15)',
+                              padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer',
+                              width: '100%', transition: 'all 0.2s', fontFamily: 'inherit'
+                            }}
+                            onMouseEnter={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.15)'; }}
+                            onMouseLeave={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.08)'; }}
+                          >
+                            {cancelling ? 'Cancelling...' : isOnTrial ? 'End Trial Early' : 'Cancel Subscription'}
+                          </button>
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '10px' }}>
-                          Renews at $5.00/month. Cancel anytime.
-                        </div>
-                        <button 
-                          onClick={() => setShowCancelConfirm(true)}
-                          disabled={cancelling}
-                          style={{
-                            background: 'rgba(239, 68, 68, 0.08)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.15)',
-                            padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer',
-                            width: '100%', transition: 'all 0.2s', fontFamily: 'inherit'
-                          }}
-                          onMouseEnter={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.15)'; }}
-                          onMouseLeave={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.08)'; }}
-                        >
-                          {cancelling ? 'Cancelling...' : 'Cancel Subscription'}
-                        </button>
-                      </div>
-                    )}
+                      );
+                    })()}
                     {user.plan !== 'pro' && user.plan !== 'infinite' && (
                       <div>
                         <div style={{ fontSize:'0.75rem', color:'rgba(255,255,255,0.3)', marginBottom:12 }}>Upgrade benefits:</div>

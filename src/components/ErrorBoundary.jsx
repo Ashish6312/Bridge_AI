@@ -12,8 +12,24 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  // Detect if this is a chunk-load failure (happens after new deployments)
+  static isChunkLoadError(error) {
+    const msg = error?.message || '';
+    return (
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Importing a module script failed') ||
+      msg.includes('Unable to preload CSS') ||
+      (error?.name === 'TypeError' && msg.includes('fetch'))
+    );
+  }
+
   componentDidCatch(error, errorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    // For chunk load errors (stale deployment), immediately reload to get fresh assets
+    if (ErrorBoundary.isChunkLoadError(error)) {
+      console.warn('[Bridge] Chunk load failure detected — reloading for fresh assets...');
+      window.location.reload();
+    }
   }
 
   componentDidUpdate(prevProps, prevState) {
