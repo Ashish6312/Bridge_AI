@@ -161,18 +161,20 @@ function App() {
     }
   }, [location.pathname]);
 
+  const isAdminPage = location.pathname.startsWith('/admin');
+
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <ChatWidget />
+      {!isAdminPage && <ChatWidget />}
       <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-main)' }}>
         <GlobalBackground />
-        <Navbar />
+        {!isAdminPage && <Navbar />}
         <main style={{ flex: 1, position: 'relative' }}>
           <Suspense fallback={<PageLoader />}>
             <BridgeRoutes />
           </Suspense>
         </main>
-        {location.pathname !== '/dashboard' && <Footer />}
+        {!isAdminPage && location.pathname !== '/dashboard' && <Footer />}
       </div>
     </GoogleOAuthProvider>
   );

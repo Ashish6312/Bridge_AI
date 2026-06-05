@@ -244,7 +244,7 @@ const AdminPage = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '120px 20px',
+        padding: '40px 20px',
         background: 'transparent',
         fontFamily: "'Inter', sans-serif"
       }}>
@@ -369,7 +369,7 @@ const AdminPage = () => {
       minHeight: '100vh',
       background: 'transparent',
       color: 'var(--text-main)',
-      padding: '120px 20px 80px',
+      padding: '40px 20px 80px',
       fontFamily: "'Inter', sans-serif"
     }}>
       <SEOHelmet 
