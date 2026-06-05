@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   Zap, Share2, Layers, GitMerge, Database, Shield, Check, X, 
   ArrowRight, Puzzle, Globe, Brain, MessageSquare, Settings, 
-  BookOpen, Wand2, Download, Search, RefreshCw, Cpu, Target
+  BookOpen, Wand2, Download, Search, RefreshCw, Cpu, Target,
+  Mail
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
 
@@ -464,42 +465,70 @@ const ServicesPage = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             style={{
-              padding: '48px', maxWidth: '440px', width: '90%', textAlign: 'center',
+              padding: '36px', maxWidth: '460px', width: '90%', textAlign: 'center',
               background: 'var(--bg-secondary)', borderRadius: '24px',
               border: '1px solid var(--border)', boxShadow: 'var(--shadow)'
             }}
           >
-            <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(222, 106, 57, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', border: '1px solid rgba(222, 106, 57, 0.2)' }}>
-                <Shield size={32} />
+            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(222, 106, 57, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', border: '1px solid rgba(222, 106, 57, 0.2)' }}>
+                <Shield size={28} />
               </div>
             </div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '12px', color: 'var(--text-main)' }}>Secure Enrollment</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6', fontSize: '1rem' }}>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '10px', color: 'var(--text-main)' }}>Subscription Setup</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.5', fontSize: '0.92rem' }}>
               {confirmModal.amount === 0 ? (
                 <>You are about to enroll in the <strong>{confirmModal.planKey?.toUpperCase()}</strong> plan.</>
               ) : (
                 <>You are about to upgrade to the <strong>{confirmModal.planKey?.toUpperCase()}</strong> plan for <strong style={{ color: 'var(--text-main)' }}>${confirmModal.amount}/mo</strong>.</>
               )}
               <br /><br />
-              This is a sandbox payment simulation. Your plan will be updated instantly.
+              Since our payment gateway integration is currently in progress, please contact our support team to activate your plan manually. Alternatively, you can use the sandbox simulation to test the Pro features instantly.
             </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              {/* Option 1: Live upgrade request via email */}
+              <a
+                href={`https://mail.google.com/mail/?view=cm&fs=1&to=business@entrext.in&su=${encodeURIComponent(`[Upgrade Request] ${confirmModal.planKey?.toUpperCase()} Plan`)}&body=${encodeURIComponent(
+                  `Hi BridgeAI Team,\n\nI would like to upgrade my account to the ${confirmModal.planKey?.toUpperCase()} plan ($${confirmModal.amount}/month).\n\nMy Registered Email: ${user?.email || ''}\n\nPlease let me know how to complete the payment.\n\nThank you!`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary"
+                style={{
+                  padding: '14px', borderRadius: '12px', fontWeight: '700',
+                  textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  fontSize: '0.92rem'
+                }}
+              >
+                <Mail size={16} /> Contact Support to Upgrade
+              </a>
+
+              {/* Option 2: Instant Sandbox Simulation */}
               <button
                 className="btn-secondary"
-                onClick={() => setConfirmModal({ show: false, planKey: null, amount: null })}
-                style={{ flex: 1, padding: '14px', borderRadius: '12px', fontWeight: '700' }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-primary"
                 onClick={handlePurchaseConfirm}
-                style={{ flex: 1, padding: '14px', borderRadius: '12px', fontWeight: '700' }}
+                style={{
+                  padding: '14px', borderRadius: '12px', fontWeight: '700',
+                  background: 'rgba(222, 106, 57, 0.05)', color: 'var(--primary)',
+                  border: '1px solid rgba(222, 106, 57, 0.2)', fontSize: '0.92rem',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                }}
               >
-                Confirm
+                <Zap size={14} fill="currentColor" /> Instant Sandbox Simulation (Testing)
               </button>
             </div>
+
+            <button
+              onClick={() => setConfirmModal({ show: false, planKey: null, amount: null })}
+              style={{
+                background: 'transparent', border: 'none', color: 'var(--text-muted)',
+                fontSize: '0.82rem', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline',
+                marginTop: '8px'
+              }}
+            >
+              Cancel
+            </button>
           </motion.div>
         </div>
       )}
