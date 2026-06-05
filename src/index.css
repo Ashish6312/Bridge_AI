@@ -1136,6 +1136,16 @@ footer {
   overflow: visible;
 }
 
+.hero-viz-scaler {
+  position: absolute;
+  width: 460px;
+  height: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+}
+
 .hero-viz-container {
   position: absolute;
   width: 460px;
@@ -1149,7 +1159,7 @@ footer {
     width: 345px;
     height: 345px;
   }
-  .hero-viz-container {
+  .hero-viz-scaler {
     transform: scale(0.75);
   }
 }
@@ -1159,7 +1169,7 @@ footer {
     width: 276px;
     height: 276px;
   }
-  .hero-viz-container {
+  .hero-viz-scaler {
     transform: scale(0.6);
   }
 }
@@ -1169,7 +1179,7 @@ footer {
     width: 230px;
     height: 230px;
   }
-  .hero-viz-container {
+  .hero-viz-scaler {
     transform: scale(0.5);
   }
 }

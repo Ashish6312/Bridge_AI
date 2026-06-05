@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AnimatePresence } from 'framer-motion';
+import posthog from 'posthog-js';
 
 // Components
 import Navbar from './components/Navbar';
@@ -136,6 +137,27 @@ function App() {
       } catch (e) { }
     }
   }, [location.pathname]); // Sync on every page navigation 
+
+  // PostHog User Identification & Tracking
+  React.useEffect(() => {
+    const userStr = localStorage.getItem('bridge_user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user && user.email) {
+          posthog.identify(user.email, {
+            email: user.email,
+            name: user.name,
+            plan: user.plan
+          });
+        }
+      } catch (e) { }
+    } else {
+      try {
+        posthog.reset();
+      } catch (e) { }
+    }
+  }, [location.pathname]);
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>

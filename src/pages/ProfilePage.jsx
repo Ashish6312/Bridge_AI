@@ -115,15 +115,15 @@ const getCurrentDeviceName = () => {
   let os = "Windows";
   let isMobile = false;
 
-  if (ua.includes("Macintosh") || ua.includes("Mac OS X")) os = "macOS";
-  else if (ua.includes("Linux")) os = "Linux";
-  else if (ua.includes("Android")) { os = "Android"; isMobile = true; }
+  if (ua.includes("Android")) { os = "Android"; isMobile = true; }
   else if (ua.includes("iPhone") || ua.includes("iPad")) { os = "iOS"; isMobile = true; }
+  else if (ua.includes("Macintosh") || ua.includes("Mac OS X")) os = "macOS";
+  else if (ua.includes("Linux")) os = "Linux";
 
   let browser = "Chrome";
-  if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
-  else if (ua.includes("Firefox")) browser = "Firefox";
-  else if (ua.includes("Edge")) browser = "Edge";
+  if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Edge") || ua.includes("Edg")) browser = "Edge";
+  else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
 
   return `${browser} — ${os}`;
 };
@@ -254,9 +254,7 @@ const ProfilePage = () => {
     }
     const currentName = getCurrentDeviceName();
     const defaultList = [
-      { name: currentName,  icon: currentName.includes('iOS') || currentName.includes('Android') ? 'mobile' : 'monitor', last: 'Active now',    current: true  },
-      { name: currentName.includes('macOS') ? 'Chrome — Windows' : 'Firefox — macOS',   icon: 'monitor', last: '2 days ago',   current: false },
-      { name: currentName.includes('Android') ? 'Mobile — iOS' : 'Mobile — Android',  icon: 'mobile', last: '5 days ago',current: false },
+      { name: currentName,  icon: currentName.includes('iOS') || currentName.includes('Android') ? 'mobile' : 'monitor', last: 'Active now',    current: true  }
     ];
     if (email) {
       localStorage.setItem(`bridge_devices_${email}`, JSON.stringify(defaultList));
@@ -311,10 +309,48 @@ const ProfilePage = () => {
         if (res.ok) {
           const data = await res.json();
           if (data.success) {
-            if (data.devices && data.devices.length > 0) {
-              setDevices(data.devices);
-              localStorage.setItem(`bridge_devices_${user.email}`, JSON.stringify(data.devices));
+            const currentName = getCurrentDeviceName();
+            let dbDevices = data.devices || [];
+            
+            // Check if current device exists in the database devices list
+            const currentExistsInDb = dbDevices.some(d => d.name === currentName);
+            
+            // Map devices to update current status and last active status
+            dbDevices = dbDevices.map(d => {
+              if (d.name === currentName) {
+                return { ...d, last: 'Active now', current: true };
+              }
+              return { ...d, current: false, last: d.last === 'Active now' ? 'Recently active' : d.last };
+            });
+            
+            // If the database list was not empty, but our current device is not in it, we might have been revoked!
+            const hadDevices = data.devices && data.devices.length > 0;
+            if (hadDevices && !currentExistsInDb) {
+              // We were revoked! Log out.
+              handleSignOut();
+              showToast("Your session has been revoked by another device.", "warning");
+              return;
             }
+            
+            if (!currentExistsInDb) {
+              dbDevices.push({
+                name: currentName,
+                icon: currentName.includes('iOS') || currentName.includes('Android') ? 'mobile' : 'monitor',
+                last: 'Active now',
+                current: true
+              });
+            }
+            
+            setDevices(dbDevices);
+            localStorage.setItem(`bridge_devices_${user.email}`, JSON.stringify(dbDevices));
+            
+            // Sync updated devices list back to database
+            fetch(`${API_BASE}/api/user/devices`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: user.email, devices: dbDevices })
+            }).catch(err => console.error("Failed to sync devices to DB:", err));
+            
             setTwoFactorEnabled(data.two_factor_enabled);
             localStorage.setItem(`bridge_2fa_enabled_${user.email}`, String(data.two_factor_enabled));
           }

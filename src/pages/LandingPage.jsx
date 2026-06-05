@@ -240,36 +240,38 @@ const LandingPage = () => {
         {/* RIGHT: NETWORK VIZ */}
         <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.4, duration:1 }} style={{ display:'flex', alignItems:'center', justifyContent: 'center', padding:'2.5rem 0 1.5rem', position:'relative', zIndex:1, width:'100%' }}>
           <div className="hero-viz-wrapper">
-            <div className="hero-viz-container">
-              {[{ s:300, d:30, c:'rgba(255,107,44,0.2)' },{ s:400, d:45, c:'rgba(124,58,237,0.12)', rev:true }].map((r,i) => (
-                <div key={i} style={{ position:'absolute', borderRadius:'50%', border:`1px dashed ${r.c}`, width:r.s, height:r.s, top:'50%', left:'50%', transform:'translate(-50%,-50%)', animation:`ldSpin ${r.d}s linear infinite ${r.rev?'reverse':''}` }} />
-              ))}
-              <svg viewBox="0 0 460 460" style={{ position:'absolute', inset:0, pointerEvents:'none', width:'100%', height:'100%' }}>
-                {[[230,230,90,90],[230,230,370,90],[230,230,90,370],[230,230,370,370]].map(([x1,y1,x2,y2],i) => (
-                  <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(222,106,57,0.15)" strokeWidth={1.5} strokeDasharray="6 4" fill="none" style={{ animation:`ldDash 2s linear infinite`, animationDelay:`${i*0.4}s` }} />
+            <div className="hero-viz-scaler">
+              <div className="hero-viz-container">
+                {[{ s:300, d:30, c:'rgba(255,107,44,0.2)' },{ s:400, d:45, c:'rgba(124,58,237,0.12)', rev:true }].map((r,i) => (
+                  <div key={i} style={{ position:'absolute', borderRadius:'50%', border:`1px dashed ${r.c}`, width:r.s, height:r.s, top:'50%', left:'50%', transform:'translate(-50%,-50%)', animation:`ldSpin ${r.d}s linear infinite ${r.rev?'reverse':''}` }} />
                 ))}
-              </svg>
-              <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:90, height:90, background:`radial-gradient(circle at 40% 40%,rgba(222,106,57,0.15),rgba(5,5,5,0.9))`, border:`2px solid rgba(222,106,57,0.25)`, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, animation:'ldPulse 3s ease-in-out infinite' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#DE6A39" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 4px rgba(222,106,57,0.15))' }}>
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                <svg viewBox="0 0 460 460" style={{ position:'absolute', inset:0, pointerEvents:'none', width:'100%', height:'100%' }}>
+                  {[[230,230,90,90],[230,230,370,90],[230,230,90,370],[230,230,370,370]].map(([x1,y1,x2,y2],i) => (
+                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(222,106,57,0.15)" strokeWidth={1.5} strokeDasharray="6 4" fill="none" style={{ animation:`ldDash 2s linear infinite`, animationDelay:`${i*0.4}s` }} />
+                  ))}
                 </svg>
-              </div>
-              {[
-                { label:'GPT-4',  pos:{ top:55,   left:55 }, color:'#34d399', bg:'radial-gradient(#0d2018,#051210)', bd:'rgba(52,211,153,0.3)' },
-                { label:'Claude', pos:{ top:55,   right:55  }, color:'#E57373', bg:'radial-gradient(#1a0e0c,#100503)', bd:'rgba(229,115,115,0.3)' },
-                { label:'Gemini', pos:{ top:335,  left:55   }, color:'#64a0ff', bg:'radial-gradient(#0d1220,#080b18)', bd:'rgba(100,160,255,0.3)' },
-                { label:'Mistral',pos:{ top:335,  right:55  }, color:'#ffbe32', bg:'radial-gradient(#1a1005,#0d0803)', bd:'rgba(255,190,50,0.3)' },
-              ].map(n => (
-                <div key={n.label} style={{ position:'absolute', ...n.pos, display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-                  <div style={{ width:70, height:70, borderRadius:'50%', background:n.bg, border:`2px solid ${n.bd}`, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s', boxShadow:`0 0 20px ${n.bd}` }}
-                    onMouseEnter={e => { e.currentTarget.style.transform='scale(1.12)'; e.currentTarget.style.boxShadow=`0 0 30px ${n.color}60`; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=`0 0 20px ${n.bd}`; }}>
-                    <div style={{ width:38, height:38, borderRadius:'50%', background:n.color, boxShadow:`0 0 12px ${n.color}80` }} />
-                  </div>
-                  <span style={{ fontFamily:"'Space Mono',monospace", fontSize:11, fontWeight:700, color:TEXT, letterSpacing:'0.05em' }}>{n.label}</span>
+                <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:90, height:90, background:`radial-gradient(circle at 40% 40%,rgba(222,106,57,0.15),rgba(5,5,5,0.9))`, border:`2px solid rgba(222,106,57,0.25)`, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, animation:'ldPulse 3s ease-in-out infinite' }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#DE6A39" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 4px rgba(222,106,57,0.15))' }}>
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
                 </div>
-              ))}
+                {[
+                  { label:'GPT-4',  pos:{ top:55,   left:55 }, color:'#34d399', bg:'radial-gradient(#0d2018,#051210)', bd:'rgba(52,211,153,0.3)' },
+                  { label:'Claude', pos:{ top:55,   right:55  }, color:'#E57373', bg:'radial-gradient(#1a0e0c,#100503)', bd:'rgba(229,115,115,0.3)' },
+                  { label:'Gemini', pos:{ top:335,  left:55   }, color:'#64a0ff', bg:'radial-gradient(#0d1220,#080b18)', bd:'rgba(100,160,255,0.3)' },
+                  { label:'Mistral',pos:{ top:335,  right:55  }, color:'#ffbe32', bg:'radial-gradient(#1a1005,#0d0803)', bd:'rgba(255,190,50,0.3)' },
+                ].map(n => (
+                  <div key={n.label} style={{ position:'absolute', ...n.pos, display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+                    <div style={{ width:70, height:70, borderRadius:'50%', background:n.bg, border:`2px solid ${n.bd}`, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s', boxShadow:`0 0 20px ${n.bd}` }}
+                      onMouseEnter={e => { e.currentTarget.style.transform='scale(1.12)'; e.currentTarget.style.boxShadow=`0 0 30px ${n.color}60`; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=`0 0 20px ${n.bd}`; }}>
+                      <div style={{ width:38, height:38, borderRadius:'50%', background:n.color, boxShadow:`0 0 12px ${n.color}80` }} />
+                    </div>
+                    <span style={{ fontFamily:"'Space Mono',monospace", fontSize:11, fontWeight:700, color:TEXT, letterSpacing:'0.05em' }}>{n.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>
