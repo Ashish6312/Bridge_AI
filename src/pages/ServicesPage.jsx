@@ -483,40 +483,44 @@ const ServicesPage = () => {
                 <>You are about to upgrade to the <strong>{confirmModal.planKey?.toUpperCase()}</strong> plan for <strong style={{ color: 'var(--text-main)' }}>${confirmModal.amount}/mo</strong>.</>
               )}
               <br /><br />
-              Since our payment gateway integration is currently in progress, please contact our support team to activate your plan manually. Alternatively, you can use the sandbox simulation to test the Pro features instantly.
+              {confirmModal.amount === 0 ? (
+                <>This will update your plan instantly.</>
+              ) : (
+                <>Since our payment gateway integration is currently in progress, please contact our support team to activate your plan manually.</>
+              )}
             </p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
-              {/* Option 1: Live upgrade request via email */}
-              <a
-                href={`https://mail.google.com/mail/?view=cm&fs=1&to=business@entrext.in&su=${encodeURIComponent(`[Upgrade Request] ${confirmModal.planKey?.toUpperCase()} Plan`)}&body=${encodeURIComponent(
-                  `Hi BridgeAI Team,\n\nI would like to upgrade my account to the ${confirmModal.planKey?.toUpperCase()} plan ($${confirmModal.amount}/month).\n\nMy Registered Email: ${user?.email || ''}\n\nPlease let me know how to complete the payment.\n\nThank you!`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary"
-                style={{
-                  padding: '14px', borderRadius: '12px', fontWeight: '700',
-                  textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  fontSize: '0.92rem'
-                }}
-              >
-                <Mail size={16} /> Contact Support to Upgrade
-              </a>
-
-              {/* Option 2: Instant Sandbox Simulation */}
-              <button
-                className="btn-secondary"
-                onClick={handlePurchaseConfirm}
-                style={{
-                  padding: '14px', borderRadius: '12px', fontWeight: '700',
-                  background: 'rgba(222, 106, 57, 0.05)', color: 'var(--primary)',
-                  border: '1px solid rgba(222, 106, 57, 0.2)', fontSize: '0.92rem',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-                }}
-              >
-                <Zap size={14} fill="currentColor" /> Instant Sandbox Simulation (Testing)
-              </button>
+              {confirmModal.amount > 0 ? (
+                /* Paid Plan: Support Request */
+                <a
+                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=business@entrext.in&su=${encodeURIComponent(`[Upgrade Request] ${confirmModal.planKey?.toUpperCase()} Plan`)}&body=${encodeURIComponent(
+                    `Hi BridgeAI Team,\n\nI would like to upgrade my account to the ${confirmModal.planKey?.toUpperCase()} plan ($${confirmModal.amount}/month).\n\nMy Registered Email: ${user?.email || ''}\n\nPlease let me know how to complete the payment.\n\nThank you!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary"
+                  style={{
+                    padding: '14px', borderRadius: '12px', fontWeight: '700',
+                    textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    fontSize: '0.92rem'
+                  }}
+                >
+                  <Mail size={16} /> Contact Support to Upgrade
+                </a>
+              ) : (
+                /* Free Plan: Direct Confirmation */
+                <button
+                  className="btn-primary"
+                  onClick={handlePurchaseConfirm}
+                  style={{
+                    padding: '14px', borderRadius: '12px', fontWeight: '700',
+                    fontSize: '0.92rem'
+                  }}
+                >
+                  Confirm Downgrade
+                </button>
+              )}
             </div>
 
             <button
