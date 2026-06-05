@@ -26,12 +26,12 @@ const SECTIONS = [
 ];
 
 const FEATURES = [
-  { icon: <Layers size={24} />, color: '#3b82f6', tag: 'Sovereign Memory', title: 'Unified Project Memory', desc: 'Aggregate chats, code snippets, and rules from ChatGPT, Claude, and Gemini into a single trusted source.' },
-  { icon: <BrainCircuit size={24} />, color: '#ec4899', tag: 'Decision Register', title: 'Decision Ledger', desc: 'Track accepted decisions, rejected alternatives, and unresolved technical questions with full context.' },
-  { icon: <Zap size={24} />, color: '#eab308', tag: 'Productivity', title: 'Save Hours Every Week', desc: 'Eliminate manual copy-pasting, re-explaining architecture, and context loss during model handoffs.' },
-  { icon: <Lock size={24} />, color: '#f97316', tag: 'Security', title: 'Private & Local-First', desc: 'Preserve sensitive business rules and architectural context locally or self-host your memory infrastructure.' },
-  { icon: <Globe size={24} />, color: '#06b6d4', tag: 'Universal Integration', title: 'Human-AI-Agent Ecosystem', desc: 'Works across all popular AI platforms, CLI systems, IDE indexes, and autonomous agent workflows.' },
-  { icon: <FolderArchive size={24} />, color: '#f59e0b', tag: 'Onboarding', title: 'Accelerated Onboarding', desc: 'Instantly transfer project memory and reasoning logs to onboard new developers or AI coding agents.' },
+  { icon: <Layers size={24} />, color: '#3b82f6', tag: 'All-In-One Space', title: 'Unified Project Space', desc: 'Bring chats, code, and project rules from ChatGPT, Claude, and Gemini into a single place.' },
+  { icon: <BrainCircuit size={24} />, color: '#ec4899', tag: 'Decision History', title: 'Decision Log', desc: 'Keep track of chosen solutions, rejected options, and open questions with all details saved.' },
+  { icon: <Zap size={24} />, color: '#eab308', tag: 'Speed', title: 'Save Hours Every Week', desc: 'Stop copying and pasting or explaining your code rules repeatedly when switching AI tools.' },
+  { icon: <Lock size={24} />, color: '#f97316', tag: 'Safe & Secure', title: 'Private & Local-First', desc: 'Keep your sensitive project rules and code details private and stored safely on your own machine.' },
+  { icon: <Globe size={24} />, color: '#06b6d4', tag: 'Universal', title: 'Works Everywhere', desc: 'Works with all popular AI tools, command line interfaces, code editors, and AI agents.' },
+  { icon: <FolderArchive size={24} />, color: '#f59e0b', tag: 'Fast Start', title: 'Easy Onboarding', desc: 'Share your project history and reasoning logs instantly to get new developers or AI tools up to speed.' },
 ];
 
 const REVIEWS = [
@@ -244,8 +244,8 @@ const LandingPage = () => {
             Now in v2.0 · Enterprise Edition
           </motion.div>
 
-          <h1 style={{ fontSize:'clamp(32px,5vw,72px)', fontWeight:800, lineHeight:1.15, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
-            Stop Fragmenting<br />
+          <h1 style={{ fontSize:'clamp(32px,5vw,72px)', fontWeight:800, lineHeight:1.25, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
+            Stop Scattering<br />
             <span style={{ 
               background:`linear-gradient(135deg,#FF6B2C 0%,#FF5C5C 50%,#7C3AED 100%)`, 
               WebkitBackgroundClip:'text', 
@@ -253,12 +253,12 @@ const LandingPage = () => {
               backgroundClip:'text',
               WebkitBoxDecorationBreak: 'clone',
               boxDecorationBreak: 'clone'
-            }}>Your Project Memory</span><br />
+            }}>Your Project Details</span><br />
             Across AI Chats.
           </h1>
 
           <p style={{ fontSize:15, color:MUTED, lineHeight:1.85, fontWeight:500, opacity:0.85, maxWidth:450, marginBottom:'1.5rem' }}>
-            Knowledge is scattered across ChatGPT, Claude, Gemini, docs, Slack, and code. BridgeAI is the shared knowledge layer that aggregates, tracks decisions, and serves as an organizational memory for humans, AI, and agents.
+            Don't lose your work when switching between ChatGPT, Claude, and Gemini. BridgeAI saves your project details, chats, and decisions in one shared space for you and your team.
           </p>
 
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:'1.5rem' }}>
@@ -383,7 +383,7 @@ const LandingPage = () => {
         <div style={{ maxWidth: 1100, margin: '0 auto 6rem', position: 'relative' }}>
           <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
             <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:ACC_RED, fontWeight:700, marginBottom:'0.75rem' }}>The Challenge</div>
-            <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT }}>Knowledge Fragmentation is the Real Enemy.<br />AI is Just Making it Visible.</h2>
+            <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.25, color:TEXT }}>Scattered Info is the Real Enemy.<br />Switching AI Tools Just Makes it Worse.</h2>
           </div>
 
           {/* Animated Browser Mockup */}
@@ -514,8 +514,8 @@ const LandingPage = () => {
         </div>
 
         <div style={{ marginBottom:'3rem' }}>
-          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:P, fontWeight:700, marginBottom:'0.75rem' }}>The Shared Knowledge Layer</div>
-          <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT }}>Aggregate Chats, Rationale,<br />and Architecture Dynamically.</h2>
+          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:P, fontWeight:700, marginBottom:'0.75rem' }}>The Shared Project Space</div>
+          <h2 style={{ fontSize:'clamp(28px,3.5vw,48px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.25, color:TEXT }}>Bring Chats, Decisions,<br />and Code Together Instantly.</h2>
         </div>
         <div className="grid-responsive-3" style={{ gap:'24px' }}>
           {FEATURES.map((f,i) => (
@@ -772,12 +772,12 @@ const LandingPage = () => {
         {/* Center CTA */}
         <div style={{ position:'relative', zIndex:5, textAlign:'center', maxWidth:560, padding:'0 2rem' }}>
           <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}>
-            <h2 style={{ fontSize:'clamp(24px,5vw,58px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.15, color:TEXT, marginBottom:'1.25rem' }}>
-              The Future of Software Development Isn't Documenting Later.<br />
-              <span style={{ background:`linear-gradient(135deg,${P},${PURP})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>It's Preserving Decisions Now.</span>
+            <h2 style={{ fontSize:'clamp(24px,5vw,58px)', fontWeight:800, letterSpacing:'-0.02em', lineHeight:1.25, color:TEXT, marginBottom:'1.25rem' }}>
+              The Future of Building Software Isn't Writing Docs Later.<br />
+              <span style={{ background:`linear-gradient(135deg,${P},${PURP})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>It's Saving Your Decisions Now.</span>
             </h2>
             <p style={{ color:MUTED, fontSize:15, lineHeight:1.85, fontWeight:500, opacity:0.8, marginBottom:'2rem' }}>
-              Bridge the gap between developers, AI tools, and autonomous coding agents with a unified memory layer.
+              Keep developers and AI tools synced with a single, shared project history.
             </p>
             <div style={{ display:'flex', gap:12, justifyContent: 'center', flexWrap:'wrap' }}>
               <Link to="/dashboard"

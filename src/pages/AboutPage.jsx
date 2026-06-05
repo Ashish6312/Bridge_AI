@@ -51,7 +51,7 @@ const AboutPage = () => {
                 <Globe size={14} color="var(--primary)" />
                 <span style={{ fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)' }}>About BridgeAI</span>
               </div>
-              <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.2rem)', fontWeight: '900', color: 'var(--text-main)', letterSpacing: '-0.05em', marginBottom: '32px', lineHeight: 1.1 }}>
+              <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.2rem)', fontWeight: '900', color: 'var(--text-main)', letterSpacing: '-0.05em', marginBottom: '32px', lineHeight: 1.3 }}>
                 Preserving Project <br /> <span style={{ color: 'var(--primary)' }}>Memory.</span>
               </h1>
               <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', lineHeight: '1.7', marginBottom: '48px', maxWidth: '650px' }}>

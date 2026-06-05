@@ -526,7 +526,7 @@ app.post('/api/admin/notifications/send', verifyAdmin, async (req, res) => {
 // ─── ADMIN SYSTEM ───────────────────────────────────────────
 
 // Middleware to verify admin token
-const verifyAdmin = async (req, res, next) => {
+async function verifyAdmin(req, res, next) {
   try {
     const token = req.headers['x-admin-token'];
     if (!token) {
