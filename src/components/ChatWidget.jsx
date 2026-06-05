@@ -169,7 +169,7 @@ export default function ChatWidget() {
             </div>
 
             {/* Body */}
-            <div style={{ flex: 1, padding: '20px', background: 'rgba(5,5,5,0.6)', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 200, maxHeight: 260, overflowY: 'auto' }}>
+            <div data-lenis-prevent style={{ flex: 1, padding: '20px', background: 'rgba(5,5,5,0.6)', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 200, maxHeight: 260, overflowY: 'auto' }}>
               {messages.map((msg) => (
                 <div key={msg.id} style={{
                   background: msg.sender === 'bot' ? 'rgba(222,106,57,0.06)' : 'rgba(124,58,237,0.08)',

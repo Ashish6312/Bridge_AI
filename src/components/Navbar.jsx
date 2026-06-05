@@ -285,7 +285,7 @@ const Navbar = () => {
               </div>
 
               {/* Notifications List */}
-              <div style={{
+              <div data-lenis-prevent style={{
                 overflowY: 'auto',
                 flex: 1,
                 maxHeight: '380px'

@@ -1943,7 +1943,7 @@ const ProjectWorkspace = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#10b981', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px', marginBottom: '12px' }}>
                   <CheckCircle2 size={12} /> DECISIONS MADE ({acceptedDecisions.length})
                 </div>
-                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                <div data-lenis-prevent className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
                   {acceptedDecisions.map(d => (
                     <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(16, 185, 129, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
                       <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
@@ -1983,7 +1983,7 @@ const ProjectWorkspace = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#ef4444', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px', marginBottom: '12px' }}>
                   <X size={12} /> REJECTED OPTIONS ({rejectedDecisions.length})
                 </div>
-                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                <div data-lenis-prevent className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
                   {rejectedDecisions.map(d => (
                     <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
                       <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
@@ -2023,7 +2023,7 @@ const ProjectWorkspace = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#f59e0b', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px', marginBottom: '12px' }}>
                   <HelpCircleIcon size={12} /> OPEN QUESTIONS ({openQuestions.length})
                 </div>
-                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                <div data-lenis-prevent className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
                   {openQuestions.map(d => (
                     <div key={d.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(245, 158, 11, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
                       <button onClick={() => deleteDecision(d.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
@@ -2145,7 +2145,7 @@ const ProjectWorkspace = ({
                   </button>
                 </div>
 
-                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingRight: '8px' }}>
+                <div data-lenis-prevent className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingRight: '8px' }}>
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)' }}>
                       <strong>Rationale:</strong> {elaboratingDecision.rationale || 'None provided'}
@@ -2297,7 +2297,7 @@ const ProjectWorkspace = ({
                 </div>
 
                 {/* Sessions list */}
-                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 10px 14px 10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div data-lenis-prevent className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 10px 14px 10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'rgba(255,255,255,0.3)', padding: '0 10px 6px 10px', letterSpacing: '0.5px' }}>
                     RECENTS
                   </div>
@@ -3067,12 +3067,13 @@ const Dashboard = () => {
             </div>
 
             {/* Navigation Engine */}
-            <div style={{ 
+            <div data-lenis-prevent style={{ 
               padding: '20px', 
               flex: 1, 
               overflowY: 'auto',
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              minHeight: 0
             }}>
               
               {/* Group: Vault Ops */}
@@ -3248,7 +3249,7 @@ const Dashboard = () => {
         </motion.aside>
 
         {/* Main Content */}
-        <main className="dashboard-main" style={{ flex: 1, minWidth: 0 }}>
+        <main data-lenis-prevent className="dashboard-main" style={{ flex: 1, minWidth: 0 }}>
           {activeTab === 'saved' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {activeProject ? (

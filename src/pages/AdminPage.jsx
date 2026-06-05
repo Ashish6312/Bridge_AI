@@ -829,7 +829,7 @@ const AdminPage = () => {
               </div>
 
               {/* Tickets List */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: 'calc(100vh - 280px)', overflowY: 'auto', paddingRight: '4px' }}>
+              <div data-lenis-prevent style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: 'calc(100vh - 280px)', overflowY: 'auto', paddingRight: '4px' }}>
                 {filteredFeedbacks.length === 0 ? (
                   <div className="glass-card" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(13,13,13,0.3)', borderRadius: '16px' }}>
                     No consultation tickets found.
@@ -1753,7 +1753,7 @@ const AdminPage = () => {
               </div>
 
               {/* Scrollable details container */}
-              <div style={{ flex: 1, overflowY: 'scroll', display: 'flex', flexDirection: 'column', gap: '28px', paddingRight: '8px', minHeight: 0 }}>
+              <div data-lenis-prevent style={{ flex: 1, overflowY: 'scroll', display: 'flex', flexDirection: 'column', gap: '28px', paddingRight: '8px', minHeight: 0 }}>
                 
                 {/* Profile Card & KPIs */}
                 <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px', alignItems: 'stretch' }}>
