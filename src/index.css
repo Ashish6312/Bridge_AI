@@ -156,8 +156,10 @@
   --footer-text: rgba(17, 24, 39, 0.6);
 }
 
-html {
-  scroll-behavior: smooth !important;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* =========================================

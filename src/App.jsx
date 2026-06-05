@@ -9,6 +9,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import GlobalBackground from './components/GlobalBackground';
 import ChatWidget from './components/ChatWidget';
+import SmoothScroll from './components/SmoothScroll';
 
 // Lazy Loaded Pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -43,7 +44,7 @@ const BridgeRoutes = () => {
   return (
     <AnimatePresence mode="wait" onExitComplete={() => {
       if (!window.location.hash) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo(0, 0);
       }
     }}>
       <Routes location={location} key={location.pathname}>
@@ -117,15 +118,7 @@ function App() {
     }
   }, [location]);
 
-  // Smooth scroll to top on page path changes
-  React.useEffect(() => {
-    if (!location.hash) {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    }
-  }, [location.pathname]);
+  // SmoothScroll component manages instant snaps on route navigation
 
   // Real-Time Extension Sync (Global)
   React.useEffect(() => {
@@ -171,7 +164,9 @@ function App() {
         {!isAdminPage && <Navbar />}
         <main style={{ flex: 1, position: 'relative' }}>
           <Suspense fallback={<PageLoader />}>
-            <BridgeRoutes />
+            <SmoothScroll>
+              <BridgeRoutes />
+            </SmoothScroll>
           </Suspense>
         </main>
         {!isAdminPage && location.pathname !== '/dashboard' && <Footer />}
