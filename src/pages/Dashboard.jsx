@@ -2443,15 +2443,22 @@ const Dashboard = () => {
 
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
   const [promptModal, setPromptModal] = useState({ isOpen: false });
-  const [localProjects, setLocalProjects] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('bridge_local_projects') || '[]');
-    } catch (e) { return []; }
-  });
+  const [localProjects, setLocalProjects] = useState([]);
 
+  // Load user-specific local projects whenever the current user changes
   useEffect(() => {
-    localStorage.setItem('bridge_local_projects', JSON.stringify(localProjects));
-  }, [localProjects]);
+    if (currentUserEmail) {
+      try {
+        const stored = JSON.parse(localStorage.getItem(`bridge_local_projects_${currentUserEmail}`) || '[]');
+        setLocalProjects(stored);
+      } catch (e) {
+        setLocalProjects([]);
+      }
+    } else {
+      setLocalProjects([]);
+    }
+  }, [currentUserEmail]);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -2544,9 +2551,10 @@ const Dashboard = () => {
         ]);
       };
 
-      const [bridgesRes, statusRes] = await Promise.all([
+      const [bridgesRes, statusRes, metadataRes] = await Promise.all([
         fetchWithTimeout(`${API_BASE}/api/bridges?email=${email}`, { headers: { 'Cache-Control': 'no-cache' } }),
-        fetchWithTimeout(`${API_BASE}/api/user/status?email=${email}`).catch(() => null)
+        fetchWithTimeout(`${API_BASE}/api/user/status?email=${email}`).catch(() => null),
+        fetchWithTimeout(`${API_BASE}/api/user/metadata?email=${email}`).catch(() => null)
       ]);
 
       const bridgesData = await bridgesRes.json();
@@ -2559,9 +2567,26 @@ const Dashboard = () => {
         const uniqueProjectIds = [...new Set(localBridges.map(b => b.project_id).filter(Boolean))];
         const serverProjects = uniqueProjectIds.map(id => ({ id, name: id }));
         
+        let dbProjects = [];
+        if (metadataRes) {
+          const metadataData = await metadataRes.json().catch(() => null);
+          if (metadataData && metadataData.success) {
+            dbProjects = metadataData.projects || [];
+            localStorage.setItem(`bridge_local_projects_${email}`, JSON.stringify(dbProjects));
+            setLocalProjects(dbProjects);
+          }
+        }
+        
         // Merge with local projects, avoiding duplicates
         const allProjects = [...serverProjects];
-        localProjects.forEach(lp => {
+        const localProjectsToMerge = dbProjects.length > 0 ? dbProjects : (() => {
+          try {
+            return JSON.parse(localStorage.getItem(`bridge_local_projects_${email}`) || '[]');
+          } catch (e) {
+            return [];
+          }
+        })();
+        localProjectsToMerge.forEach(lp => {
           if (!allProjects.find(ap => ap.id === lp.id || ap.name === lp.name)) {
             allProjects.push(lp);
           }
@@ -2703,7 +2728,19 @@ const Dashboard = () => {
   const handleCreateProject = (name) => {
     if (!name) return;
     const newProject = { id: name, name, created_at: new Date().toISOString() };
-    setLocalProjects(prev => [...prev, newProject]);
+    setLocalProjects(prev => {
+      const updated = [...prev, newProject];
+      if (currentUserEmail) {
+        localStorage.setItem(`bridge_local_projects_${currentUserEmail}`, JSON.stringify(updated));
+        // Persist workspaces to database
+        fetch(`${API_BASE}/api/user/projects`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentUserEmail, projects: updated })
+        }).catch(err => console.error('Failed to persist workspaces to database:', err));
+      }
+      return updated;
+    });
     setProjects(prev => {
       if (prev.find(p => p.name === name)) return prev;
       return [...prev, newProject];

@@ -245,7 +245,10 @@ const ProfilePage = () => {
   const [realActivity, setRealActivity]   = useState([]);
   const [bridgesList, setBridgesList]     = useState([]);
   const [devices, setDevices]             = useState(() => {
-    const stored = localStorage.getItem('bridge_devices');
+    const s = localStorage.getItem('bridge_user');
+    const u = s ? JSON.parse(s) : null;
+    const email = u?.email || '';
+    const stored = email ? localStorage.getItem(`bridge_devices_${email}`) : null;
     if (stored) {
       try { return JSON.parse(stored); } catch (e) {}
     }
@@ -255,11 +258,16 @@ const ProfilePage = () => {
       { name: currentName.includes('macOS') ? 'Chrome — Windows' : 'Firefox — macOS',   icon: 'monitor', last: '2 days ago',   current: false },
       { name: currentName.includes('Android') ? 'Mobile — iOS' : 'Mobile — Android',  icon: 'mobile', last: '5 days ago',current: false },
     ];
-    localStorage.setItem('bridge_devices', JSON.stringify(defaultList));
+    if (email) {
+      localStorage.setItem(`bridge_devices_${email}`, JSON.stringify(defaultList));
+    }
     return defaultList;
   });
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(() => {
-    return localStorage.getItem('bridge_2fa_enabled') === 'true';
+    const s = localStorage.getItem('bridge_user');
+    const u = s ? JSON.parse(s) : null;
+    const email = u?.email || '';
+    return email ? localStorage.getItem(`bridge_2fa_enabled_${email}`) === 'true' : false;
   });
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [twoFaCode, setTwoFaCode] = useState('');
@@ -294,6 +302,30 @@ const ProfilePage = () => {
     }
   }, [toast.show]);
 
+  // Sync devices list and 2FA status from database on mount/user email change
+  useEffect(() => {
+    if (!user?.email) return;
+    const fetchMetadata = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/user/metadata?email=${user.email}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            if (data.devices && data.devices.length > 0) {
+              setDevices(data.devices);
+              localStorage.setItem(`bridge_devices_${user.email}`, JSON.stringify(data.devices));
+            }
+            setTwoFactorEnabled(data.two_factor_enabled);
+            localStorage.setItem(`bridge_2fa_enabled_${user.email}`, String(data.two_factor_enabled));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load user metadata from DB:", err);
+      }
+    };
+    fetchMetadata();
+  }, [user?.email]);
+
   const handleSignOut = () => {
     localStorage.removeItem('bridge_user');
     window.dispatchEvent(new Event('storage'));
@@ -307,7 +339,15 @@ const ProfilePage = () => {
   const handleLogoutAllDevices = () => {
     setDevices(prev => {
       const updated = prev.filter(d => d.current);
-      localStorage.setItem('bridge_devices', JSON.stringify(updated));
+      if (user?.email) {
+        localStorage.setItem(`bridge_devices_${user.email}`, JSON.stringify(updated));
+        // Persist to database
+        fetch(`${API_BASE}/api/user/devices`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: user.email, devices: updated })
+        }).catch(err => console.error("Failed to sync devices to DB:", err));
+      }
       return updated;
     });
     showToast('Terminated all active secondary sessions successfully.', 'success');
@@ -316,7 +356,15 @@ const ProfilePage = () => {
   const handleRevokeDevice = (deviceName) => {
     setDevices(prev => {
       const updated = prev.filter(d => d.name !== deviceName);
-      localStorage.setItem('bridge_devices', JSON.stringify(updated));
+      if (user?.email) {
+        localStorage.setItem(`bridge_devices_${user.email}`, JSON.stringify(updated));
+        // Persist to database
+        fetch(`${API_BASE}/api/user/devices`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: user.email, devices: updated })
+        }).catch(err => console.error("Failed to sync devices to DB:", err));
+      }
       return updated;
     });
     showToast(`Session revoked for ${deviceName} successfully.`, 'success');
@@ -356,7 +404,15 @@ const ProfilePage = () => {
     }
 
     if (verified || twoFaCode === '123456') {
-      localStorage.setItem('bridge_2fa_enabled', 'true');
+      if (user?.email) {
+        localStorage.setItem(`bridge_2fa_enabled_${user.email}`, 'true');
+        // Persist to database
+        fetch(`${API_BASE}/api/user/2fa`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: user.email, two_factor_enabled: true })
+        }).catch(err => console.error("Failed to sync 2FA status to DB:", err));
+      }
       setTwoFactorEnabled(true);
       setShow2FAModal(false);
       showToast("Two-Factor Authentication activated successfully.", "success");
@@ -1715,8 +1771,16 @@ Thank you for using Bridge AI!`;
                 <button onClick={()=>setShowDisable2FAConfirm(false)} className="pp-ghost-btn">Cancel</button>
                 <button onClick={() => {
                   setShowDisable2FAConfirm(false);
-                  localStorage.setItem('bridge_2fa_enabled', 'false');
-                  localStorage.removeItem(`bridge_2fa_secret_${user?.email}`);
+                  if (user?.email) {
+                    localStorage.setItem(`bridge_2fa_enabled_${user.email}`, 'false');
+                    localStorage.removeItem(`bridge_2fa_secret_${user.email}`);
+                    // Persist to database
+                    fetch(`${API_BASE}/api/user/2fa`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: user.email, two_factor_enabled: false })
+                    }).catch(err => console.error("Failed to sync 2FA status to DB:", err));
+                  }
                   setTwoFactorEnabled(false);
                   showToast("Two-Factor Authentication disabled successfully.", "warning");
                 }} className="pp-danger-btn">Disable 2FA</button>

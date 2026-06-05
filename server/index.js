@@ -230,6 +230,10 @@ const initDB = async () => {
     await pool.query("ALTER TABLE project_contexts ADD COLUMN IF NOT EXISTS problem_statement TEXT");
     // Trial column — stores when the 7-day Pro trial expires (NULL = not on trial)
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP');
+    // User metadata columns for workspaces, session devices, and 2FA
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS projects JSONB DEFAULT \'[]\'');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS devices JSONB DEFAULT \'[]\'');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE');
     // Deduplicate existing project decisions
     await pool.query(`
       DELETE FROM project_decisions 
@@ -869,22 +873,85 @@ app.patch('/api/user/profile', async (req, res) => {
 });
 
 app.delete('/api/user/data', async (req, res) => {
+  const client = await pool.connect();
   try {
     const { email } = req.query;
     if (!email) return res.status(400).json({ error: "Email required" });
     
-    // Delete all bridges for the user
-    await pool.query('DELETE FROM bridges WHERE user_email = $1', [email]);
+    await client.query('BEGIN');
     
-    // Reset settings
-    await pool.query(
-      `UPDATE users 
-       SET settings = '{"notifications":true,"autoBridge":false,"secureMode":true}' 
-       WHERE email = $1`,
-      [email]
-    );
+    // Clean up all related tables
+    await client.query('DELETE FROM bridges WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM invoices WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM project_contexts WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM project_decisions WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM project_chats WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM subscribers WHERE email = $1', [email]);
     
-    res.json({ success: true, message: "All user context and settings deleted successfully." });
+    // Delete the user record itself
+    const result = await client.query('DELETE FROM users WHERE email = $1', [email]);
+    
+    await client.query('COMMIT');
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    res.json({ success: true, message: "All user context, settings, and account data deleted successfully." });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+app.get('/api/user/metadata', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    const result = await pool.query('SELECT projects, devices, two_factor_enabled FROM users WHERE email = $1', [email]);
+    if (result.rowCount === 0) return res.status(404).json({ error: "User not found" });
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      projects: row.projects || [],
+      devices: row.devices || [],
+      two_factor_enabled: !!row.two_factor_enabled
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/user/projects', async (req, res) => {
+  try {
+    const { email, projects } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    await pool.query('UPDATE users SET projects = $1 WHERE email = $2', [JSON.stringify(projects), email]);
+    res.json({ success: true, message: "Workspaces updated in database." });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/user/devices', async (req, res) => {
+  try {
+    const { email, devices } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    await pool.query('UPDATE users SET devices = $1 WHERE email = $2', [JSON.stringify(devices), email]);
+    res.json({ success: true, message: "Devices updated in database." });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/user/2fa', async (req, res) => {
+  try {
+    const { email, two_factor_enabled } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    await pool.query('UPDATE users SET two_factor_enabled = $1 WHERE email = $2', [two_factor_enabled, email]);
+    res.json({ success: true, message: "2FA status updated in database." });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

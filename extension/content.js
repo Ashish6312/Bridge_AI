@@ -538,15 +538,36 @@ async function handleAutoPaste() {
 
       if (target.isContentEditable) {
         target.focus();
-        // More robust insertion for ContentEditable (preserves newlines)
+        
+        // Split text into lines
         const lines = fullText.split('\n');
-        lines.forEach((line, i) => {
-          document.execCommand('insertText', false, line);
-          if (i < lines.length - 1) {
-            // Try to force a real newline in the editor's model
-            document.execCommand('insertParagraph', false);
-          }
-        });
+        
+        // If it's short (under 20 lines), insert synchronously for speed
+        if (lines.length <= 20) {
+          lines.forEach((line, i) => {
+            document.execCommand('insertText', false, line);
+            if (i < lines.length - 1) {
+              document.execCommand('insertParagraph', false);
+            }
+          });
+        } else {
+          // For large payloads, insert asynchronously in small chunks to prevent browser hangs/freezes
+          (async () => {
+            const chunkSize = 15; // Process 15 lines per batch
+            for (let i = 0; i < lines.length; i += chunkSize) {
+              const chunk = lines.slice(i, i + chunkSize);
+              chunk.forEach((line, idx) => {
+                const absoluteIndex = i + idx;
+                document.execCommand('insertText', false, line);
+                if (absoluteIndex < lines.length - 1) {
+                  document.execCommand('insertParagraph', false);
+                }
+              });
+              // Yield control back to the browser's main thread to allow rendering and handle UI interactions
+              await new Promise(resolve => setTimeout(resolve, 10));
+            }
+          })();
+        }
       } else {
         target.value = fullText;
         target.dispatchEvent(new Event('input', { bubbles: true }));
