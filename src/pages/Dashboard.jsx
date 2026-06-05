@@ -2432,8 +2432,10 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toast, setToast] = useState(null);
-  const [stats, setStats] = useState({ totalBridges: 0, totalTokens: 0, plan: 'free', usageCount: 0, trialDaysLeft: null });
+  const [stats, setStats] = useState({ totalBridges: 0, totalTokens: 0, plan: 'free', usageCount: 0, trialDaysLeft: null, trialEndsAt: null });
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [trialTimeLeft, setTrialTimeLeft] = useState('');
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
   // Reactive user email - updates when user logs in/out so child components re-fetch data
   const [currentUserEmail, setCurrentUserEmail] = useState(() => {
     try { return JSON.parse(localStorage.getItem('bridge_user') || '{}').email || ''; } catch(e) { return ''; }
@@ -2460,6 +2462,36 @@ const Dashboard = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Live Countdown Timer for Pro Trial
+  useEffect(() => {
+    if (!stats.trialEndsAt) {
+      setTrialTimeLeft('');
+      return;
+    }
+    const updateTimer = () => {
+      const msLeft = new Date(stats.trialEndsAt) - new Date();
+      if (msLeft <= 0) {
+        setTrialTimeLeft('Expired');
+        // Force reload status to trigger downgrade / popup
+        loadData(true);
+      } else {
+        const days = Math.floor(msLeft / 86400000);
+        const hours = Math.floor((msLeft % 86400000) / 3600000);
+        const minutes = Math.floor((msLeft % 3600000) / 60000);
+        const seconds = Math.floor((msLeft % 60000) / 1000);
+        
+        let timerStr = '';
+        if (days > 0) timerStr += `${days}d `;
+        timerStr += `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+        setTrialTimeLeft(timerStr);
+      }
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [stats.trialEndsAt, loadData]);
 
   const [hubStatus, setHubStatus] = useState('connecting'); // 'online' | 'offline'
   const retryCountRef = React.useRef(0);
@@ -2588,13 +2620,20 @@ const Dashboard = () => {
             ...prev, 
             plan: statusData.plan, 
             usageCount: statusData.usage,
-            trialDaysLeft: statusData.trial_days_left ?? null
+            trialDaysLeft: statusData.trial_days_left ?? null,
+            trialEndsAt: statusData.trial_ends_at ?? null
           }));
+          
+          // Show expired popup modal if plan downgraded to free, and user hasn't dismissed it in the current session
+          if (statusData.plan === 'free' && currentUserEmail && !sessionStorage.getItem('bridge_trial_expired_dismissed')) {
+            setShowExpiredModal(true);
+          }
+
           // Sync plan into localStorage if it changed (e.g. trial expired)
           try {
             const storedUser = JSON.parse(localStorage.getItem('bridge_user') || '{}');
-            if (storedUser.email && storedUser.plan !== statusData.plan) {
-              const updated = { ...storedUser, plan: statusData.plan };
+            if (storedUser.email && (storedUser.plan !== statusData.plan || storedUser.trial_ends_at !== statusData.trial_ends_at)) {
+              const updated = { ...storedUser, plan: statusData.plan, trial_ends_at: statusData.trial_ends_at || null };
               localStorage.setItem('bridge_user', JSON.stringify(updated));
             }
           } catch (e) {}
@@ -2854,14 +2893,14 @@ const Dashboard = () => {
               <div style={{ marginTop: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingLeft: '4px' }}>
                   <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px' }}>STORAGE LIMIT</div>
-                  <span style={{ fontSize: '0.65rem', fontWeight: '700', color: stats.trialDaysLeft > 0 ? '#f59e0b' : 'var(--primary)' }}>
-                    {stats.trialDaysLeft > 0 ? 'TRIAL' : (stats.plan || 'FREE').toUpperCase()}
+                  <span style={{ fontSize: '0.65rem', fontWeight: '700', color: (trialTimeLeft && trialTimeLeft !== 'Expired') ? '#f59e0b' : 'var(--primary)' }}>
+                    {(trialTimeLeft && trialTimeLeft !== 'Expired') ? 'TRIAL' : (stats.plan || 'FREE').toUpperCase()}
                   </span>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
 
                   {/* ── Active Pro Trial ── */}
-                  {stats.trialDaysLeft > 0 && (
+                  {trialTimeLeft && trialTimeLeft !== 'Expired' && (
                     <>
                       {/* Countdown pill */}
                       <div style={{
@@ -2879,8 +2918,8 @@ const Dashboard = () => {
                           <div style={{ fontSize: '0.6rem', fontWeight: '800', color: '#f59e0b', letterSpacing: '0.5px' }}>
                             PRO TRIAL ACTIVE
                           </div>
-                          <div style={{ fontSize: '0.72rem', fontWeight: '700', color: 'rgba(255,255,255,0.8)', marginTop: '1px' }}>
-                            {stats.trialDaysLeft} day{stats.trialDaysLeft !== 1 ? 's' : ''} remaining
+                          <div style={{ fontSize: '0.72rem', fontWeight: '700', color: 'rgba(255,255,255,0.8)', marginTop: '1px', fontFamily: 'monospace' }}>
+                            {trialTimeLeft}
                           </div>
                         </div>
                       </div>
@@ -3568,6 +3607,76 @@ const Dashboard = () => {
         context={forgeState.context}
         onDispatch={(url) => handleDispatch(url, forgeState.bestContext)}
       />
+
+      {/* ── Trial Expired Popup Modal ── */}
+      {showExpiredModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 99999,
+          background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{
+              padding: '36px', maxWidth: '440px', width: '90%', textAlign: 'center',
+              background: 'var(--bg-secondary)', borderRadius: '24px',
+              border: '1.5px solid rgba(222, 106, 57, 0.25)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              fontFamily: "'Inter', sans-serif"
+            }}
+          >
+            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
+              <div style={{
+                width: '56px', height: '56px', borderRadius: '50%',
+                background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f87171'
+              }}>
+                <Zap size={28} fill="currentColor" />
+              </div>
+            </div>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: '900', marginBottom: '10px', color: '#fff', letterSpacing: '-0.02em' }}>
+              Pro Trial Expired
+            </h3>
+            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '28px', lineHeight: '1.6', fontSize: '0.9rem' }}>
+              Your 7-day Pro Trial has ended and your account has been downgraded to the Free tier. 
+              <br /><br />
+              Advanced Intelligence modes (Developer, Research, Study, Project), prompt optimization, and unlimited bridges are now locked. Upgrade to Pro to restore unlimited access.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <a
+                href={`https://mail.google.com/mail/?view=cm&fs=1&to=business@entrext.in&su=${encodeURIComponent(`[Upgrade Request] PRO Plan`)}&body=${encodeURIComponent(
+                  `Hi BridgeAI Team,\n\nI would like to upgrade my account to the PRO plan ($5/month).\n\nMy Registered Email: ${currentUserEmail}\n\nPlease let me know how to complete the payment.\n\nThank you!`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary"
+                style={{
+                  padding: '14px', borderRadius: '12px', fontWeight: '700',
+                  textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  fontSize: '0.92rem', background: 'linear-gradient(135deg, #f59e0b, #FF6B2C)',
+                  color: '#fff', boxShadow: '0 4px 16px rgba(245, 158, 11, 0.25)'
+                }}
+              >
+                Upgrade to Pro — $5/mo
+              </a>
+              <button
+                onClick={() => {
+                  sessionStorage.setItem('bridge_trial_expired_dismissed', 'true');
+                  setShowExpiredModal(false);
+                }}
+                className="btn-secondary"
+                style={{
+                  padding: '12px', borderRadius: '12px', fontWeight: '700',
+                  background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.5)',
+                  border: '1px solid rgba(255,255,255,0.06)', fontSize: '0.9rem', cursor: 'pointer'
+                }}
+              >
+                Continue as Free User (Degraded Services)
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
     </div>
   );
