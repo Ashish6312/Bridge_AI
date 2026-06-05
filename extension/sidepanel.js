@@ -609,7 +609,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         platform: capturedData.platform,
                         title: capturedData.title,
                         email: userSession?.email || 'guest',
-                        mode: currentMode
+                        mode: currentMode,
+                        optimizedText: (capturedData.optimized && capturedData.optimizedPrompt) ? capturedData.optimizedPrompt : null
                     })
                 });
 

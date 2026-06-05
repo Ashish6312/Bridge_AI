@@ -349,7 +349,7 @@ function decompressMessages(base64Str) {
 
 app.post('/api/summarize', async (req, res) => {
   try {
-    let { messages, compressedMessages, platform, title, email, mode = 'quick', project_id = null } = req.body;
+    let { messages, compressedMessages, platform, title, email, mode = 'quick', project_id = null, optimizedText = null } = req.body;
 
     if (compressedMessages) {
       const decompressed = decompressMessages(compressedMessages);
@@ -420,22 +420,29 @@ app.post('/api/summarize', async (req, res) => {
     const formattedChat = messages.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n\n');
     
     // ── AI Distillation Protocol ──────────────────────────────
-    console.log(`[PROTOCOL] Initiating AI distillation for mode: ${finalMode}`);
-    
-    const PROMPTS = {
-      quick:     'Provide a brief, high-level TL;DR summary (3-5 bullet points) of this conversation.',
-      developer: 'Extract technical context: 1. Goal 2. Tech Stack 3. Implementation Details 4. Blockers.',
-      research:  'Distill into research notes: 1. Core Thesis 2. Evidence/Data 3. Key Findings 4. References.',
-      study:     'Convert to study guide: 1. Main Topic 2. Key Concepts 3. Definition of Terms 4. Summary.',
-      project:   'Summarize as project update: 1. Current Status 2. Milestone Progress 3. Risks 4. Next Actions.'
-    };
+    let summary;
+    if (optimizedText) {
+      console.log(`[PROTOCOL] Using user-optimized prompt directly for summary`);
+      const summaryHeader = `### OPTIMIZED INTELLIGENCE LOG [${platform.toUpperCase()}]\n\n`;
+      summary = `${summaryHeader}${optimizedText.trim()}`;
+      finalMode = 'optimized';
+    } else {
+      console.log(`[PROTOCOL] Initiating AI distillation for mode: ${finalMode}`);
+      const PROMPTS = {
+        quick:     'Provide a brief, high-level TL;DR summary (3-5 bullet points) of this conversation.',
+        developer: 'Extract technical context: 1. Goal 2. Tech Stack 3. Implementation Details 4. Blockers.',
+        research:  'Distill into research notes: 1. Core Thesis 2. Evidence/Data 3. Key Findings 4. References.',
+        study:     'Convert to study guide: 1. Main Topic 2. Key Concepts 3. Definition of Terms 4. Summary.',
+        project:   'Summarize as project update: 1. Current Status 2. Milestone Progress 3. Risks 4. Next Actions.'
+      };
 
-    const aiSummary = await callGroq([
-      { role: 'system', content: `You are an expert intelligence analyst. ${PROMPTS[finalMode] || PROMPTS.quick} Output ONLY the summary in professional markdown.` },
-      { role: 'user', content: formattedChat.substring(0, 120000) }
-    ]);
-    const summaryHeader = `### ${finalMode.toUpperCase()} INTELLIGENCE LOG [${platform.toUpperCase()}]\n\n`;
-    const summary = `${summaryHeader}${aiSummary.trim()}`;
+      const aiSummary = await callGroq([
+        { role: 'system', content: `You are an expert intelligence analyst. ${PROMPTS[finalMode] || PROMPTS.quick} Output ONLY the summary in professional markdown.` },
+        { role: 'user', content: formattedChat.substring(0, 120000) }
+      ]);
+      const summaryHeader = `### ${finalMode.toUpperCase()} INTELLIGENCE LOG [${platform.toUpperCase()}]\n\n`;
+      summary = `${summaryHeader}${aiSummary.trim()}`;
+    }
     
     const id = 'brid_' + Date.now().toString(36);
     

@@ -293,6 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     email:    userSession?.email || 'guest',
                     mode:     selectedMode,
                     prompt:   MODE_PROMPTS[selectedMode],
+                    optimizedText: (capturedData.optimized && capturedData.optimizedPrompt) ? capturedData.optimizedPrompt : null
                 })
             });
 
