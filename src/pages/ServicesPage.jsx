@@ -258,31 +258,21 @@ const ServicesPage = () => {
               <button
                 onClick={() => {
                   if (user) {
-                    if (isPostTrial) {
-                      // Scroll to Pro card when trial is over
-                      document.getElementById('pro-plan-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else if (user.plan !== 'free') {
+                    if (user.plan !== 'free') {
                       handlePurchaseClick('free', 0);
                     }
                   } else {
                     navigate('/signup');
                   }
                 }}
-                disabled={!isPostTrial && user?.plan === 'free'}
-                className={isPostTrial ? 'btn-primary' : 'btn-secondary'}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: '12px', fontWeight: '700', fontSize: '0.95rem',
-                  ...(isPostTrial ? { background: 'rgba(222,106,57,0.12)', color: 'var(--primary)', border: '1px solid rgba(222,106,57,0.3)' } : {})
-                }}
+                disabled={user?.plan === 'free'}
+                className="btn-secondary"
+                style={{ width: '100%', padding: '14px', borderRadius: '12px', fontWeight: '700', fontSize: '0.95rem' }}
               >
-                {isPostTrial
-                  ? '✦ Trial Ended — Upgrade Now'
-                  : user?.plan === 'free'
-                  ? 'Current Plan'
-                  : 'Start Free'}
+                {user?.plan === 'free' ? 'Current Plan' : 'Start Free'}
               </button>
               <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                {isPostTrial ? 'Your trial has ended.' : 'No credit card required.'}
+                No credit card required.
               </div>
             </motion.div>
 
@@ -311,12 +301,14 @@ const ServicesPage = () => {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
                 <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>PRO</span>
-                <span style={{
-                  fontSize: '0.72rem', fontWeight: '800',
-                  background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b',
-                  border: '1px solid rgba(245, 158, 11, 0.25)',
-                  padding: '4px 12px', borderRadius: '100px'
-                }}>🎁 7-Day Free Trial</span>
+                {!isPostTrial && (
+                  <span style={{
+                    fontSize: '0.72rem', fontWeight: '800',
+                    background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    padding: '4px 12px', borderRadius: '100px'
+                  }}>🎁 7-Day Free Trial</span>
+                )}
               </div>
 
               <div style={{ marginBottom: '8px' }}>
