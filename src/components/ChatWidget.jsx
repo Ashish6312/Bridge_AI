@@ -11,6 +11,7 @@ export default function ChatWidget() {
     { id: 2, sender: 'bot', text: 'You can check our docs or FAQ for quick answers.' }
   ]);
   const messagesEndRef = useRef(null);
+  const widgetRef = useRef(null);
 
   // Read user email if logged in
   const userStr = localStorage.getItem('bridge_user');
@@ -22,6 +23,16 @@ export default function ChatWidget() {
     window.addEventListener('OPEN_SUPPORT_CHAT', handleOpenChat);
     return () => window.removeEventListener('OPEN_SUPPORT_CHAT', handleOpenChat);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isOpen && widgetRef.current && !widgetRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,7 +81,7 @@ export default function ChatWidget() {
   };
 
   return (
-    <div className="chat-widget">
+    <div className="chat-widget" ref={widgetRef}>
       <style>{`
         @keyframes chatPulse {
           0%,100% { box-shadow: 0 4px 16px rgba(0,0,0,0.4); transform: scale(1); }

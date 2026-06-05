@@ -1458,12 +1458,15 @@ const AdminPage = () => {
 
         {/* MODAL 1: PROVISION USER */}
         {isCreateModalOpen && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'center', zIndex: 1000, padding: '20px'
-          }}>
+          <div 
+            onClick={(e) => { if (e.target === e.currentTarget) setIsCreateModalOpen(false); }}
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'center', zIndex: 1000, padding: '20px'
+            }}
+          >
             <div className="glass-card" style={{
               maxWidth: '500px', width: '100%',
               background: 'rgba(15, 15, 15, 0.95)',
@@ -1608,12 +1611,15 @@ const AdminPage = () => {
 
         {/* MODAL 2: RESET PASSWORD */}
         {isPasswordResetModalOpen && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'center', zIndex: 1000, padding: '20px'
-          }}>
+          <div 
+            onClick={(e) => { if (e.target === e.currentTarget) setIsPasswordResetModalOpen(false); }}
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'center', zIndex: 1000, padding: '20px'
+            }}
+          >
             <div className="glass-card" style={{
               maxWidth: '440px', width: '100%',
               background: 'rgba(15, 15, 15, 0.95)',
@@ -1704,12 +1710,15 @@ const AdminPage = () => {
 
         {/* MODAL 3: USER DIAGNOSTICS LEDGER */}
         {isDetailsModalOpen && selectedUserDetails && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(16px)',
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'center', zIndex: 1000, padding: '20px'
-          }}>
+          <div 
+            onClick={(e) => { if (e.target === e.currentTarget) setIsDetailsModalOpen(false); }}
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(16px)',
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'center', zIndex: 1000, padding: '20px'
+            }}
+          >
             <div className="glass-card" style={{
               maxWidth: '850px', width: '100%', maxHeight: '90vh',
               background: 'rgba(15, 15, 15, 0.96)',
@@ -2093,12 +2102,15 @@ const AdminPage = () => {
 
         {/* MODAL 5: UPDATE USER BILLING & PLAN */}
         {isBillingModalOpen && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'center', zIndex: 1000, padding: '20px'
-          }}>
+          <div 
+            onClick={(e) => { if (e.target === e.currentTarget) setIsBillingModalOpen(false); }}
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(12px)',
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'center', zIndex: 1000, padding: '20px'
+            }}
+          >
             <div className="glass-card" style={{
               maxWidth: '460px', width: '100%',
               background: 'rgba(15, 15, 15, 0.95)',

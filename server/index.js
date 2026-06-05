@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const cron = require('node-cron');
 const EventEmitter = require('events');
 const zlib = require('zlib');
-const { sendEmail, sendWelcomeEmail, sendPromotionEmail } = require('./emailService');
+const { sendEmail, sendWelcomeEmail, sendPromotionEmail, sendChatbotIssueResolvedEmail, sendFeedbackTicketResolvedEmail } = require('./emailService');
 
 /**
  * Helper to call Groq API with fallback to Pollinations
@@ -298,6 +298,30 @@ const initDB = async () => {
       );
       console.log(`[DB] Refreshed admin credentials for: ${adminEmail}`);
     }
+
+    // Create notifications table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        user_email TEXT, -- NULL for global notifications (all users)
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        type VARCHAR(50) DEFAULT 'info', -- 'feature', 'offer', 'issue_resolved', 'info'
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Seed default global notifications if none exist
+    const countGlobal = await pool.query("SELECT COUNT(*) FROM notifications WHERE user_email IS NULL");
+    if (parseInt(countGlobal.rows[0].count) === 0) {
+      await pool.query(`
+        INSERT INTO notifications (user_email, title, message, type) VALUES 
+        (NULL, 'New Feature: Smooth Scrolling', 'We have integrated Vercel/Linear-style Lenis smooth scrolling for an ultra-smooth experience!', 'feature'),
+        (NULL, 'Special Offer: Pro Subscription', 'Upgrade today and get 2 months free on the Pro annual plan. Cancel anytime.', 'offer')
+      `);
+      console.log("[DB] Seeded default global notifications.");
+    }
   } catch (err) {
     console.error("DB Init Error:", err);
   }
@@ -424,6 +448,54 @@ app.post('/api/feedbacks', async (req, res) => {
   }
 });
 
+// ─── USER NOTIFICATIONS ENDPOINTS ─────────────────────────────
+
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { email } = req.query;
+    let result;
+    if (email && email !== 'undefined' && email !== 'null') {
+      result = await pool.query(
+        `SELECT * FROM notifications 
+         WHERE user_email IS NULL OR user_email = $1 
+         ORDER BY created_at DESC`,
+        [email]
+      );
+    } else {
+      result = await pool.query(
+        `SELECT * FROM notifications 
+         WHERE user_email IS NULL 
+         ORDER BY created_at DESC`
+      );
+    }
+    res.json({ success: true, notifications: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.patch('/api/notifications/:id/read', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('UPDATE notifications SET is_read = TRUE WHERE id = $1', [id]);
+    res.json({ success: true, message: 'Notification marked as read.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/notifications/read-all', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (email && email !== 'undefined' && email !== 'null') {
+      await pool.query('UPDATE notifications SET is_read = TRUE WHERE user_email = $1', [email]);
+    }
+    res.json({ success: true, message: 'All notifications marked as read.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ─── ADMIN SYSTEM ───────────────────────────────────────────
 
 // Middleware to verify admin token
@@ -523,6 +595,15 @@ app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid status' });
     }
     
+    // Fetch old details
+    const feedbackRow = await pool.query('SELECT user_email, title, description, status, admin_response FROM feedbacks WHERE id = $1', [req.params.id]);
+    if (feedbackRow.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Feedback not found' });
+    }
+
+    const oldStatus = feedbackRow.rows[0].status;
+    const { user_email, title, description } = feedbackRow.rows[0];
+
     if (status && admin_response !== undefined) {
       await pool.query('UPDATE feedbacks SET status = $1, admin_response = $2 WHERE id = $3', [status, admin_response, req.params.id]);
     } else if (status) {
@@ -530,6 +611,27 @@ app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
     } else if (admin_response !== undefined) {
       await pool.query('UPDATE feedbacks SET admin_response = $1 WHERE id = $2', [admin_response, req.params.id]);
     }
+
+    if (status === 'resolved' && oldStatus !== 'resolved' && user_email && user_email !== 'guest' && user_email !== 'anonymous') {
+      const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
+      await pool.query(
+        `INSERT INTO notifications (user_email, title, message, type)
+         VALUES ($1, $2, $3, 'issue_resolved')`,
+        [
+          user_email,
+          'Support Ticket Resolved',
+          `Your support ticket "${truncatedTitle}" has been resolved by the administrator.`,
+          'issue_resolved'
+        ]
+      );
+
+      // Send email notification
+      const resolvedAdminResponse = admin_response !== undefined ? admin_response : feedbackRow.rows[0].admin_response;
+      sendFeedbackTicketResolvedEmail(user_email, title, description, resolvedAdminResponse).catch(err => {
+        console.error('[Mail] Failed to send feedback resolution email:', err);
+      });
+    }
+
     res.json({ success: true, message: 'Feedback updated successfully.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -643,7 +745,37 @@ app.patch('/api/admin/chatbot-queries/:id', verifyAdmin, async (req, res) => {
     if (!['resolved', 'issue_faced'].includes(status)) {
       return res.status(400).json({ success: false, error: 'Invalid status' });
     }
+    
+    // Get existing state
+    const queryRow = await pool.query('SELECT user_email, query, status FROM chatbot_queries WHERE id = $1', [req.params.id]);
+    if (queryRow.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Chatbot query not found' });
+    }
+
+    const oldStatus = queryRow.rows[0].status;
+    const { user_email, query } = queryRow.rows[0];
+
     await pool.query('UPDATE chatbot_queries SET status = $1 WHERE id = $2', [status, req.params.id]);
+
+    if (status === 'resolved' && oldStatus !== 'resolved' && user_email && user_email !== 'guest') {
+      const truncatedQuery = query.length > 50 ? query.substring(0, 50) + '...' : query;
+      await pool.query(
+        `INSERT INTO notifications (user_email, title, message, type)
+         VALUES ($1, $2, $3, 'issue_resolved')`,
+        [
+          user_email,
+          'Support Issue Resolved',
+          `Your support query "${truncatedQuery}" has been marked as resolved by the administrator.`,
+          'issue_resolved'
+        ]
+      );
+
+      // Send Email resolution notification
+      sendChatbotIssueResolvedEmail(user_email, query).catch(err => {
+        console.error('[Mail] Failed to send chatbot resolution email:', err);
+      });
+    }
+
     res.json({ success: true, message: 'Chatbot query status updated.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
