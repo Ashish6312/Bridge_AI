@@ -562,9 +562,15 @@ app.get('/api/user/status', async (req, res) => {
       trialDaysLeft = msLeft > 0 ? Math.ceil(msLeft / 86400000) : 0;
     }
     
+    let userPlan = plan || 'free';
+    // Belt-and-suspenders: treat expired trial users as free even if cron hasn't run yet
+    if (userPlan === 'pro' && trial_ends_at && new Date(trial_ends_at) < new Date()) {
+      userPlan = 'free';
+    }
+    
     res.json({ 
       success: true, 
-      plan: plan || 'free',
+      plan: userPlan,
       trial_ends_at: trial_ends_at || null,
       trial_days_left: trialDaysLeft,
       usage: parseInt(countRes.rows[0].count),
@@ -624,7 +630,7 @@ app.post('/api/user/upgrade', async (req, res) => {
     const { email, plan } = req.body; // 'pro' or 'infinite'
     if (!['free', 'pro', 'infinite'].includes(plan)) return res.status(400).json({ error: "Invalid sovereign tier." });
     
-    await pool.query('UPDATE users SET plan = $1 WHERE email = $2', [plan, email]);
+    await pool.query('UPDATE users SET plan = $1, trial_ends_at = NULL WHERE email = $2', [plan, email]);
     res.json({ success: true, message: `System: User upgraded to ${plan.toUpperCase()} tier successfully.` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -651,8 +657,8 @@ app.post('/api/user/purchase', async (req, res) => {
     // Begin Sovereign Transaction
     await pool.query('BEGIN');
     
-    // 1. Update User Plan
-    await pool.query('UPDATE users SET plan = $1 WHERE email = $2', [plan, email]);
+    // 1. Update User Plan (clear trial_ends_at to transition to a permanent paid plan)
+    await pool.query('UPDATE users SET plan = $1, trial_ends_at = NULL WHERE email = $2', [plan, email]);
     
     // 2. Create Invoice Record
     await pool.query(
