@@ -11,6 +11,7 @@ import {
   ChevronRight, BookOpen, ExternalLink, Sparkles, Award
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
+import { jsPDF } from 'jspdf';
 
 /* ─── Real AI Platform SVG Logos ──────────────────────────── */
 const ChatGPTLogo = () => (
@@ -586,23 +587,195 @@ const ProfilePage = () => {
   };
 
   const handleDownloadInvoice = (inv) => {
-    const content = `=========================================
-INVOICE - BRIDGE AI
-=========================================
-Invoice ID: #${inv.id}
-Date: ${new Date(inv.created_at).toLocaleDateString()}
-Plan: ${inv.plan?.toUpperCase()}
-Amount: $${inv.amount}
-Status: PAID
-=========================================
-Thank you for using Bridge AI!`;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `invoice-${inv.id?.slice(0,8)}.txt`;
-    a.click();
-    showToast(`Invoice #${inv.id?.slice(0,8)} downloaded.`, 'success');
+    try {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Colors
+      const primaryColor = [222, 106, 57]; // #DE6A39
+      const darkColor = [24, 24, 27]; // Charcoal/Black
+      const greyColor = [100, 116, 139]; // Slate Gray
+      const lightGreyColor = [241, 245, 249]; // Light background
+      const greenColor = [16, 185, 129]; // Emerald success color for PAID status
+      
+      // Page Margins
+      const margin = 20;
+      const width = doc.internal.pageSize.getWidth();
+      const height = doc.internal.pageSize.getHeight();
+      
+      // Header Background Strip
+      doc.setFillColor(...lightGreyColor);
+      doc.rect(0, 0, width, 45, 'F');
+
+      // Brand Logo / Name
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(...primaryColor);
+      doc.text('BRIDGE AI', margin, 22);
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...greyColor);
+      doc.text('The Shared Knowledge Layer for Humans, AI, and Agents', margin, 28);
+      doc.text('support@bridgeai-realworld-problem.vercel.app', margin, 34);
+
+      // INVOICE Header Title
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(28);
+      doc.setTextColor(...darkColor);
+      doc.text('INVOICE', width - margin - 50, 26);
+
+      // Divider line
+      doc.setDrawColor(...primaryColor);
+      doc.setLineWidth(0.8);
+      doc.line(margin, 45, width - margin, 45);
+
+      // Details Grid
+      // Billed To Column
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...greyColor);
+      doc.text('BILLED TO', margin, 65);
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(...darkColor);
+      doc.text(user?.name || 'Anonymous User', margin, 73);
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...greyColor);
+      doc.text(user?.email || 'N/A', margin, 79);
+
+      // Invoice info Column
+      const infoX = width / 2 + 10;
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...greyColor);
+      doc.text('INVOICE DETAILS', infoX, 65);
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...darkColor);
+      doc.text(`Invoice ID:  #${inv.id}`, infoX, 73);
+      doc.text(`Issue Date:  ${new Date(inv.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`, infoX, 79);
+      doc.text(`Payment:     Paid (Credit Card)`, infoX, 85);
+
+      // PAID status pill
+      doc.setFillColor(...greenColor);
+      doc.roundedRect(infoX + 68, 81, 15, 6, 1.5, 1.5, 'F');
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text('PAID', infoX + 71.5, 85.2);
+
+      // Line items table
+      const tableY = 105;
+      
+      // Table Header Row
+      doc.setFillColor(...darkColor);
+      doc.rect(margin, tableY, width - (margin * 2), 10, 'F');
+      
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(255, 255, 255);
+      doc.text('Description', margin + 6, tableY + 6.5);
+      doc.text('Qty', width - margin - 60, tableY + 6.5, { align: 'center' });
+      doc.text('Unit Price', width - margin - 35, tableY + 6.5, { align: 'center' });
+      doc.text('Amount', width - margin - 10, tableY + 6.5, { align: 'center' });
+
+      // Table Data Row
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...darkColor);
+      
+      const rowY = tableY + 18;
+      // Description text wrapping
+      doc.setFont('Helvetica', 'bold');
+      doc.text(`BridgeAI subscription plan - ${inv.plan?.toUpperCase()}`, margin + 6, rowY);
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...greyColor);
+      doc.text('Access to unlimited context transfers, prompt logs, and priority support.', margin + 6, rowY + 5.5);
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...darkColor);
+      doc.text('1', width - margin - 60, rowY, { align: 'center' });
+      doc.text(`$${parseFloat(inv.amount).toFixed(2)}`, width - margin - 35, rowY, { align: 'center' });
+      doc.text(`$${parseFloat(inv.amount).toFixed(2)}`, width - margin - 10, rowY, { align: 'center' });
+
+      // Border lines below row
+      doc.setDrawColor(226, 232, 240); // very light grey
+      doc.setLineWidth(0.3);
+      doc.line(margin, tableY + 30, width - margin, tableY + 30);
+
+      // Summary Panel (Right side)
+      const summaryY = tableY + 45;
+      const labelX = width - margin - 65;
+      const valueX = width - margin - 10;
+      
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...greyColor);
+      doc.text('Subtotal:', labelX, summaryY);
+      doc.text(`$${parseFloat(inv.amount).toFixed(2)}`, valueX, summaryY, { align: 'right' });
+
+      doc.text('Tax (0.00%):', labelX, summaryY + 8);
+      doc.text('$0.00', valueX, summaryY + 8, { align: 'right' });
+
+      // Total Paid line
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.3);
+      doc.line(width - margin - 75, summaryY + 13, width - margin, summaryY + 13);
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(...darkColor);
+      doc.text('Total Paid:', labelX, summaryY + 20);
+      doc.setTextColor(...primaryColor);
+      doc.text(`$${parseFloat(inv.amount).toFixed(2)}`, valueX, summaryY + 20, { align: 'right' });
+
+      // Note / Terms section
+      const noteY = height - 55;
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(...greyColor);
+      doc.text('IMPORTANT TERMS & CONDITIONS', margin, noteY);
+      
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...greyColor);
+      
+      const terms = [
+        '1. This receipt confirms full transaction authorization and clearing of funds.',
+        '2. Subscriptions renew automatically. You can cancel your subscription inside your profile at any time.',
+        '3. For billing support, custom setups, or refund inquiries, please email business@entrext.in.',
+        'Thank you for partnering with BridgeAI to build a unified project memory layer!'
+      ];
+      terms.forEach((t, i) => {
+        doc.text(t, margin, noteY + 5 + (i * 4.5));
+      });
+
+      // Bottom Footer Strip
+      doc.setFillColor(...lightGreyColor);
+      doc.rect(0, height - 12, width, 12, 'F');
+      
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...greyColor);
+      doc.text('BridgeAI — The Shared Knowledge Layer for Humans, AI, and Agents', width / 2, height - 4.5, { align: 'center' });
+
+      // Save PDF
+      doc.save(`invoice-${inv.id?.slice(0, 8)}.pdf`);
+      showToast(`Invoice #${inv.id?.slice(0, 8)} downloaded as PDF.`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Error generating PDF invoice.', 'error');
+    }
   };
 
   const handleOpenContext = (title) => {
