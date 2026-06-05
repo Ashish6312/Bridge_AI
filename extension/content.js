@@ -517,46 +517,184 @@ const TARGET_SELECTORS = {
  */
 async function handleAutoPaste() {
   const platform = getPlatform();
-  // We check for storage on ALL pages now to support Universal Bridge
   const { pending_bridge } = await chrome.storage.local.get('pending_bridge');
   if (!pending_bridge) return;
 
   console.log('BridgeAI: Detected pending context for cross-platform bridge.');
 
+  // 1. Inject Styles
+  const styleId = 'bridgeai-sync-styles';
+  if (!document.getElementById(styleId)) {
+    const styleEl = document.createElement('style');
+    styleEl.id = styleId;
+    styleEl.textContent = `
+      @keyframes bridge-spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes bridge-fade-in {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .bridge-spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 107, 44, 0.2);
+        border-top-color: #FF6B2C;
+        border-radius: 50%;
+        animation: bridge-spin 0.8s linear infinite;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+      .bridge-success-checkmark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        background: #10b981;
+        color: white;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+    `;
+    document.head.appendChild(styleEl);
+  }
+
+  // 2. Create and Inject Overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'bridgeai-sync-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999999;
+    background: rgba(13, 13, 13, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 107, 44, 0.25);
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.65), 0 0 20px rgba(255, 107, 44, 0.08);
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 330px;
+    animation: bridge-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  `;
+
+  // Render Initial state content
+  const platformLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
+  overlay.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div class="bridge-spinner" id="bridge-status-indicator"></div>
+      <span style="font-weight: 700; font-size: 0.95rem; color: #f5f5f5;" id="bridge-status-title">Connecting to ${platformLabel}...</span>
+    </div>
+    <p style="margin: 0; font-size: 0.82rem; color: #a3a3a3; line-height: 1.4;" id="bridge-status-desc">
+      Waiting for target chat input field to load completely.
+    </p>
+  `;
+  document.body.appendChild(overlay);
+
   let attempts = 0;
-  const interval = setInterval(() => {
-    // Try platform specific, then try any visible textarea
+  const interval = setInterval(async () => {
     const selector = TARGET_SELECTORS[platform] || TARGET_SELECTORS.fallback;
     const target = document.querySelector(selector);
     
     if (target && (target.offsetWidth > 0 || target.isContentEditable)) {
       clearInterval(interval);
-      console.log('BridgeAI: Hub target acquired. Bridging intelligence...');
-      
-      const intro = "System: Continuing from BridgeAI extracted context.\n\n";
-      const fullText = intro + pending_bridge;
+      console.log('BridgeAI: Target acquired. Initiating countdown...');
 
-      if (target.isContentEditable) {
-        target.focus();
-        try {
-          // Insert the entire text block natively.
-          // This is near-instantaneous, preserves newlines, and avoids Lexical/ProseMirror reconciliation loop crashes.
-          document.execCommand('insertText', false, fullText);
-        } catch (err) {
-          console.error('BridgeAI contenteditable insertion failed:', err);
-          // Fallback to textContent if execCommand fails
-          target.textContent = fullText;
-          target.dispatchEvent(new Event('input', { bubbles: true }));
+      // Update overlay to countdown state
+      let countdown = 3;
+      const titleEl = document.getElementById('bridge-status-title');
+      const descEl = document.getElementById('bridge-status-desc');
+
+      const countdownInterval = setInterval(() => {
+        if (countdown > 0) {
+          if (titleEl) titleEl.innerText = `Syncing context in ${countdown}s...`;
+          if (descEl) descEl.innerText = "Please wait, preparing chat input editor handlers.";
+          countdown--;
+        } else {
+          clearInterval(countdownInterval);
+
+          // Perform insertion
+          if (titleEl) titleEl.innerText = "Transferring context...";
+          if (descEl) descEl.innerText = "Injecting intelligence module. Do not type or close this tab.";
+
+          setTimeout(() => {
+            const intro = "System: Continuing from BridgeAI extracted context.\n\n";
+            const fullText = intro + pending_bridge;
+
+            let success = false;
+            if (target.isContentEditable) {
+              target.focus();
+              try {
+                document.execCommand('insertText', false, fullText);
+                success = true;
+              } catch (err) {
+                console.error('BridgeAI contenteditable insertion failed:', err);
+                target.textContent = fullText;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                success = true;
+              }
+            } else {
+              target.value = fullText;
+              target.dispatchEvent(new Event('input', { bubbles: true }));
+              success = true;
+            }
+
+            if (success) {
+              chrome.storage.local.remove('pending_bridge');
+              
+              // Success visual state
+              const indicatorEl = document.getElementById('bridge-status-indicator');
+              if (indicatorEl) {
+                indicatorEl.className = 'bridge-success-checkmark';
+                indicatorEl.innerHTML = '✓';
+              }
+              if (titleEl) {
+                titleEl.innerText = "Intelligence Transferred!";
+                titleEl.style.color = "#10b981";
+              }
+              if (descEl) descEl.innerText = `Context synced successfully. Ready to prompt ${platformLabel}!`;
+
+              // Fade out and remove
+              setTimeout(() => {
+                overlay.style.transition = "all 0.5s ease";
+                overlay.style.opacity = "0";
+                overlay.style.transform = "translateY(20px)";
+                setTimeout(() => overlay.remove(), 500);
+              }, 2500);
+            }
+          }, 100);
         }
-      } else {
-        target.value = fullText;
-        target.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-      
-      chrome.storage.local.remove('pending_bridge');
+      }, 1000);
+      return;
     }
 
-    if (++attempts > 40) clearInterval(interval);
+    if (++attempts > 40) {
+      clearInterval(interval);
+      // Timeout state
+      const indicatorEl = document.getElementById('bridge-status-indicator');
+      if (indicatorEl) indicatorEl.remove();
+      const titleEl = document.getElementById('bridge-status-title');
+      if (titleEl) {
+        titleEl.innerText = "Connection Timed Out";
+        titleEl.style.color = "#ef4444";
+      }
+      const descEl = document.getElementById('bridge-status-desc');
+      if (descEl) descEl.innerText = "Could not locate chat input field. Please refresh and try again.";
+      
+      setTimeout(() => {
+        overlay.style.transition = "all 0.5s ease";
+        overlay.style.opacity = "0";
+        overlay.style.transform = "translateY(20px)";
+        setTimeout(() => overlay.remove(), 500);
+      }, 5000);
+    }
   }, 600);
 }
 
