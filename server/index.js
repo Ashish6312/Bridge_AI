@@ -217,9 +217,20 @@ const initDB = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
+      CREATE TABLE IF NOT EXISTS feedbacks (
+        id VARCHAR(50) PRIMARY KEY,
+        user_email TEXT,
+        type VARCHAR(50) DEFAULT 'feedback',
+        title TEXT,
+        description TEXT,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE INDEX IF NOT EXISTS idx_project_contexts_lookup ON project_contexts(user_email, project_id);
       CREATE INDEX IF NOT EXISTS idx_project_decisions_lookup ON project_decisions(user_email, project_id);
       CREATE INDEX IF NOT EXISTS idx_project_chats_lookup ON project_chats(user_email, project_id);
+      CREATE INDEX IF NOT EXISTS idx_feedbacks_user_email ON feedbacks(user_email);
     `);
     // Crucial Migrations
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT \'free\'');
@@ -234,6 +245,7 @@ const initDB = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS projects JSONB DEFAULT \'[]\'');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS devices JSONB DEFAULT \'[]\'');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE');
     // Deduplicate existing project decisions
     await pool.query(`
       DELETE FROM project_decisions 
@@ -243,6 +255,29 @@ const initDB = async () => {
         GROUP BY project_id, user_email, LOWER(title)
       )
     `);
+
+    // Seed default admin user
+    const hashedAdminPassword = await bcrypt.hash('team1@entrext.com', 10);
+    
+    // Revoke admin access for other emails in database init to ensure strict single admin
+    await pool.query('UPDATE users SET is_admin = FALSE WHERE email != $1', ['entrext1@gmail.com']);
+
+    const adminCheck = await pool.query('SELECT * FROM users WHERE email = $1', ['entrext1@gmail.com']);
+    if (adminCheck.rowCount === 0) {
+      await pool.query(
+        `INSERT INTO users (email, password, name, plan, is_admin)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (email) DO NOTHING`,
+        ['entrext1@gmail.com', hashedAdminPassword, 'System Admin', 'infinite', true]
+      );
+      console.log('[DB] Seeded default admin user: entrext1@gmail.com');
+    } else {
+      await pool.query(
+        `UPDATE users SET password = $1, is_admin = TRUE, plan = 'infinite' WHERE email = $2`,
+        [hashedAdminPassword, 'entrext1@gmail.com']
+      );
+      console.log('[DB] Refreshed admin credentials for: entrext1@gmail.com');
+    }
   } catch (err) {
     console.error("DB Init Error:", err);
   }
@@ -332,6 +367,248 @@ app.get('/api/auth/me', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ─── USER FEEDBACK ENDPOINT ─────────────────────────────────
+
+app.post('/api/feedbacks', async (req, res) => {
+  try {
+    const { email, type, title, description } = req.body;
+    if (!title || !description) {
+      return res.status(400).json({ success: false, error: 'Title and description are required.' });
+    }
+    const id = 'feed_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+    await pool.query(
+      `INSERT INTO feedbacks (id, user_email, type, title, description, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'pending', CURRENT_TIMESTAMP)`,
+      [id, email || 'guest', type || 'feedback', title, description]
+    );
+    res.json({ success: true, message: 'Feedback submitted successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── ADMIN SYSTEM ───────────────────────────────────────────
+
+const activeAdminSessions = new Map();
+
+// Middleware to verify admin token
+const verifyAdmin = (req, res, next) => {
+  const token = req.headers['x-admin-token'];
+  if (token && activeAdminSessions.has(token)) {
+    next();
+  } else {
+    res.status(403).json({ error: 'Unauthorized: Admin privileges required.' });
+  }
+};
+
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Email and password required.' });
+    }
+
+    // Lock down to ONLY entrext1@gmail.com
+    if (email !== 'entrext1@gmail.com') {
+      return res.status(401).json({ success: false, error: 'Invalid admin credentials.' });
+    }
+
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (result.rowCount === 0) {
+      return res.status(401).json({ success: false, error: 'Invalid admin credentials.' });
+    }
+
+    const user = result.rows[0];
+    if (!user.is_admin) {
+      return res.status(403).json({ success: false, error: 'Unauthorized: Admin privileges required.' });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ success: false, error: 'Invalid admin credentials.' });
+    }
+
+    const token = 'admin_sess_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    activeAdminSessions.set(token, user.email);
+
+    res.json({ success: true, token, email: user.email });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/stats', verifyAdmin, async (req, res) => {
+  try {
+    const usersCount = await pool.query('SELECT COUNT(*) FROM users');
+    const bridgesCount = await pool.query('SELECT COUNT(*) FROM bridges');
+    const feedbacksCount = await pool.query('SELECT COUNT(*) FROM feedbacks');
+    const subscribersCount = await pool.query('SELECT COUNT(*) FROM subscribers');
+    const invoicesResult = await pool.query('SELECT COUNT(*), COALESCE(SUM(amount), 0) as revenue FROM invoices');
+    
+    res.json({
+      success: true,
+      stats: {
+        users: parseInt(usersCount.rows[0].count),
+        bridges: parseInt(bridgesCount.rows[0].count),
+        feedbacks: parseInt(feedbacksCount.rows[0].count),
+        subscribers: parseInt(subscribersCount.rows[0].count),
+        invoices: parseInt(invoicesResult.rows[0].count),
+        revenue: parseFloat(invoicesResult.rows[0].revenue)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/feedbacks', verifyAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM feedbacks ORDER BY created_at DESC');
+    res.json({ success: true, feedbacks: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['pending', 'in_progress', 'resolved'].includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid status' });
+    }
+    await pool.query('UPDATE feedbacks SET status = $1 WHERE id = $2', [status, req.params.id]);
+    res.json({ success: true, message: 'Feedback status updated successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM feedbacks WHERE id = $1', [req.params.id]);
+    res.json({ success: true, message: 'Feedback deleted successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/users', verifyAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT email, name, picture, plan, created_at, trial_ends_at, two_factor_enabled FROM users ORDER BY created_at DESC'
+    );
+    res.json({ success: true, users: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.patch('/api/admin/users/:email', verifyAdmin, async (req, res) => {
+  try {
+    const { plan } = req.body;
+    if (!['free', 'pro', 'infinite'].includes(plan)) {
+      return res.status(400).json({ success: false, error: 'Invalid plan' });
+    }
+    await pool.query('UPDATE users SET plan = $1, trial_ends_at = NULL WHERE email = $2', [plan, req.params.email]);
+    res.json({ success: true, message: 'User plan updated successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/admin/users/:email', verifyAdmin, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { email } = req.params;
+    await client.query('BEGIN');
+    await client.query('DELETE FROM bridges WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM invoices WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM project_contexts WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM project_decisions WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM project_chats WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM subscribers WHERE email = $1', [email]);
+    await client.query('DELETE FROM feedbacks WHERE user_email = $1', [email]);
+    await client.query('DELETE FROM users WHERE email = $1', [email]);
+    await client.query('COMMIT');
+    res.json({ success: true, message: 'User and all associated data deleted successfully.' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+app.get('/api/admin/bridges', verifyAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, user_email, title, source, summary, snippets, mode, created_at FROM bridges ORDER BY created_at DESC LIMIT 500'
+    );
+    res.json({ success: true, bridges: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/admin/bridges/:id', verifyAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM bridges WHERE id = $1', [req.params.id]);
+    res.json({ success: true, message: 'Bridge deleted successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/invoices', verifyAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM invoices ORDER BY created_at DESC');
+    res.json({ success: true, invoices: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/subscribers', verifyAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM subscribers ORDER BY created_at DESC');
+    res.json({ success: true, subscribers: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/admin/subscribers/:email', verifyAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM subscribers WHERE email = $1', [req.params.email]);
+    res.json({ success: true, message: 'Subscriber deleted successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/db-query', verifyAdmin, async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query) {
+      return res.status(400).json({ success: false, error: 'SQL Query is required.' });
+    }
+    
+    // Execute query
+    const result = await pool.query(query);
+    res.json({
+      success: true,
+      result: {
+        rows: result.rows,
+        rowCount: result.rowCount,
+        fields: result.fields ? result.fields.map(f => f.name) : []
+      }
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 /**
  * Helper to decompress gzip base64 string to message array
  */

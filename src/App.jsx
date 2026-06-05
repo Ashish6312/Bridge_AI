@@ -26,6 +26,7 @@ const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const SupportPage = lazy(() => import('./pages/SupportPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 const ProtectedRoute = ({ children }) => {
   const user = localStorage.getItem('bridge_user');
@@ -63,6 +64,7 @@ const BridgeRoutes = () => {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/support" element={<SupportPage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Routes>
     </AnimatePresence>
   );
@@ -170,7 +172,7 @@ function App() {
             <BridgeRoutes />
           </Suspense>
         </main>
-        <Footer />
+        {location.pathname !== '/dashboard' && <Footer />}
       </div>
     </GoogleOAuthProvider>
   );

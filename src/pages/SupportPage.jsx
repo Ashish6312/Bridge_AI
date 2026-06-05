@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEOHelmet from '../components/SEOHelmet';
+import { apiFetch } from '../apiConfig';
 
 const PlatformLogo = ({ name }) => {
   const logos = {
@@ -94,81 +95,83 @@ const FAQS = [
 
 const SupportPage = () => {
   const [openFaq, setOpenFaq] = useState(null);
-  const [bugForm, setBugForm] = useState({ title: '', platform: 'ChatGPT', description: '' });
-  const [featureForm, setFeatureForm] = useState({ title: '', details: '', impact: 'medium' });
+  const [bugForm, setBugForm] = useState({ title: '', platform: 'ChatGPT', description: '', email: '' });
+  const [featureForm, setFeatureForm] = useState({ title: '', details: '', impact: 'medium', email: '' });
   const [submittedBug, setSubmittedBug] = useState(false);
   const [submittedFeature, setSubmittedFeature] = useState(false);
+  const [loadingBug, setLoadingBug] = useState(false);
+  const [loadingFeature, setLoadingFeature] = useState(false);
+
+  const userStr = localStorage.getItem('bridge_user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const userEmail = user?.email || '';
 
   const toggleFaq = (idx) => {
     setOpenFaq(openFaq === idx ? null : idx);
   };
 
-  const handleBugSubmit = (e) => {
+  const handleBugSubmit = async (e) => {
     e.preventDefault();
-    const subject = encodeURIComponent(`[BridgeAI Bug Report] ${bugForm.title}`);
-    const body = encodeURIComponent(
-`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🐛 BRIDGEAI - BUG REPORT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 SUMMARY
-   ${bugForm.title}
-
-💻 AFFECTED PLATFORM
-   • Platform: ${bugForm.platform}
-
-📝 DESCRIPTION & OBSERVATIONS
-   ${bugForm.description}
-
-🔧 SYSTEM CONTEXT
-   • Client OS: Windows
-   • App Environment: Production
-   • Extension Target: v1.0.1
-
-📌 STEPS TO REPRODUCE:
-   1. Open ${bugForm.platform}
-   2. [Please add steps here...]
-
-🎯 EXPECTED BEHAVIOR:
-   [What did you expect to happen instead?]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-— Submitted via BridgeAI Support Dashboard`
-    );
-    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=business@entrext.in&su=${subject}&body=${body}`, '_blank');
-    setSubmittedBug(true);
-    setBugForm({ title: '', platform: 'ChatGPT', description: '' });
-    setTimeout(() => setSubmittedBug(false), 4000);
+    const finalEmail = userEmail || bugForm.email || 'guest';
+    const type = 'bug';
+    const description = `Platform: ${bugForm.platform}\n\nDescription: ${bugForm.description}`;
+    
+    try {
+      setLoadingBug(true);
+      const res = await apiFetch('/api/feedbacks', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: finalEmail,
+          type,
+          title: bugForm.title,
+          description
+        })
+      });
+      if (res.ok) {
+        setSubmittedBug(true);
+        setBugForm({ title: '', platform: 'ChatGPT', description: '', email: '' });
+        setTimeout(() => setSubmittedBug(false), 4000);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to submit bug report');
+      }
+    } catch (err) {
+      alert(err.message || 'Error submitting bug report');
+    } finally {
+      setLoadingBug(false);
+    }
   };
 
-  const handleFeatureSubmit = (e) => {
+  const handleFeatureSubmit = async (e) => {
     e.preventDefault();
-    const impactLabels = { low: 'Nice to Have (Low)', medium: 'Workflow Booster (Medium)', high: 'Critical Pipeline (High)' };
-    const subject = encodeURIComponent(`[BridgeAI Feature Request] ${featureForm.title}`);
-    const body = encodeURIComponent(
-`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✨ BRIDGEAI - FEATURE REQUEST
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 FEATURE SUMMARY
-   ${featureForm.title}
-
-🔥 ESTIMATED IMPACT
-   • Level: ${impactLabels[featureForm.impact] || featureForm.impact}
-
-📝 USE CASE & FUNCTIONAL DETAILS
-   ${featureForm.details}
-
-💡 PROPOSED SOLUTION / VALUE ADDED
-   [Describe how this feature improves your LLM workflow or saves time...]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-— Submitted via BridgeAI Support Dashboard`
-    );
-    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=business@entrext.in&su=${subject}&body=${body}`, '_blank');
-    setSubmittedFeature(true);
-    setFeatureForm({ title: '', details: '', impact: 'medium' });
-    setTimeout(() => setSubmittedFeature(false), 4000);
+    const finalEmail = userEmail || featureForm.email || 'guest';
+    const type = 'feature_request';
+    const description = `Impact: ${featureForm.impact}\n\nDetails: ${featureForm.details}`;
+    
+    try {
+      setLoadingFeature(true);
+      const res = await apiFetch('/api/feedbacks', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: finalEmail,
+          type,
+          title: featureForm.title,
+          description
+        })
+      });
+      if (res.ok) {
+        setSubmittedFeature(true);
+        setFeatureForm({ title: '', details: '', impact: 'medium', email: '' });
+        setTimeout(() => setSubmittedFeature(false), 4000);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to submit feature request');
+      }
+    } catch (err) {
+      alert(err.message || 'Error submitting feature request');
+    } finally {
+      setLoadingFeature(false);
+    }
   };
 
   return (
@@ -319,6 +322,19 @@ const SupportPage = () => {
                   </div>
                 ) : (
                   <form onSubmit={handleBugSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {!userEmail && (
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Your Email</label>
+                        <input 
+                          type="email" 
+                          required
+                          value={bugForm.email}
+                          onChange={e => setBugForm({ ...bugForm, email: e.target.value })}
+                          placeholder="you@example.com"
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text)', outline: 'none' }}
+                        />
+                      </div>
+                    )}
                     <div>
                       <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Brief Summary</label>
                       <input 
@@ -357,8 +373,8 @@ const SupportPage = () => {
                         style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text)', outline: 'none', resize: 'vertical' }}
                       />
                     </div>
-                    <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.9rem', display: 'flex', justifyContent: 'center', gap: '8px', borderRadius: '10px' }}>
-                      <Send size={16} /> Send Bug Report
+                    <button type="submit" disabled={loadingBug} className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.9rem', display: 'flex', justifyContent: 'center', gap: '8px', borderRadius: '10px', opacity: loadingBug ? 0.7 : 1 }}>
+                      <Send size={16} /> {loadingBug ? 'Sending...' : 'Send Bug Report'}
                     </button>
                   </form>
                 )}
@@ -382,6 +398,19 @@ const SupportPage = () => {
                   </div>
                 ) : (
                   <form onSubmit={handleFeatureSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {!userEmail && (
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Your Email</label>
+                        <input 
+                          type="email" 
+                          required
+                          value={featureForm.email}
+                          onChange={e => setFeatureForm({ ...featureForm, email: e.target.value })}
+                          placeholder="you@example.com"
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text)', outline: 'none' }}
+                        />
+                      </div>
+                    )}
                     <div>
                       <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--muted)', marginBottom: '6px', textTransform: 'uppercase' }}>What is the feature?</label>
                       <input 
@@ -416,8 +445,8 @@ const SupportPage = () => {
                         style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text)', outline: 'none', resize: 'vertical' }}
                       />
                     </div>
-                    <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.9rem', display: 'flex', justifyContent: 'center', gap: '8px', borderRadius: '10px' }}>
-                      <Send size={16} /> Send Feature Request
+                    <button type="submit" disabled={loadingFeature} className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.9rem', display: 'flex', justifyContent: 'center', gap: '8px', borderRadius: '10px', opacity: loadingFeature ? 0.7 : 1 }}>
+                      <Send size={16} /> {loadingFeature ? 'Saving...' : 'Send Feature Request'}
                     </button>
                   </form>
                 )}

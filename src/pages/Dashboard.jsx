@@ -310,6 +310,26 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
     }
   };
 
+  const handleEditRegenerate = async () => {
+    setIsRegenerating(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_log: editChatLog || editSummary || ctx.chat_log || ctx.chatLog || '' })
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error);
+      
+      setEditSummary(data.summary);
+      triggerToast('Intelligence draft re-distilled.');
+    } catch (err) {
+      triggerToast('Protocol Timeout: AI Hub unreachable.');
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   const handleOptimize = async () => {
     setIsOptimizing(true);
     try {
@@ -429,8 +449,32 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button onClick={handleSaveEdit} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>Save Changes</button>
+          
+          <button 
+            onClick={handleEditRegenerate} 
+            disabled={isRegenerating}
+            style={{ 
+              background: 'rgba(222, 106, 57, 0.1)', 
+              border: '1px solid rgba(222, 106, 57, 0.3)', 
+              color: 'var(--primary)', 
+              padding: '8px 16px', 
+              borderRadius: '8px', 
+              fontSize: '0.8rem', 
+              cursor: 'pointer', 
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(222, 106, 57, 0.2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(222, 106, 57, 0.1)'; }}
+          >
+            <RefreshCw size={12} className={isRegenerating ? 'animate-spin' : ''} />
+            {isRegenerating ? 'Re-distilling...' : 'Re-distill Summary'}
+          </button>
+
           <button 
             onClick={() => { 
               setIsEditing(false); 
@@ -519,50 +563,6 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
             title="Edit Log"
           >
             <Edit2 size={13} />
-          </button>
-
-          <button 
-            onClick={handleSmartRename} 
-            style={{ 
-              width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.02)', 
-              border: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' 
-            }} 
-            onMouseEnter={e => { e.currentTarget.style.color = 'white'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
-            title="Smart Rename"
-          >
-            <Wand2 size={13} />
-          </button>
-          
-          <button 
-            onClick={() => handleSendToMail(ctx.id)}
-            disabled={mailSending === ctx.id}
-            style={{ 
-              width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.02)', 
-              border: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' 
-            }} 
-            onMouseEnter={e => { e.currentTarget.style.color = 'white'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
-            title="Dispatch to Mail"
-          >
-            {mailSending === ctx.id ? '...' : <Mail size={13} />}
-          </button>
-
-          <button 
-            onClick={handleRegenerate} 
-            disabled={isRegenerating}
-            style={{ 
-              width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.02)', 
-              border: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' 
-            }} 
-            onMouseEnter={e => { e.currentTarget.style.color = 'white'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
-            title="Regenerate Intelligence"
-          >
-             <RefreshCw size={12} className={isRegenerating ? 'pulse' : ''} />
           </button>
 
           <div ref={projectMenuRef} style={{ position: 'relative' }}>
@@ -739,19 +739,22 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
               alignItems: 'center',
               gap: '6px',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: 'scale(1) translateY(0)'
             }}
             onMouseEnter={e => {
               e.currentTarget.style.color = '#ffffff';
-              e.currentTarget.style.background = `${plat.color}15`;
+              e.currentTarget.style.background = `${plat.color}18`;
               e.currentTarget.style.borderColor = plat.color;
-              e.currentTarget.style.boxShadow = `0 0 10px ${plat.color}15`;
+              e.currentTarget.style.boxShadow = `0 4px 15px ${plat.color}25, 0 0 8px ${plat.color}15`;
+              e.currentTarget.style.transform = 'scale(1.03) translateY(-1px)';
             }}
             onMouseLeave={e => {
               e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
               e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
               e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.style.transform = 'scale(1) translateY(0)';
             }}
           >
             {React.cloneElement(plat.icon, { size: 12, color: 'currentColor' })}
@@ -763,20 +766,6 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
       {/* Action Footer */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', paddingTop: '14px', borderTop: '1px solid rgba(255, 255, 255, 0.04)' }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button 
-            onClick={handleOptimize}
-            disabled={isOptimizing}
-            style={{ 
-              fontSize: '0.75rem', padding: '6px 14px', borderRadius: '8px', 
-              border: '1px solid rgba(255,255,255,0.06)', background: 'transparent',
-              color: 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: '0.2s'
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'white'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-          >
-            {isOptimizing ? '🪄 Optimizing...' : '🪄 Optimize Prompt'}
-          </button>
-          
           <div ref={exportRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setShowExport(v => !v)}
@@ -789,27 +778,50 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'white'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
             >
-              <Download size={12} /> Export
+              <Settings size={12} /> Actions <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
             </button>
             {showExport && (
               <div style={{
                 position: 'absolute', bottom: '110%', left: 0,
-                background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)',
+                background: 'rgba(15, 23, 42, 0.98)', backdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px', padding: '4px', zIndex: 100, minWidth: '180px',
-                boxShadow: '0 10px 35px rgba(0,0,0,0.5)'
+                borderRadius: '8px', padding: '6px', zIndex: 100, minWidth: '190px',
+                boxShadow: '0 10px 35px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
               }}>
+                <button 
+                  onClick={() => { handleOptimize(); setShowExport(false); }}
+                  disabled={isOptimizing}
+                  style={{ 
+                    display: 'flex', width: '100%', background: 'transparent', border: 'none',
+                    color: 'white', padding: '8px 10px', textAlign: 'left', cursor: 'pointer',
+                    borderRadius: '6px', fontSize: '0.75rem', fontWeight: '500',
+                    transition: 'background 0.2s', alignItems: 'center', gap: '8px'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                >
+                  <Wand2 size={14} className={isOptimizing ? 'animate-spin' : ''} />
+                  {isOptimizing ? 'Optimizing...' : 'Optimize Prompt'}
+                </button>
+
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+
+                <div style={{ fontSize: '0.6rem', fontWeight: '800', color: 'rgba(255,255,255,0.3)', padding: '2px 10px 4px 10px', letterSpacing: '0.5px' }}>EXPORT OPTIONS</div>
+
                 {[
-                  { fmt: 'markdown', label: 'Markdown (.md)', icon: <FileText size={14} /> },
-                  { fmt: 'json',     label: 'JSON (.json)', icon: <Database size={14} /> },
-                  { fmt: 'prompt',   label: 'Prompt Pack (.txt)', icon: <Zap size={14} /> },
+                  { fmt: 'markdown', label: 'Export as Markdown (.md)', icon: <FileText size={14} /> },
+                  { fmt: 'json',     label: 'Export as JSON (.json)', icon: <Database size={14} /> },
+                  { fmt: 'prompt',   label: 'Export as Prompt Pack (.txt)', icon: <Zap size={14} /> },
                 ].map(({ fmt, label, icon }) => (
                   <button 
                     key={fmt} 
                     onClick={() => { exportBridge(ctx, fmt); setShowExport(false); }}
                     style={{ 
                       display: 'flex', width: '100%', background: 'transparent', border: 'none',
-                      color: 'white', padding: '10px 12px', textAlign: 'left', cursor: 'pointer',
+                      color: 'white', padding: '8px 10px', textAlign: 'left', cursor: 'pointer',
                       borderRadius: '6px', fontSize: '0.75rem', fontWeight: '500',
                       transition: 'background 0.2s', alignItems: 'center', gap: '8px'
                     }}
@@ -842,13 +854,24 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
         <button 
           onClick={() => onForge(ctx, optimizedPrompt || ctx.summary)}
           style={{ 
-            padding: '6px 14px', fontSize: '0.75rem', fontWeight: '600',
+            padding: '8px 18px', fontSize: '0.75rem', fontWeight: '600',
             borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px',
-            border: '1px dashed rgba(255, 255, 255, 0.15)', background: 'transparent',
-            color: 'var(--primary)', cursor: 'pointer', transition: 'all 0.2s'
+            border: 'none', 
+            background: 'linear-gradient(135deg, var(--primary) 0%, #ff8038 100%)',
+            color: '#ffffff', 
+            cursor: 'pointer', 
+            boxShadow: '0 0 12px rgba(222, 106, 57, 0.35)',
+            textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(222, 106, 57, 0.05)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'; }}
+          onMouseEnter={e => { 
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 0 20px rgba(222, 106, 57, 0.6)';
+          }}
+          onMouseLeave={e => { 
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 0 12px rgba(222, 106, 57, 0.35)';
+          }}
         >
           <Globe size={12} /> Forge Universal Bridge
         </button>
@@ -1571,6 +1594,190 @@ const ProjectWorkspace = ({
       {/* 📂 SESSION LOGS */}
       {projectTab === 'logs' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          
+          {/* Quickstart Feature Highlight Grid */}
+          <div style={{ marginBottom: '32px' }}>
+            {/* If memory layer is empty and there are bridges, show a call-to-action banner to compile */}
+            {!techStack && !goals && !rules && !problemStatement && filteredBridges.length > 0 && (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(222,106,57,0.1) 0%, rgba(124,58,237,0.06) 100%)',
+                border: '1px solid rgba(222,106,57,0.25)',
+                borderRadius: '16px',
+                padding: '20px 24px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '16px',
+                boxShadow: '0 0 20px rgba(222,106,57,0.05)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: '1 1 300px' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', flexShrink: 0 }}>
+                    <Cpu size={24} />
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: '#fff' }}>Synthesize Project Profile with AI</h4>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                      Automatically extract your tech stack, objectives, architecture rules, and decisions from your saved chat logs.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={compileMemory}
+                  disabled={isCompiling}
+                  className="btn-primary"
+                  style={{
+                    padding: '10px 20px',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    border: 'none',
+                    flexShrink: 0
+                  }}
+                >
+                  <RefreshCw size={14} className={isCompiling ? 'animate-spin' : ''} />
+                  {isCompiling ? 'Synthesizing...' : '✨ Compile Profile Now'}
+                </button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Zap size={14} color="var(--primary)" />
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)' }}>
+                Workspace Intelligence Engine
+              </span>
+            </div>
+
+            <div className="features-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+              
+              {/* Feature 1: Memory Layer */}
+              <div 
+                onClick={() => setProjectTab('memory')}
+                style={{
+                  background: 'rgba(13, 13, 13, 0.45)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.3)';
+                  e.currentTarget.style.background = 'rgba(222, 106, 57, 0.02)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.background = 'rgba(13, 13, 13, 0.45)';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(222, 106, 57, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                    <BookOpen size={18} />
+                  </div>
+                  <span style={{
+                    fontSize: '0.65rem', fontWeight: '800', padding: '3px 8px', borderRadius: '6px',
+                    background: (techStack || goals || rules || problemStatement) ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.04)',
+                    color: (techStack || goals || rules || problemStatement) ? '#34d399' : 'var(--text-muted)',
+                    textTransform: 'uppercase'
+                  }}>
+                    {(techStack || goals || rules || problemStatement) ? '✓ Configured' : '○ Empty'}
+                  </span>
+                </div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: '800', color: '#fff' }}>Problem &amp; Rules</h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  Keep track of code guidelines, constraints, and technologies. Inject context layers dynamically.
+                </p>
+              </div>
+
+              {/* Feature 2: Decision Ledger */}
+              <div 
+                onClick={() => setProjectTab('decisions')}
+                style={{
+                  background: 'rgba(13, 13, 13, 0.45)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.3)';
+                  e.currentTarget.style.background = 'rgba(124, 58, 237, 0.02)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.background = 'rgba(13, 13, 13, 0.45)';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(124, 58, 237, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
+                    <Settings size={18} />
+                  </div>
+                  <span style={{
+                    fontSize: '0.65rem', fontWeight: '800', padding: '3px 8px', borderRadius: '6px',
+                    background: decisions.length > 0 ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.04)',
+                    color: decisions.length > 0 ? '#c084fc' : 'var(--text-muted)',
+                    textTransform: 'uppercase'
+                  }}>
+                    {decisions.length} Saved
+                  </span>
+                </div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: '800', color: '#fff' }}>Decision Ledger</h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  Document architectural and tech choices. Elaborate rationale into actionable checklists.
+                </p>
+              </div>
+
+              {/* Feature 3: RAG AI Assistant */}
+              <div 
+                onClick={() => setProjectTab('chat')}
+                style={{
+                  background: 'rgba(13, 13, 13, 0.45)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'rgba(6, 182, 212, 0.3)';
+                  e.currentTarget.style.background = 'rgba(6, 182, 212, 0.02)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.background = 'rgba(13, 13, 13, 0.45)';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(6, 182, 212, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22d3ee' }}>
+                    <MessageSquare size={18} />
+                  </div>
+                  <span style={{
+                    fontSize: '0.65rem', fontWeight: '800', padding: '3px 8px', borderRadius: '6px',
+                    background: chatSessions.length > 0 ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.04)',
+                    color: chatSessions.length > 0 ? '#22d3ee' : 'var(--text-muted)',
+                    textTransform: 'uppercase'
+                  }}>
+                    {chatSessions.length} Chats
+                  </span>
+                </div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: '800', color: '#fff' }}>Memory AI Assistant</h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  Query your consolidated project contexts, decisions, and history dynamically.
+                </p>
+              </div>
+
+            </div>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
               Showing <strong>{filteredBridges.length}</strong> conversation logs in this sector.

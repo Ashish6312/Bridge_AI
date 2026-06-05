@@ -324,7 +324,7 @@ const Footer = () => {
             <div style={{ fontSize: 12, color: '#71717A', fontWeight: 500, letterSpacing: '0.02em' }}>
               © 2026 BridgeAI Protocol. All rights reserved.
             </div>
-            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
               {[
                 { label: 'Privacy Policy', key: 'privacy' },
                 { label: 'Terms of Service', key: 'terms of actions' },
