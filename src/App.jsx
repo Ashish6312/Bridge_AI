@@ -9,7 +9,6 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import GlobalBackground from './components/GlobalBackground';
 import ChatWidget from './components/ChatWidget';
-import SmoothScroll from './components/SmoothScroll';
 
 // Lazy Loaded Pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -164,9 +163,7 @@ function App() {
         {!isAdminPage && <Navbar />}
         <main style={{ flex: 1, position: 'relative' }}>
           <Suspense fallback={<PageLoader />}>
-            <SmoothScroll>
-              <BridgeRoutes />
-            </SmoothScroll>
+            <BridgeRoutes />
           </Suspense>
         </main>
         {!isAdminPage && location.pathname !== '/dashboard' && <Footer />}
