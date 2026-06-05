@@ -227,6 +227,12 @@ const initDB = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
+      CREATE TABLE IF NOT EXISTS admin_sessions (
+        token TEXT PRIMARY KEY,
+        email TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE INDEX IF NOT EXISTS idx_project_contexts_lookup ON project_contexts(user_email, project_id);
       CREATE INDEX IF NOT EXISTS idx_project_decisions_lookup ON project_decisions(user_email, project_id);
       CREATE INDEX IF NOT EXISTS idx_project_chats_lookup ON project_chats(user_email, project_id);
@@ -331,7 +337,7 @@ app.post('/api/login', async (req, res) => {
     let adminToken = null;
     if (user.is_admin) {
       adminToken = 'admin_sess_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-      activeAdminSessions.set(adminToken, user.email);
+      await pool.query('INSERT INTO admin_sessions (token, email) VALUES ($1, $2)', [adminToken, user.email]);
     }
 
     res.json({ success: true, user, adminToken });
@@ -361,7 +367,7 @@ app.post('/api/auth/google', async (req, res) => {
     let adminToken = null;
     if (row.is_admin) {
       adminToken = 'admin_sess_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-      activeAdminSessions.set(adminToken, row.email);
+      await pool.query('INSERT INTO admin_sessions (token, email) VALUES ($1, $2)', [adminToken, row.email]);
     }
 
     res.json({ success: true, user: row, trialActivated: isNewUser, adminToken });
@@ -410,15 +416,21 @@ app.post('/api/feedbacks', async (req, res) => {
 
 // ─── ADMIN SYSTEM ───────────────────────────────────────────
 
-const activeAdminSessions = new Map();
-
 // Middleware to verify admin token
-const verifyAdmin = (req, res, next) => {
-  const token = req.headers['x-admin-token'];
-  if (token && activeAdminSessions.has(token)) {
-    next();
-  } else {
-    res.status(403).json({ error: 'Unauthorized: Admin privileges required.' });
+const verifyAdmin = async (req, res, next) => {
+  try {
+    const token = req.headers['x-admin-token'];
+    if (!token) {
+      return res.status(403).json({ error: 'Unauthorized: Admin privileges required.' });
+    }
+    const result = await pool.query('SELECT * FROM admin_sessions WHERE token = $1', [token]);
+    if (result.rowCount > 0) {
+      next();
+    } else {
+      res.status(403).json({ error: 'Unauthorized: Admin privileges required.' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Database session validation failed: ' + err.message });
   }
 };
 
@@ -451,7 +463,7 @@ app.post('/api/admin/login', async (req, res) => {
     }
 
     const token = 'admin_sess_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-    activeAdminSessions.set(token, user.email);
+    await pool.query('INSERT INTO admin_sessions (token, email) VALUES ($1, $2)', [token, user.email]);
 
     res.json({ success: true, token, email: user.email });
   } catch (err) {
