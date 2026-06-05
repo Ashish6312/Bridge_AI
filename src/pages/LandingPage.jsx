@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown, Check, X, Star, Layers, Copy, ClipboardX, FolderOpen, FileText, RefreshCw, BrainCircuit, Zap, Lock, Globe, FolderArchive } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { apiFetch } from '../apiConfig';
 
 /* ── palette ── */
 const P = '#DE6A39';       // Primary Soft Copper
@@ -96,6 +97,57 @@ const LandingPage = () => {
   const isOnboarding = searchParams.get('onboarding') === 'true';
   const [openFaq, setOpenFaq] = useState(null);
   const [activeSection, setActiveSection] = useState('hero');
+
+  // Feedback states
+  const [feedbackLiked, setFeedbackLiked] = useState(null); // true = Love it, false = Needs work
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [submittedFeedback, setSubmittedFeedback] = useState(false);
+
+  const userStr = localStorage.getItem('bridge_user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const userEmail = user?.email || '';
+
+  const handleGeneralFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (feedbackLiked === null) {
+      alert('Please select if you like it or not!');
+      return;
+    }
+    const finalEmail = userEmail || feedbackEmail || 'guest';
+    const type = 'feedback';
+    const title = `General Feedback: ${feedbackLiked ? 'Love it' : 'Needs work'}`;
+    const description = feedbackText;
+
+    try {
+      setSubmittingFeedback(true);
+      const res = await apiFetch('/api/feedbacks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: finalEmail,
+          type,
+          title,
+          description
+        })
+      });
+      if (res.ok) {
+        setSubmittedFeedback(true);
+        setFeedbackText('');
+        setFeedbackEmail('');
+        setFeedbackLiked(null);
+        setTimeout(() => setSubmittedFeedback(false), 5000);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to submit feedback');
+      }
+    } catch (err) {
+      alert(err.message || 'Error submitting feedback');
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
 
   /* ── Page setup ── */
   useEffect(() => {
@@ -780,7 +832,172 @@ const LandingPage = () => {
         </div>
       </motion.section>
 
+      {/* ══════════════════════════════════════════════
+          SECTION 8: GENERAL FEEDBACK
+      ══════════════════════════════════════════════ */}
+      <motion.section id="general-feedback" initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} transition={{ duration:0.6 }}
+        style={{ position:'relative', zIndex:2, padding:'6rem 3rem', borderTop:`1px solid rgba(255,107,44,0.12)`, background:'rgba(5,5,5,0.2)' }}>
+        <div style={{ position:'absolute', bottom:'10%', left:'10%', width:350, height:350, borderRadius:'50%', background:'radial-gradient(circle, rgba(222,106,57,0.05) 0%, transparent 70%)', filter:'blur(100px)', pointerEvents:'none', zIndex:-1 }} />
 
+        <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:P, fontWeight:700, marginBottom:16 }}>Your Voice</div>
+          <h2 style={{ fontSize:'clamp(2rem,4vw,2.8rem)', fontWeight:800, color:TEXT, letterSpacing:'-0.03em', marginBottom:12 }}>
+            Do you like <span style={{ background:`linear-gradient(135deg,${P},${PURP})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>BridgeAI</span>?
+          </h2>
+          <p style={{ color:MUTED, fontSize:15, fontWeight:500, opacity:0.8, marginBottom:40 }}>
+            Tell us if we are on the right track or how we can improve. Your input shapes our roadmap.
+          </p>
+
+          <div style={{ ...glassCard, borderRadius: 20, padding: 32, textAlign: 'left', border: '1px solid rgba(255, 107, 44, 0.15)', boxShadow: '0 10px 40px rgba(0,0,0,0.4)' }}>
+            {submittedFeedback ? (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: 'center', padding: '40px 0' }}>
+                <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(222,106,57,0.15)', border: '1px solid rgba(222,106,57,0.3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: P, marginBottom: 20 }}>
+                  <Check size={32} />
+                </div>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: TEXT, marginBottom: 8 }}>Thank you! 🧡</h3>
+                <p style={{ color: MUTED, fontSize: '0.95rem' }}>Your feedback has been submitted directly to the dev team.</p>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleGeneralFeedbackSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                
+                {/* Like / Dislike Toggle */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '800', color: MUTED, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    How is your experience?
+                  </label>
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <button
+                      type="button"
+                      onClick={() => setFeedbackLiked(true)}
+                      style={{
+                        flex: 1,
+                        padding: '16px',
+                        borderRadius: 12,
+                        background: feedbackLiked === true ? 'rgba(222, 106, 57, 0.15)' : 'rgba(255,255,255,0.02)',
+                        border: feedbackLiked === true ? '1px solid rgba(222, 106, 57, 0.5)' : '1px solid rgba(255,255,255,0.05)',
+                        color: feedbackLiked === true ? 'white' : MUTED,
+                        fontSize: '0.95rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 10,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <span style={{ fontSize: '1.2rem' }}>😍</span> I love it!
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFeedbackLiked(false)}
+                      style={{
+                        flex: 1,
+                        padding: '16px',
+                        borderRadius: 12,
+                        background: feedbackLiked === false ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.02)',
+                        border: feedbackLiked === false ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255,255,255,0.05)',
+                        color: feedbackLiked === false ? 'white' : MUTED,
+                        fontSize: '0.95rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 10,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <span style={{ fontSize: '1.2rem' }}>🛠️</span> It needs work
+                    </button>
+                  </div>
+                </div>
+
+                {/* Feedback Textarea */}
+                <div>
+                  <label htmlFor="feedback-text-area" style={{ display: 'block', fontSize: '0.8rem', fontWeight: '800', color: MUTED, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    What did you like or dislike?
+                  </label>
+                  <textarea
+                    id="feedback-text-area"
+                    required
+                    value={feedbackText}
+                    onChange={e => setFeedbackText(e.target.value)}
+                    placeholder="Tell us what you think. Your direct experience helps us build a better platform..."
+                    rows={4}
+                    style={{
+                      width: '100%',
+                      padding: '14px 18px',
+                      borderRadius: 12,
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: TEXT,
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      resize: 'vertical',
+                      lineHeight: '1.5',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                </div>
+
+                {/* Email Input (if guest) */}
+                {!userEmail && (
+                  <div>
+                    <label htmlFor="feedback-email-input" style={{ display: 'block', fontSize: '0.8rem', fontWeight: '800', color: MUTED, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Your Email (Optional)
+                    </label>
+                    <input
+                      id="feedback-email-input"
+                      type="email"
+                      value={feedbackEmail}
+                      onChange={e => setFeedbackEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: 12,
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        color: TEXT,
+                        fontSize: '0.95rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={submittingFeedback}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    borderRadius: 12,
+                    background: 'linear-gradient(135deg, var(--primary) 0%, #ff8038 100%)',
+                    border: 'none',
+                    color: 'white',
+                    fontWeight: '700',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    boxShadow: '0 4px 20px rgba(222, 106, 57, 0.25)',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = ''}
+                >
+                  {submittingFeedback ? 'Submitting...' : 'Submit Feedback'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </motion.section>
 
     </div>
   );
