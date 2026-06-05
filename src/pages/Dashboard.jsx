@@ -1159,16 +1159,12 @@ const ProjectWorkspace = ({
       const data = await res.json();
       if (data.success && data.data) {
         setChatSessions(data.data);
-        if (data.data.length > 0) {
-          const mostRecent = data.data[0];
-          setActiveSessionId(mostRecent.id);
-          setChatHistory(mostRecent.messages || []);
-        } else {
-          setActiveSessionId(null);
-          setChatHistory([
-            { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
-          ]);
-        }
+        // Always start on a fresh new chat after page load/refresh
+        // Previous sessions are accessible in the sidebar
+        setActiveSessionId(null);
+        setChatHistory([
+          { role: 'assistant', text: `Hello! I am your Project Memory Assistant. I have indexed your tech stack, goals, rules, and decision history for "${projectId}". Ask me any questions, generate system prompts, or request onboarding docs!` }
+        ]);
       }
     } catch (err) {
       console.error("Error fetching chat sessions:", err);
@@ -2021,7 +2017,18 @@ const ProjectWorkspace = ({
                   {isChatSidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeft size={14} />}
                 </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Cpu size={16} color="var(--primary)" />
+                  <div style={{
+                    width: '22px', height: '22px', borderRadius: '7px',
+                    background: 'linear-gradient(135deg, #7C3AED, #DE6A39)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z"/>
+                      <circle cx="9" cy="14" r="1.2" fill="white" stroke="none"/>
+                      <circle cx="15" cy="14" r="1.2" fill="white" stroke="none"/>
+                    </svg>
+                  </div>
                   <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'rgba(255,255,255,0.8)' }}>AI Memory Assistant</span>
                 </div>
               </div>
@@ -2146,12 +2153,16 @@ const ProjectWorkspace = ({
                       transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                       style={{ 
                         width: '64px', height: '64px', borderRadius: '20px', 
-                        background: 'linear-gradient(135deg, #DE6A39 0%, #7C3AED 100%)', 
+                        background: 'linear-gradient(135deg, #7C3AED 0%, #DE6A39 100%)', 
                         display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        boxShadow: '0 0 30px rgba(222, 106, 57, 0.3)', marginBottom: '24px', flexShrink: 0
+                        boxShadow: '0 0 40px rgba(124, 58, 237, 0.35)', marginBottom: '24px', flexShrink: 0
                       }}
                     >
-                      <Cpu size={32} color="white" />
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z"/>
+                        <circle cx="9" cy="14" r="1.5" fill="white" stroke="none"/>
+                        <circle cx="15" cy="14" r="1.5" fill="white" stroke="none"/>
+                      </svg>
                     </motion.div>
                     <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '8px', letterSpacing: '-0.02em' }}>
                       How can I help you today?
@@ -2208,12 +2219,16 @@ const ProjectWorkspace = ({
                           {isAssistant && (
                             <div style={{ 
                               width: '32px', height: '32px', borderRadius: '10px', 
-                              background: 'linear-gradient(135deg, #DE6A39, #7C3AED)', 
+                              background: 'linear-gradient(135deg, #7C3AED, #DE6A39)', 
                               display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                              flexShrink: 0, color: 'white', fontSize: '0.9rem',
-                              boxShadow: '0 0 10px rgba(222,106,57,0.2)' 
+                              flexShrink: 0,
+                              boxShadow: '0 0 12px rgba(124, 58, 237, 0.3)' 
                             }}>
-                              🤖
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z"/>
+                                <circle cx="9" cy="14" r="1.2" fill="white" stroke="none"/>
+                                <circle cx="15" cy="14" r="1.2" fill="white" stroke="none"/>
+                              </svg>
                             </div>
                           )}
                           <div style={{
