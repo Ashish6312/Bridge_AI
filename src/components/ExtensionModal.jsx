@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Puzzle, Pin, CheckCircle, ExternalLink, ChevronRight } from 'lucide-react';
+import { X, Download, Puzzle, Pin, CheckCircle, ExternalLink } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 
 const STEPS = [
   {
@@ -40,6 +41,10 @@ const ExtensionModal = ({ onClose }) => {
 
   const [downloaded, setDownloaded] = useState(false);
 
+  // Detect native APK or general mobile browser context
+  const isNative = Capacitor.isNativePlatform();
+  const isMobile = isNative || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   return (
     <AnimatePresence>
       <motion.div
@@ -69,6 +74,33 @@ const ExtensionModal = ({ onClose }) => {
           .extension-modal-content::-webkit-scrollbar-thumb:hover {
             background: var(--primary);
           }
+
+          /* Responsive Overrides */
+          @media (max-width: 640px) {
+            .extension-modal-content {
+              padding: 24px 20px !important;
+              border-radius: 20px !important;
+              max-height: 95vh !important;
+            }
+            .extension-modal-title {
+              font-size: 1.3rem !important;
+            }
+            .extension-modal-step-card {
+              padding: 16px !important;
+              gap: 12px !important;
+            }
+            .extension-modal-step-title {
+              font-size: 0.95rem !important;
+            }
+            .extension-modal-step-desc {
+              font-size: 0.82rem !important;
+            }
+            .extension-modal-download-btn {
+              padding: 14px !important;
+              font-size: 0.95rem !important;
+              margin-bottom: 24px !important;
+            }
+          }
         `}</style>
         <motion.div
           initial={{ scale: 0.95, y: 20 }}
@@ -90,17 +122,21 @@ const ExtensionModal = ({ onClose }) => {
           }}
         >
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <div style={{ background: 'var(--primary)', padding: '10px', borderRadius: '14px', display: 'flex' }}>
                   <Puzzle size={22} color="white" />
                 </div>
-                <h2 style={{ fontSize: '1.6rem', margin: 0, fontWeight: '800', color: '#F5F5F5', letterSpacing: '-0.02em' }}>Install BridgeAI Extension</h2>
+                <h2 className="extension-modal-title" style={{ fontSize: '1.6rem', margin: 0, fontWeight: '800', color: '#F5F5F5', letterSpacing: '-0.02em' }}>
+                  {isMobile ? 'Extension Status' : 'Install BridgeAI Extension'}
+                </h2>
               </div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0 }}>
-                Works on Chrome, Brave, Edge — any Chromium browser.
-              </p>
+              {!isMobile && (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0 }}>
+                  Works on Chrome, Brave, Edge — any Chromium browser.
+                </p>
+              )}
             </div>
             <button onClick={onClose} style={{
               background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -120,65 +156,105 @@ const ExtensionModal = ({ onClose }) => {
             </button>
           </div>
 
-          {/* Download CTA */}
-          <a
-            href="/bridgeai-extension.zip"
-            download="bridgeai-extension.zip"
-            onClick={() => setDownloaded(true)}
-            className="btn-primary"
-            style={{ width: '100%', padding: '18px', fontSize: '1.1rem', justifyContent: 'center', marginBottom: '40px', borderRadius: '16px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            {downloaded
-              ? <><CheckCircle size={20} /> Extension Obtained</>
-              : <><Download size={20} /> Download Extension (.zip)</>
-            }
-          </a>
-
-          {/* Steps */}
-          <p style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '20px', textTransform: 'uppercase' }}>
-            Installation Steps
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {STEPS.map((step, i) => (
-              <div key={i} style={{
-                display: 'flex', gap: '20px', alignItems: 'flex-start',
-                padding: '20px', borderRadius: '16px',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+          {isMobile ? (
+            /* Coming Soon state for mobile devices & native APK */
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+              padding: '40px 20px', background: 'rgba(255, 255, 255, 0.01)',
+              border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '20px',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.03)', marginTop: '16px'
+            }}>
+              <div style={{
+                width: '72px', height: '72px', borderRadius: '50%',
+                background: 'rgba(255, 107, 44, 0.08)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', marginBottom: '24px',
+                border: '1px solid rgba(255, 107, 44, 0.2)',
+                boxShadow: '0 0 20px rgba(255, 107, 44, 0.1)'
               }}>
-                <div style={{
-                  width: '40px', height: '40px', borderRadius: '10px',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, border: '1px solid rgba(255, 255, 255, 0.06)',
-                }}>
-                  {step.icon}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: '900', color: 'var(--primary)', background: 'var(--primary-soft)', padding: '2px 10px', borderRadius: '100px' }}>
-                      STEP {i + 1}
-                    </span>
-                    <span style={{ fontWeight: '800', fontSize: '1.05rem', color: '#F5F5F5' }}>{step.title}</span>
-                  </div>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>{step.desc}</p>
-                  {step.code && (
-                    <code style={{
-                      display: 'inline-block', marginTop: '10px',
-                      background: 'rgba(255, 107, 44, 0.08)', color: 'var(--primary)',
-                      border: '1px solid rgba(255, 107, 44, 0.15)',
-                      padding: '6px 12px', borderRadius: '8px', fontSize: '0.85rem',
-                      fontFamily: 'monospace', fontWeight: '600'
-                    }}>{step.code}</code>
-                  )}
-                </div>
+                <Puzzle size={32} color="var(--primary)" />
               </div>
-            ))}
-          </div>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'white', marginBottom: '12px' }}>
+                Coming Soon on Mobile
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: 1.6, margin: 0, maxWidth: '400px' }}>
+                BridgeAI browser extensions are currently designed for computer and laptop browsers (Chrome, Brave, Edge, etc.) which support developer extensions. Native mobile syncing is coming soon!
+              </p>
+              <div style={{
+                marginTop: '28px', padding: '12px 20px', background: 'rgba(255, 107, 44, 0.05)',
+                border: '1px solid rgba(255, 107, 44, 0.1)', borderRadius: '12px',
+                fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600'
+              }}>
+                💻 Access from a desktop device to download
+              </div>
+            </div>
+          ) : (
+            /* Standard Desktop Mode */
+            <>
+              {/* Download CTA */}
+              <a
+                href="/bridgeai-extension.zip"
+                download="bridgeai-extension.zip"
+                onClick={() => setDownloaded(true)}
+                className="btn-primary extension-modal-download-btn"
+                style={{ width: '100%', padding: '18px', fontSize: '1.1rem', justifyContent: 'center', marginBottom: '40px', borderRadius: '16px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                {downloaded
+                  ? <><CheckCircle size={20} /> Extension Obtained</>
+                  : <><Download size={20} /> Download Extension (.zip)</>
+                }
+              </a>
 
-          <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
-            Ready to relay? Open your browser and start bridging context.
-          </p>
+              {/* Steps */}
+              <p style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '20px', textTransform: 'uppercase' }}>
+                Installation Steps
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {STEPS.map((step, i) => (
+                  <div 
+                    key={i} 
+                    className="extension-modal-step-card"
+                    style={{
+                      display: 'flex', gap: '20px', alignItems: 'flex-start',
+                      padding: '20px', borderRadius: '16px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.05)',
+                    }}
+                  >
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '10px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, border: '1px solid rgba(255, 255, 255, 0.06)',
+                    }}>
+                      {step.icon}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: '900', color: 'var(--primary)', background: 'var(--primary-soft)', padding: '2px 10px', borderRadius: '100px' }}>
+                          STEP {i + 1}
+                        </span>
+                        <span className="extension-modal-step-title" style={{ fontWeight: '800', fontSize: '1.05rem', color: '#F5F5F5' }}>{step.title}</span>
+                      </div>
+                      <p className="extension-modal-step-desc" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>{step.desc}</p>
+                      {step.code && (
+                        <code style={{
+                          display: 'inline-block', marginTop: '10px',
+                          background: 'rgba(255, 107, 44, 0.08)', color: 'var(--primary)',
+                          border: '1px solid rgba(255, 107, 44, 0.15)',
+                          padding: '6px 12px', borderRadius: '8px', fontSize: '0.85rem',
+                          fontFamily: 'monospace', fontWeight: '600'
+                        }}>{step.code}</code>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <p style={{ textAlign: 'center', marginTop: '32px', fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
+                Ready to relay? Open your browser and start bridging context.
+              </p>
+            </>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

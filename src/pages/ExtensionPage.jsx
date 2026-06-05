@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Puzzle, Pin, CheckCircle, ExternalLink, Activity, ArrowRight, Shield } from 'lucide-react';
+import { Download, Puzzle, Pin, CheckCircle, ExternalLink, ArrowRight, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 
 const STEPS = [
   {
@@ -41,12 +42,16 @@ const ExtensionPage = () => {
     setDownloaded(true);
   };
 
+  // Detect mobile app/device context
+  const isNative = Capacitor.isNativePlatform();
+  const isMobile = isNative || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   return (
     <div style={{ minHeight: '100vh', background: 'transparent', padding: '120px 20px 100px' }}>
       <div className="container" style={{ maxWidth: '1000px' }}>
         
         {/* ── Header ────────────────────────────────────────── */}
-        <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? '48px' : '80px' }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -58,83 +63,127 @@ const ExtensionPage = () => {
               marginBottom: '32px'
             }}>
               <Puzzle size={14} color="var(--primary)" />
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)' }}>How to Install</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)' }}>
+                {isMobile ? 'Extension Status' : 'How to Install'}
+              </span>
             </div>
             
             <h1 style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', fontWeight: '900', marginBottom: '24px', letterSpacing: '-0.04em', lineHeight: 1, color: 'var(--text-main)' }}>
-              Install the <span style={{ color: 'var(--primary)' }}>BridgeAI Extension</span>
+              {isMobile ? 'Mobile Compatibility' : <>Install the <span style={{ color: 'var(--primary)' }}>BridgeAI Extension</span></>}
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', lineHeight: '1.7', maxWidth: '700px', margin: '0 auto' }}>
-              Add BridgeAI to your browser to sync chats instantly. Works on Chrome, Brave, Edge, and other major browsers.
+              {isMobile 
+                ? 'Check support status and extension compatibility for mobile platforms.'
+                : 'Add BridgeAI to your browser to sync chats instantly. Works on Chrome, Brave, Edge, and other major browsers.'
+              }
             </p>
           </motion.div>
         </div>
 
-        {/* ── Main Action ───────────────────────────────────── */}
-        <div className="grid-responsive-2" style={{ gap: '40px', alignItems: 'start' }}>
-          
+        {/* ── Main Content Area ─────────────────────────────── */}
+        {isMobile ? (
+          /* Coming Soon state for mobile devices & native APK */
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+            style={{ maxWidth: '600px', margin: '0 auto' }}
           >
-            <div className="glass-card" style={{ padding: '48px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '32px', boxShadow: 'var(--shadow)' }}>
-              <div style={{ background: 'var(--primary)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
-                <Download size={32} color="white" />
+            <div className="glass-card" style={{
+              padding: '48px 32px', textAlign: 'center', background: 'var(--bg-secondary)',
+              border: '1px solid var(--border)', borderRadius: '32px', boxShadow: 'var(--shadow)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center'
+            }}>
+              <div style={{
+                width: '80px', height: '80px', borderRadius: '50%',
+                background: 'rgba(255, 107, 44, 0.08)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', marginBottom: '24px',
+                border: '1px solid rgba(255, 107, 44, 0.2)',
+                boxShadow: '0 0 30px rgba(255, 107, 44, 0.15)'
+              }}>
+                <Puzzle size={36} color="var(--primary)" />
               </div>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)' }}>Download Extension</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '32px' }}>
-                Download the latest version of the BridgeAI extension. 
-                This ZIP file contains the extension files you'll load into your browser.
+              <h3 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--text-main)', marginBottom: '16px', letterSpacing: '-0.02em' }}>
+                Coming Soon on Mobile
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.7, marginBottom: '32px', maxWidth: '460px' }}>
+                BridgeAI browser extensions are currently designed for computer and laptop browsers (Chrome, Brave, Edge, etc.) which support developer extensions. Native mobile syncing is coming soon!
               </p>
-              
-              <button 
-                onClick={handleDownload}
-                className="btn-primary" 
-                style={{ width: '100%', padding: '20px', fontSize: '1.1rem', justifyContent: 'center', borderRadius: '16px' }}
-              >
-                {downloaded ? <><CheckCircle size={22} /> Download Started</> : <><Download size={22} /> Download Extension (.zip)</>}
-              </button>
-              
-              <div style={{ marginTop: '32px', padding: '20px', borderRadius: '16px', background: 'var(--gray-50)', border: '1px solid var(--gray-200)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', marginBottom: '8px' }}>
-                  <Shield size={16} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase' }}>Verified Build</span>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  This extension runs entirely in your browser. Your API keys and data are kept safe and local.
-                </p>
+              <div style={{
+                padding: '16px 24px', background: 'rgba(255, 107, 44, 0.05)',
+                border: '1px solid rgba(255, 107, 44, 0.1)', borderRadius: '16px',
+                fontSize: '0.95rem', color: 'var(--primary)', fontWeight: '700',
+                display: 'inline-flex', alignItems: 'center', gap: '8px'
+              }}>
+                💻 Please use a laptop or desktop computer to install
               </div>
             </div>
           </motion.div>
-
-          {/* Steps Column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {STEPS.map((step, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + (i * 0.1) }}
-                className="glass-card mobile-col" 
-                style={{ padding: '24px 32px', display: 'flex', gap: '24px', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
-              >
-                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--gray-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {step.icon}
+        ) : (
+          /* Standard Desktop Layout */
+          <div className="grid-responsive-2" style={{ gap: '40px', alignItems: 'start' }}>
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="glass-card" style={{ padding: '48px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '32px', boxShadow: 'var(--shadow)' }}>
+                <div style={{ background: 'var(--primary)', width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
+                  <Download size={32} color="white" />
                 </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: '900', color: 'var(--primary)', opacity: 0.6 }}>STEP {i + 1}</span>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>{step.title}</h4>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)' }}>Download Extension</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '32px' }}>
+                  Download the latest version of the BridgeAI extension. 
+                  This ZIP file contains the extension files you'll load into your browser.
+                </p>
+                
+                <button 
+                  onClick={handleDownload}
+                  className="btn-primary" 
+                  style={{ width: '100%', padding: '20px', fontSize: '1.1rem', justifyContent: 'center', borderRadius: '16px' }}
+                >
+                  {downloaded ? <><CheckCircle size={22} /> Download Started</> : <><Download size={22} /> Download Extension (.zip)</>}
+                </button>
+                
+                <div style={{ marginTop: '32px', padding: '20px', borderRadius: '16px', background: 'var(--gray-50)', border: '1px solid var(--gray-200)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', marginBottom: '8px' }}>
+                    <Shield size={16} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase' }}>Verified Build</span>
                   </div>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, lineHeight: 1.5 }}>{step.desc}</p>
-                  {step.code && <code style={{ display: 'inline-block', marginTop: '10px', background: 'rgba(79, 70, 229, 0.05)', color: 'var(--primary)', padding: '4px 12px', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'monospace' }}>{step.code}</code>}
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                    This extension runs entirely in your browser. Your API keys and data are kept safe and local.
+                  </p>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            </motion.div>
 
-        </div>
+            {/* Steps Column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {STEPS.map((step, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, x: 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + (i * 0.1) }}
+                  className="glass-card mobile-col" 
+                  style={{ padding: '24px 32px', display: 'flex', gap: '24px', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
+                >
+                  <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--gray-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {step.icon}
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: '900', color: 'var(--primary)', opacity: 0.6 }}>STEP {i + 1}</span>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>{step.title}</h4>
+                    </div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, lineHeight: 1.5 }}>{step.desc}</p>
+                    {step.code && <code style={{ display: 'inline-block', marginTop: '10px', background: 'rgba(79, 70, 229, 0.05)', color: 'var(--primary)', padding: '4px 12px', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'monospace' }}>{step.code}</code>}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Footer Link ───────────────────────────────────── */}
         <div style={{ textAlign: 'center', marginTop: '80px' }}>

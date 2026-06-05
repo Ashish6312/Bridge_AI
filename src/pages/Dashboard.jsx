@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { API_BASE } from '../apiConfig';
 import IntelligenceBridge from '../components/IntelligenceBridge';
+import { Capacitor } from '@capacitor/core';
+
 
 const isRecent = (dateString) => {
   if (!dateString) return false;
@@ -2418,7 +2420,8 @@ const renderInlineMarkdown = (text) => {
 };
 
 const Dashboard = () => {
-
+  const isNative = Capacitor.isNativePlatform();
+  const isMobile = isNative || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -3336,67 +3339,93 @@ const Dashboard = () => {
 
                 {/* Right Side: Installation Steps */}
                 <div className="glass-card" style={{ padding: '40px', borderStyle: 'dashed', borderColor: 'var(--primary)', borderWidth: '2px', background: '#0b0f19' }}>
-                  <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    🚀 Quick Installation Guide
-                  </h2>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                    {/* Step 1 */}
-                    <div style={{ display: 'flex', gap: '24px' }}>
-                      <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white', boxShadow: '0 8px 20px rgba(139, 92, 246, 0.3)' }}>1</div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Download Extension Package</h4>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '16px' }}>Get the latest BridgeAI analyst module packaged as a .zip file.</p>
-                        <button 
-                          className="btn-primary" 
-                          style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}
-                          onClick={() => window.open('/bridgeai-extension.zip', '_blank')}
-                        >
-                          <Download size={18} /> Download BridgeAI (.zip)
-                        </button>
+                  {isMobile ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '20px 0' }}>
+                      <div style={{
+                        width: '64px', height: '64px', borderRadius: '50%',
+                        background: 'rgba(255, 107, 44, 0.08)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', marginBottom: '20px',
+                        border: '1px solid rgba(255, 107, 44, 0.2)'
+                      }}>
+                        <Puzzle size={28} color="var(--primary)" />
                       </div>
-                    </div>
-
-                    {/* Step 2 */}
-                    <div style={{ display: 'flex', gap: '24px' }}>
-                      <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white' }}>2</div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Open Extensions Dashboard</h4>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                          Navigate to <code style={{ color: 'var(--primary)', background: 'rgba(139, 92, 246, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>chrome://extensions</code> and enable <strong>Developer Mode</strong> in the top-right corner.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Step 3 */}
-                    <div style={{ display: 'flex', gap: '24px' }}>
-                      <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white' }}>3</div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Load Unpacked Module</h4>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                          Extract the downloaded ZIP, click <strong>"Load Unpacked"</strong>, and select the <code style={{ color: 'white' }}>BridgeAI</code> folder.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Step 4 */}
-                    <div style={{ display: 'flex', gap: '24px' }}>
-                      <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white' }}>4</div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Pin for Immediate Access</h4>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                          Click the puzzle icon (🧩) in your toolbar and pin <strong>BridgeAI</strong> for one-click extraction.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: '16px', paddingTop: '32px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div style={{ background: 'var(--primary)', width: '12px', height: '12px', borderRadius: '50%', boxShadow: '0 0 15px var(--primary)' }}></div>
-                      <p style={{ fontSize: '0.95rem', fontWeight: '600', color: 'white' }}>
-                        Ready to bridge. Open ChatGPT, Gemini, or Claude to begin.
+                      <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'white', marginBottom: '12px' }}>Coming Soon on Mobile</h3>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0, marginBottom: '20px', maxWidth: '340px' }}>
+                        BridgeAI browser extensions are currently designed for computer and laptop browsers (Chrome, Brave, Edge, etc.) which support developer extensions. Mobile syncing is coming soon!
                       </p>
+                      <div style={{
+                        padding: '10px 16px', background: 'rgba(255, 107, 44, 0.05)',
+                        border: '1px solid rgba(255, 107, 44, 0.1)', borderRadius: '10px',
+                        fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '600'
+                      }}>
+                        💻 Please use a desktop to configure extensions
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        🚀 Quick Installation Guide
+                      </h2>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                        {/* Step 1 */}
+                        <div style={{ display: 'flex', gap: '24px' }}>
+                          <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white', boxShadow: '0 8px 20px rgba(139, 92, 246, 0.3)' }}>1</div>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Download Extension Package</h4>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '16px' }}>Get the latest BridgeAI analyst module packaged as a .zip file.</p>
+                            <button 
+                              className="btn-primary" 
+                              style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                              onClick={() => window.open('/bridgeai-extension.zip', '_blank')}
+                            >
+                              <Download size={18} /> Download BridgeAI (.zip)
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Step 2 */}
+                        <div style={{ display: 'flex', gap: '24px' }}>
+                          <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white' }}>2</div>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Open Extensions Dashboard</h4>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                              Navigate to <code style={{ color: 'var(--primary)', background: 'rgba(139, 92, 246, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>chrome://extensions</code> and enable <strong>Developer Mode</strong> in the top-right corner.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Step 3 */}
+                        <div style={{ display: 'flex', gap: '24px' }}>
+                          <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white' }}>3</div>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Load Unpacked Module</h4>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                              Extract the downloaded ZIP, click <strong>"Load Unpacked"</strong>, and select the <code style={{ color: 'white' }}>BridgeAI</code> folder.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Step 4 */}
+                        <div style={{ display: 'flex', gap: '24px' }}>
+                          <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'white' }}>4</div>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Pin for Immediate Access</h4>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                              Click the puzzle icon (🧩) in your toolbar and pin <strong>BridgeAI</strong> for one-click extraction.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div style={{ marginTop: '16px', paddingTop: '32px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{ background: 'var(--primary)', width: '12px', height: '12px', borderRadius: '50%', boxShadow: '0 0 15px var(--primary)' }}></div>
+                          <p style={{ fontSize: '0.95rem', fontWeight: '600', color: 'white' }}>
+                            Ready to bridge. Open ChatGPT, Gemini, or Claude to begin.
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
