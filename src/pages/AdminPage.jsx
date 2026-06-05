@@ -85,6 +85,7 @@ const AdminPage = () => {
   const [users, setUsers] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [chatbotQueries, setChatbotQueries] = useState([]);
   
   // Search & Filter states
   const [userSearch, setUserSearch] = useState('');
@@ -177,6 +178,7 @@ const AdminPage = () => {
     setUsers([]);
     setFeedbacks([]);
     setInvoices([]);
+    setChatbotQueries([]);
     setSelectedFeedbackId(null);
   };
 
@@ -237,6 +239,10 @@ const AdminPage = () => {
         const res = await adminFetch('/api/admin/users');
         const data = await res.json();
         if (res.ok) setUsers(data.users);
+      } else if (tab === 'chatbot') {
+        const res = await adminFetch('/api/admin/chatbot-queries');
+        const data = await res.json();
+        if (res.ok) setChatbotQueries(data.queries);
       }
     } catch (err) {
       console.error(`Error fetching ${tab}:`, err);
@@ -444,6 +450,44 @@ const AdminPage = () => {
             fetchStats();
           } else {
             alert('Failed to delete feedback');
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      },
+      true // isWarning
+    );
+  };
+
+  const handleUpdateChatbotQueryStatus = async (id, newStatus) => {
+    try {
+      const res = await adminFetch(`/api/admin/chatbot-queries/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        fetchTabContent('chatbot');
+      } else {
+        alert('Failed to update chatbot query status');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteChatbotQuery = async (id) => {
+    showConfirm(
+      'Delete Chatbot Query Log',
+      'Are you sure you want to delete this chatbot query log? This action cannot be undone.',
+      async () => {
+        try {
+          const res = await adminFetch(`/api/admin/chatbot-queries/${id}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            fetchTabContent('chatbot');
+          } else {
+            alert('Failed to delete chatbot query log');
           }
         } catch (err) {
           console.error(err);
@@ -687,6 +731,19 @@ const AdminPage = () => {
               >
                 <Users size={14} />
                 <span>User Registry</span>
+              </button>
+              <button
+                onClick={() => { setActiveTab('chatbot'); fetchTabContent('chatbot'); }}
+                style={{
+                  padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                  background: activeTab === 'chatbot' ? 'rgba(222, 106, 57, 0.15)' : 'transparent',
+                  color: activeTab === 'chatbot' ? 'var(--primary)' : 'var(--text-muted)',
+                  fontSize: '0.85rem', fontWeight: '700', transition: 'all 0.2s',
+                  display: 'flex', alignItems: 'center', gap: '6px'
+                }}
+              >
+                <MessageCircle size={14} />
+                <span>Chatbot Logs</span>
               </button>
             </div>
 
@@ -987,7 +1044,7 @@ const AdminPage = () => {
               gap: '20px'
             }}>
               {[
-                { label: 'Total Registries', value: stats?.users ?? '...', icon: <Users size={20} />, color: 'var(--primary)' },
+                { label: 'Paid Users', value: stats?.users ?? '...', icon: <Users size={20} />, color: 'var(--primary)' },
                 { label: 'Active Sync Bridges', value: stats?.bridges ?? '...', icon: <Database size={20} />, color: '#7c3aed' },
                 { label: 'Inbox Feedbacks', value: stats?.feedbacks ?? '...', icon: <MessageSquare size={20} />, color: '#cd6b6b' },
                 { label: 'Billing Revenue', value: stats ? `$${stats.revenue.toFixed(2)}` : '...', icon: <CreditCard size={20} />, color: '#10b981' },
@@ -1207,6 +1264,119 @@ const AdminPage = () => {
               )}
             </div>
 
+          </div>
+        )}
+
+        {activeTab === 'chatbot' && (
+          <div className="glass-card" style={{
+            background: 'rgba(13, 13, 13, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)',
+            borderRadius: '24px', padding: '32px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>Support Chatbot RAG Telemetry</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '4px 0 0' }}>
+                  Auditing interactions and auto-classified user issues.
+                </p>
+              </div>
+            </div>
+
+            {chatbotQueries.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px 0' }}>No chatbot interactions logged yet.</p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', fontWeight: '700' }}>
+                      <th style={{ padding: '12px 8px' }}>User Email</th>
+                      <th style={{ padding: '12px 8px' }}>User Query</th>
+                      <th style={{ padding: '12px 8px' }}>Chatbot Response</th>
+                      <th style={{ padding: '12px 8px' }}>Status</th>
+                      <th style={{ padding: '12px 8px' }}>Timestamp</th>
+                      <th style={{ padding: '12px 8px', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chatbotQueries.map(q => (
+                      <tr key={q.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.02)', verticalAlign: 'top' }}>
+                        <td style={{ padding: '14px 8px', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>
+                          {q.user_email}
+                        </td>
+                        <td style={{ padding: '14px 8px', color: 'white', maxWidth: '250px', wordBreak: 'break-word', fontSize: '0.85rem' }}>
+                          {q.query}
+                        </td>
+                        <td style={{ padding: '14px 8px', color: 'var(--text-muted)', maxWidth: '300px', wordBreak: 'break-word', fontSize: '0.85rem' }}>
+                          {q.response}
+                        </td>
+                        <td style={{ padding: '14px 8px' }}>
+                          {q.status === 'issue_faced' ? (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '4px 10px',
+                              borderRadius: '12px',
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              color: '#f87171',
+                              fontSize: '0.75rem',
+                              fontWeight: '700'
+                            }}>
+                              Issue Faced
+                            </span>
+                          ) : (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '4px 10px',
+                              borderRadius: '12px',
+                              background: 'rgba(16, 185, 129, 0.1)',
+                              border: '1px solid rgba(16, 185, 129, 0.2)',
+                              color: '#34d399',
+                              fontSize: '0.75rem',
+                              fontWeight: '700'
+                            }}>
+                              Resolved
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '14px 8px', color: 'var(--text-muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                          {new Date(q.created_at).toLocaleString()}
+                        </td>
+                        <td style={{ padding: '14px 8px', textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                            <button
+                              onClick={() => handleUpdateChatbotQueryStatus(q.id, q.status === 'issue_faced' ? 'resolved' : 'issue_faced')}
+                              style={{
+                                background: q.status === 'issue_faced' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                border: q.status === 'issue_faced' ? '1px solid rgba(16, 185, 129, 0.15)' : '1px solid rgba(239, 68, 68, 0.15)',
+                                color: q.status === 'issue_faced' ? '#34d399' : '#f87171',
+                                cursor: 'pointer',
+                                padding: '6px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700'
+                              }}
+                              title={q.status === 'issue_faced' ? 'Mark Resolved' : 'Mark Issue Faced'}
+                            >
+                              {q.status === 'issue_faced' ? 'Resolve' : 'Flag Issue'}
+                            </button>
+
+                            <button 
+                              onClick={() => handleDeleteChatbotQuery(q.id)}
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.08)',
+                                color: '#f87171', cursor: 'pointer',
+                                padding: '6px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center'
+                              }}
+                              title="Delete Query Log"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

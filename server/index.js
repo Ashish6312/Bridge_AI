@@ -227,6 +227,15 @@ const initDB = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
+      CREATE TABLE IF NOT EXISTS chatbot_queries (
+        id VARCHAR(50) PRIMARY KEY,
+        user_email TEXT,
+        query TEXT,
+        response TEXT,
+        status VARCHAR(50) DEFAULT 'resolved',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE TABLE IF NOT EXISTS admin_sessions (
         token TEXT PRIMARY KEY,
         email TEXT,
@@ -237,6 +246,7 @@ const initDB = async () => {
       CREATE INDEX IF NOT EXISTS idx_project_decisions_lookup ON project_decisions(user_email, project_id);
       CREATE INDEX IF NOT EXISTS idx_project_chats_lookup ON project_chats(user_email, project_id);
       CREATE INDEX IF NOT EXISTS idx_feedbacks_user_email ON feedbacks(user_email);
+      CREATE INDEX IF NOT EXISTS idx_chatbot_queries_user_email ON chatbot_queries(user_email);
     `);
     // Crucial Migrations
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT \'free\'');
@@ -473,7 +483,9 @@ app.post('/api/admin/login', async (req, res) => {
 
 app.get('/api/admin/stats', verifyAdmin, async (req, res) => {
   try {
-    const usersCount = await pool.query('SELECT COUNT(*) FROM users');
+    const usersCount = await pool.query(
+      "SELECT COUNT(*) FROM users WHERE plan != 'free' AND (trial_ends_at IS NULL OR trial_ends_at <= NOW())"
+    );
     const bridgesCount = await pool.query('SELECT COUNT(*) FROM bridges');
     const feedbacksCount = await pool.query('SELECT COUNT(*) FROM feedbacks');
     const subscribersCount = await pool.query('SELECT COUNT(*) FROM subscribers');
@@ -528,6 +540,99 @@ app.delete('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM feedbacks WHERE id = $1', [req.params.id]);
     res.json({ success: true, message: 'Feedback deleted successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── SUPPORT CHATBOT (RAG) ENDPOINTS ────────────────────────
+
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { query, email } = req.body;
+    if (!query) {
+      return res.status(400).json({ success: false, error: 'Query is required.' });
+    }
+
+    // RAG: Query resolved feedback tickets to act as dynamic knowledge base
+    const feedbackKBRes = await pool.query(
+      "SELECT title, description, admin_response FROM feedbacks WHERE status = 'resolved' AND admin_response IS NOT NULL AND admin_response != '' LIMIT 15"
+    );
+    const resolvedContext = feedbackKBRes.rows.map(f => 
+      `Issue: ${f.title}\nDescription: ${f.description}\nResolution/Fix: ${f.admin_response}`
+    ).join('\n\n');
+
+    const systemPrompt = `You are the BridgeAI Support Chatbot. Your task is to help users with their questions or technical issues.
+Always respond in a very short, straightforward, and direct manner (max 2-3 sentences). Do not use conversational filler or polite intros/outros unless necessary.
+Use the following context from our platform's FAQs and recently resolved user issues/bug fixes to formulate your answer. If the user's issue/question matches a resolved issue or fix, explain the fix directly.
+
+=== FAQ CONTEXT ===
+- How does BridgeAI work?: BridgeAI is a browser extension that reads your active AI chat logs when you click "Capture". It organizes the questions you asked and the answers you got, and saves them. You can then copy or send that context into any other AI chat window with a single click.
+- Is my data stored locally?: Yes, by default all chat history is stored locally in your browser. No data is sent to our servers unless you sign in to back up or sync.
+- What platforms are supported?: ChatGPT, Claude, Gemini, Perplexity, DeepSeek, Poe, and Mistral.
+- Why are permissions required?: Storage to save chats, page access to read chat sessions on capture, clipboard access to copy text, and dashboard access.
+- Why is extraction failing?: Usually due to website layout updates by platforms (like Claude or ChatGPT). Refresh the tab and ensure your extension is updated.
+
+=== RESOLVED PAST ISSUES & FIXES (KNOWLEDGE BASE) ===
+${resolvedContext || 'No past resolved issues found.'}
+
+If the user is facing a bug, error, or system problem (e.g. extraction failing, login error) that is NOT resolved in the knowledge base, start your response with "⚠️ ISSUE DETECTED: " so we can notify our developers, and briefly explain what they should do next. Otherwise, answer their question directly.`;
+
+    const aiResponseText = await callGroq([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: query }
+    ], { temperature: 0.1, max_tokens: 300 });
+
+    const response = aiResponseText.trim();
+
+    // Automatically check query status: flag as 'issue_faced' if AI responds with warning or query includes typical issue keywords
+    let status = 'resolved';
+    const lowerQuery = query.toLowerCase();
+    const isIssueKeywords = lowerQuery.includes('bug') || lowerQuery.includes('fail') || lowerQuery.includes('error') || lowerQuery.includes('broken') || lowerQuery.includes('issue') || lowerQuery.includes('problem') || lowerQuery.includes('not working') || lowerQuery.includes('failed');
+    if (response.startsWith('⚠️ ISSUE DETECTED:') || isIssueKeywords) {
+      status = 'issue_faced';
+    }
+
+    const id = 'chatlog_' + Date.now().toString(36);
+    await pool.query(
+      `INSERT INTO chatbot_queries (id, user_email, query, response, status)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [id, email || 'guest', query, response, status]
+    );
+
+    res.json({ success: true, response, status });
+  } catch (err) {
+    console.error('Chatbot API Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/chatbot-queries', verifyAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM chatbot_queries ORDER BY created_at DESC');
+    res.json({ success: true, queries: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.patch('/api/admin/chatbot-queries/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['resolved', 'issue_faced'].includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid status' });
+    }
+    await pool.query('UPDATE chatbot_queries SET status = $1 WHERE id = $2', [status, req.params.id]);
+    res.json({ success: true, message: 'Chatbot query status updated.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/admin/chatbot-queries/:id', verifyAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM chatbot_queries WHERE id = $1', [req.params.id]);
+    res.json({ success: true, message: 'Chatbot query deleted successfully.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

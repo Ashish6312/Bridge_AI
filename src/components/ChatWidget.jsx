@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { apiFetch } from '../apiConfig';
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([
     { id: 1, sender: 'bot', text: 'Hi there! 👋 How can we help you bridge your AI context today?' },
-    { id: 2, sender: 'bot', text: 'You can also check our docs for quick answers.' }
+    { id: 2, sender: 'bot', text: 'You can check our docs or FAQ for quick answers.' }
   ]);
   const messagesEndRef = useRef(null);
+
+  // Read user email if logged in
+  const userStr = localStorage.getItem('bridge_user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const userEmail = user?.email || 'guest';
 
   useEffect(() => {
     const handleOpenChat = () => setIsOpen(true);
@@ -27,41 +33,40 @@ export default function ChatWidget() {
     }
   }, [isOpen, messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!message.trim()) return;
     
-    const userMsg = { id: Date.now(), sender: 'user', text: message.trim() };
+    const queryText = message.trim();
+    const userMsg = { id: Date.now(), sender: 'user', text: queryText };
     setMessages(prev => [...prev, userMsg]);
     setMessage('');
-    
-    // Simulate AI thinking and response
-    setTimeout(() => {
-      const lowerText = userMsg.text.toLowerCase();
-      let responseText = "I'm not quite sure about that. Our documentation might have the answer, or you can contact support@bridgeai.com.";
-      let responseLink = null;
-      
-      if (lowerText.includes('more info') || lowerText.includes('more information') || lowerText.includes('details') || lowerText.includes('read more')) {
-        responseText = "For an in-depth look at our architecture and features, check out our blog or detailed features section!";
-        responseLink = { url: "#features", label: "View Features" };
-      } else if (lowerText.includes('what is') || lowerText.includes('about') || lowerText.includes('what do you do')) {
-        responseText = "Bridge AI is a universal chat and prompt sync engine. We allow you to instantly bridge, summarize, and sync conversation contexts across ChatGPT, Claude, Gemini, and DeepSeek without context loss.";
-      } else if (lowerText.includes('price') || lowerText.includes('cost') || lowerText.includes('pricing')) {
-        responseText = "BridgeAI is currently in a free beta phase for early adopters! Keep an eye on our pricing page for future updates.";
-        responseLink = { url: "#pricing", label: "View Pricing" };
-      } else if (lowerText.includes('docs') || lowerText.includes('documentation') || lowerText.includes('help') || lowerText.includes('faq')) {
-        responseText = "You can find our comprehensive documentation covering system architectures and prompt guides, or check out our FAQ section.";
-        responseLink = { url: "#faq", label: "View FAQ" };
-      } else if (lowerText.includes('contact') || lowerText.includes('support')) {
-        responseText = "You can reach our support team directly at support@bridgeai.com. We're here to help!";
-      } else if (lowerText.includes('hello') || lowerText.includes('hi') || lowerText.includes('hey')) {
-        responseText = "Hello there! How can I help you with BridgeAI today?";
-      } else if (lowerText.includes('how it works') || lowerText.includes('how does it work') || lowerText.includes('features')) {
-        responseText = "It works by securely extracting your context from one LLM (like ChatGPT) and injecting it into another (like Claude), maintaining your intelligence vault seamlessly. We support all major models!";
-        responseLink = { url: "#features", label: "Explore Features" };
-      }
 
-      setMessages(prev => [...prev, { id: Date.now(), sender: 'bot', text: responseText, link: responseLink }]);
-    }, 600);
+    // Add temporary bot thinking bubble
+    const thinkingId = Date.now() + 1;
+    setMessages(prev => [...prev, { id: thinkingId, sender: 'bot', text: 'Thinking...' }]);
+    
+    try {
+      const res = await apiFetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: queryText, email: userEmail })
+      });
+      const data = await res.json();
+      
+      setMessages(prev => {
+        const filtered = prev.filter(m => m.id !== thinkingId);
+        if (res.ok && data.success) {
+          return [...filtered, { id: Date.now(), sender: 'bot', text: data.response }];
+        } else {
+          return [...filtered, { id: Date.now(), sender: 'bot', text: '⚠️ Connection lost. Please reload and try again.' }];
+        }
+      });
+    } catch (err) {
+      setMessages(prev => {
+        const filtered = prev.filter(m => m.id !== thinkingId);
+        return [...filtered, { id: Date.now(), sender: 'bot', text: '⚠️ Connection lost. Please reload and try again.' }];
+      });
+    }
   };
 
   return (
