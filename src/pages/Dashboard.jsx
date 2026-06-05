@@ -2356,61 +2356,63 @@ const ProjectWorkspace = ({
               {/* Right Chat Area */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'transparent' }}>
                 {chatHistory.length <= 1 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '20px 40px', textAlign: 'center', overflowY: 'auto' }}>
-                    <motion.div 
-                      animate={{ scale: [1, 1.05, 1] }} 
-                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                      style={{ 
-                        width: '64px', height: '64px', borderRadius: '20px', 
-                        background: 'linear-gradient(135deg, #7C3AED 0%, #DE6A39 100%)', 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        boxShadow: '0 0 40px rgba(124, 58, 237, 0.35)', marginBottom: '24px', flexShrink: 0
-                      }}
-                    >
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z"/>
-                        <circle cx="9" cy="14" r="1.5" fill="white" stroke="none"/>
-                        <circle cx="15" cy="14" r="1.5" fill="white" stroke="none"/>
-                      </svg>
-                    </motion.div>
-                    <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '8px', letterSpacing: '-0.02em' }}>
-                      How can I help you today?
-                    </h2>
-                    <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', maxWidth: '400px', marginBottom: '32px', lineHeight: '1.5' }}>
-                      Ask anything about this project's architecture, decisions ledger, tech stack, rules, or uploaded contexts.
-                    </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, padding: '20px 40px', textAlign: 'center', overflowY: 'auto' }}>
+                    <div style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '20px 0' }}>
+                      <motion.div 
+                        animate={{ scale: [1, 1.05, 1] }} 
+                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                        style={{ 
+                          width: '64px', height: '64px', borderRadius: '20px', 
+                          background: 'linear-gradient(135deg, #7C3AED 0%, #DE6A39 100%)', 
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                          boxShadow: '0 0 40px rgba(124, 58, 237, 0.35)', marginBottom: '24px', flexShrink: 0
+                        }}
+                      >
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z"/>
+                          <circle cx="9" cy="14" r="1.5" fill="white" stroke="none"/>
+                          <circle cx="15" cy="14" r="1.5" fill="white" stroke="none"/>
+                        </svg>
+                      </motion.div>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '8px', letterSpacing: '-0.02em' }}>
+                        How can I help you today?
+                      </h2>
+                      <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', maxWidth: '400px', marginBottom: '32px', lineHeight: '1.5' }}>
+                        Ask anything about this project's architecture, decisions ledger, tech stack, rules, or uploaded contexts.
+                      </p>
 
-                    <div className="grid-responsive-2" style={{ width: '100%', maxWidth: '640px', gap: '12px' }}>
-                      {[
-                        { q: "Why did we choose our database?", d: "Query active postgres/neon reasons" },
-                        { q: "Write a developer onboarding guide", d: "Summarize active guidelines & rules" },
-                        { q: "Create a system prompt for Claude", d: "Distill memory rules into Claude format" },
-                        { q: "What decisions are still pending?", d: "List all open items in decision ledger" }
-                      ].map((s, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setChatInput(s.q)}
-                          style={{
-                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
-                            borderRadius: '12px', padding: '16px', color: 'rgba(255,255,255,0.8)', cursor: 'pointer',
-                            textAlign: 'left', transition: 'all 0.25s', display: 'flex', flexDirection: 'column', gap: '4px'
-                          }}
-                          onMouseEnter={e => { 
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; 
-                            e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.4)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                          }}
-                          onMouseLeave={e => { 
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; 
-                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-                            e.currentTarget.style.transform = '';
-                          }}
-                        >
-                          <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'white' }}>{s.q}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{s.d}</div>
-                        </button>
-                      ))}
+                      <div className="grid-responsive-2" style={{ width: '100%', maxWidth: '640px', gap: '12px' }}>
+                        {[
+                          { q: "Why did we choose our database?", d: "Query active postgres/neon reasons" },
+                          { q: "Write a developer onboarding guide", d: "Summarize active guidelines & rules" },
+                          { q: "Create a system prompt for Claude", d: "Distill memory rules into Claude format" },
+                          { q: "What decisions are still pending?", d: "List all open items in decision ledger" }
+                        ].map((s, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setChatInput(s.q)}
+                            style={{
+                              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+                              borderRadius: '12px', padding: '16px', color: 'rgba(255,255,255,0.8)', cursor: 'pointer',
+                              textAlign: 'left', transition: 'all 0.25s', display: 'flex', flexDirection: 'column', gap: '4px'
+                            }}
+                            onMouseEnter={e => { 
+                              e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; 
+                              e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.4)';
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                            }}
+                            onMouseLeave={e => { 
+                              e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; 
+                              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                              e.currentTarget.style.transform = '';
+                            }}
+                          >
+                            <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'white' }}>{s.q}</div>
+                            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{s.d}</div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : (
