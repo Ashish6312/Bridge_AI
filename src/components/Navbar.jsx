@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layers, LogOut, LayoutDashboard, Menu, X, Puzzle, Bell, Sparkles, Gift, CheckCircle2, Info } from 'lucide-react';
 import ExtensionModal from './ExtensionModal';
+import { apiFetch } from '../apiConfig';
 
 const Navbar = () => {
   const [user, setUser] = useState(null);
@@ -40,7 +41,7 @@ const Navbar = () => {
   const fetchNotifications = async () => {
     try {
       const emailParam = user ? `?email=${encodeURIComponent(user.email)}` : '';
-      const response = await fetch(`/api/notifications${emailParam}`);
+      const response = await apiFetch(`/api/notifications${emailParam}`);
       const data = await response.json();
       if (data.success) {
         setNotifications(data.notifications || []);
@@ -76,7 +77,7 @@ const Navbar = () => {
       }
     } else {
       try {
-        const res = await fetch(`/api/notifications/${notification.id}/read`, { method: 'PATCH' });
+        const res = await apiFetch(`/api/notifications/${notification.id}/read`, { method: 'PATCH' });
         const data = await res.json();
         if (data.success) {
           setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, is_read: true } : n));
@@ -99,7 +100,7 @@ const Navbar = () => {
 
     if (user) {
       try {
-        await fetch('/api/notifications/read-all', {
+        await apiFetch('/api/notifications/read-all', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: user.email })
