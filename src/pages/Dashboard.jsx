@@ -1581,9 +1581,9 @@ const ProjectWorkspace = ({
               onClick={compileMemory}
               disabled={isCompiling}
               className="btn-primary" 
-              style={{ padding: '10px 18px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '10px', fontWeight: '600', transition: 'all 0.2s' }}
-              onMouseEnter={e => { if(!isCompiling){ e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = '#fff'; } }}
-              onMouseLeave={e => { if(!isCompiling){ e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--primary)'; } }}
+              style={{ padding: '10px 18px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', border: 'none', color: '#fff', borderRadius: '10px', fontWeight: '700', transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(222, 106, 57, 0.4)' }}
+              onMouseEnter={e => { if(!isCompiling){ e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(222, 106, 57, 0.6)'; } }}
+              onMouseLeave={e => { if(!isCompiling){ e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(222, 106, 57, 0.4)'; } }}
             >
               <RefreshCw size={14} className={isCompiling ? 'ldBlink' : ''} />
               {isCompiling ? 'AI Synthesizing...' : 'Compile Memory with AI'}
