@@ -687,7 +687,7 @@ app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
       }
 
       if (finalAdminResponse && finalAdminResponse.trim() !== '') {
-        notificationMessage += `\n\nAdmin Note: ${finalAdminResponse}`;
+        notificationMessage += `\nAdmin Note: ${finalAdminResponse}`;
       }
 
       await pool.query(

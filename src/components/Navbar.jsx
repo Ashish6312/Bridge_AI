@@ -348,7 +348,7 @@ const Navbar = () => {
                               {timeAgo(n.created_at)}
                             </span>
                           </div>
-                          <p style={{ fontSize: '12px', color: 'var(--nav-text)', lineHeight: 1.4, margin: 0, textAlign: 'left' }}>
+                          <p style={{ fontSize: '12px', color: 'var(--nav-text)', lineHeight: 1.4, margin: 0, textAlign: 'left', whiteSpace: 'pre-wrap' }}>
                             {n.message}
                           </p>
                         </div>
