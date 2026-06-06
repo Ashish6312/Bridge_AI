@@ -588,7 +588,7 @@ app.get('/api/admin/stats', verifyAdmin, async (req, res) => {
     const bridgesCount = await pool.query('SELECT COUNT(*) FROM bridges');
     const feedbacksCount = await pool.query('SELECT COUNT(*) FROM feedbacks');
     const subscribersCount = await pool.query('SELECT COUNT(*) FROM subscribers');
-    const invoicesResult = await pool.query('SELECT COUNT(*), COALESCE(SUM(amount), 0) as revenue FROM invoices');
+    const invoicesResult = await pool.query("SELECT COUNT(*) as count, COALESCE(SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END), 0) as revenue FROM invoices");
     
     res.json({
       success: true,
