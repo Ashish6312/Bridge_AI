@@ -1601,7 +1601,7 @@ const ProjectWorkspace = ({
           {/* Quickstart Feature Highlight Grid */}
           <div style={{ marginBottom: '32px' }}>
             {/* If memory layer is empty and there are bridges, show a call-to-action banner to compile */}
-            {!techStack && !goals && !rules && !problemStatement && filteredBridges.length > 0 && (
+            {!loadingContext && !techStack && !goals && !rules && !problemStatement && filteredBridges.length > 0 && (
               <div style={{
                 background: 'linear-gradient(135deg, rgba(222,106,57,0.1) 0%, rgba(124,58,237,0.06) 100%)',
                 border: '1px solid rgba(222,106,57,0.25)',
