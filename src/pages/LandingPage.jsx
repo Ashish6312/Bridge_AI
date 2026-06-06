@@ -298,15 +298,7 @@ const LandingPage = () => {
             </Link>
           </div>
 
-          <div style={{ padding: '12px 20px', background: 'rgba(255,107,44,0.08)', borderRadius: '12px', marginBottom: '2rem', border: '1px solid rgba(255,107,44,0.2)', maxWidth: '450px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span style={{ fontSize: '16px' }}>📱</span>
-              <strong style={{ color: '#FF6B2C', fontSize: '14px' }}>New: APK Update v2.0 Available</strong>
-            </div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              Take your project memory on the go. The new Android APK brings zero-latency sync and offline access to all your AI decision logs.
-            </p>
-          </div>
+
 
 
           <div>
