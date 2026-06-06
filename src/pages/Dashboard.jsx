@@ -1564,9 +1564,9 @@ const ProjectWorkspace = ({
                 onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
                 onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
               >
-                {"\u2190"} Sectors
+                {"\u2190"} All Projects
               </button>
-              <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase', background: 'rgba(255, 107, 44, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>Project Vault</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase', background: 'rgba(255, 107, 44, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>Project Overview</span>
             </div>
             <h1 style={{ fontSize: '2.4rem', fontWeight: '800', letterSpacing: '-0.03em', color: '#FFFFFF', margin: 0, maxWidth: '100%', wordBreak: 'normal', overflowWrap: 'break-word', display: 'flex', alignItems: 'center', gap: '12px' }}>
               {projects.find(p => p.id === projectId)?.name || projectId}
