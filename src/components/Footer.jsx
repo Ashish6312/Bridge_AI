@@ -186,27 +186,12 @@ const Footer = () => {
             overflow: visible;
             color: transparent;
             -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35);
-            transition: -webkit-text-stroke 0.8s ease;
+            transition: color 0.6s ease, -webkit-text-stroke 0.6s ease;
             cursor: default;
           }
-          .ft-watermark::before {
-            content: "Bridge AI";
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle 250px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(222, 106, 57, 0.95) 0%, rgba(222, 106, 57, 0) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            opacity: 0;
-            transition: --mouse-x 0.6s cubic-bezier(0.16, 1, 0.3, 1), --mouse-y 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.5s ease-out;
-            pointer-events: none;
-          }
           .ft-watermark:hover {
-            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.55);
-          }
-          .ft-watermark:hover::before {
-            opacity: 1;
-            transition: --mouse-x 0.1s ease-out, --mouse-y 0.1s ease-out, opacity 0.3s ease-in;
+            color: #DE6A39; /* Matte orange finish */
+            -webkit-text-stroke: 1px transparent;
           }
           .footer-main-grid {
             display: grid;
