@@ -2202,7 +2202,7 @@ const ProjectWorkspace = ({
 
       {projectTab === 'chat' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', height: '520px', borderRadius: '16px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '600px', height: 'calc(100vh - 250px)', borderRadius: '16px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', position: 'relative' }}>
             {/* Header Bar */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.15)', zIndex: 11 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -2361,22 +2361,34 @@ const ProjectWorkspace = ({
                 {chatHistory.length <= 1 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, padding: '20px 40px', textAlign: 'center', overflowY: 'auto' }}>
                     <div style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '20px 0' }}>
-                      <motion.div 
-                        animate={{ scale: [1, 1.05, 1] }} 
-                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                        style={{ 
-                          width: '64px', height: '64px', borderRadius: '20px', 
-                          background: 'linear-gradient(135deg, #7C3AED 0%, #DE6A39 100%)', 
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                          boxShadow: '0 0 40px rgba(124, 58, 237, 0.35)', marginBottom: '24px', flexShrink: 0
-                        }}
-                      >
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z"/>
-                          <circle cx="9" cy="14" r="1.5" fill="white" stroke="none"/>
-                          <circle cx="15" cy="14" r="1.5" fill="white" stroke="none"/>
-                        </svg>
-                      </motion.div>
+                      <div style={{ position: 'relative', marginBottom: '32px', marginTop: '20px' }}>
+                        {/* Glowing rotating backdrop */}
+                        <motion.div 
+                          animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+                          transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                          style={{
+                            position: 'absolute', top: '-20%', left: '-20%', width: '140%', height: '140%',
+                            background: 'conic-gradient(from 0deg, transparent, rgba(124, 58, 237, 0.4), rgba(222, 106, 57, 0.4), transparent)',
+                            filter: 'blur(20px)', borderRadius: '50%', zIndex: 0
+                          }}
+                        />
+                        <motion.div 
+                          animate={{ scale: [1, 1.05, 1] }} 
+                          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                          style={{ 
+                            width: '72px', height: '72px', borderRadius: '24px', 
+                            background: 'linear-gradient(135deg, #7C3AED 0%, #DE6A39 100%)', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                            boxShadow: '0 0 40px rgba(124, 58, 237, 0.5), inset 0 2px 10px rgba(255,255,255,0.3)', position: 'relative', zIndex: 1
+                          }}
+                        >
+                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z"/>
+                            <circle cx="9" cy="14" r="1.5" fill="white" stroke="none"/>
+                            <circle cx="15" cy="14" r="1.5" fill="white" stroke="none"/>
+                          </svg>
+                        </motion.div>
+                      </div>
                       <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '8px', letterSpacing: '-0.02em' }}>
                         How can I help you today?
                       </h2>
