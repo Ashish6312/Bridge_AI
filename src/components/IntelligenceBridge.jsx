@@ -125,7 +125,7 @@ export default function IntelligenceBridge() {
   if (contextLost) return null;
 
   return (
-    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0, opacity: 0.6 }}>
+    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0, opacity: 0.6, maskImage: 'linear-gradient(to right, transparent 0%, transparent 45%, black 65%)', WebkitMaskImage: 'linear-gradient(to right, transparent 0%, transparent 45%, black 65%)' }}>
       <Canvas
         dpr={[1, 1.5]}
         frameloop="always"
