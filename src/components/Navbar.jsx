@@ -98,6 +98,9 @@ const Navbar = () => {
     });
     localStorage.setItem('bridge_read_global_notifications', JSON.stringify(updatedRead));
     setReadGlobalIds(updatedRead);
+    
+    // Optimistic UI update
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
 
     if (user) {
       try {
