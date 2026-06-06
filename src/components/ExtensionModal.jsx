@@ -109,6 +109,7 @@ const ExtensionModal = ({ onClose }) => {
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           onClick={e => e.stopPropagation()}
           className="extension-modal-content"
+          data-lenis-prevent="true"
           style={{
             width: '100%', maxWidth: '560px',
             padding: '40px',

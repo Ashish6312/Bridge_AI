@@ -85,7 +85,7 @@ const Footer = () => {
                 </button>
               </div>
 
-              <div data-lenis-prevent style={{ padding: '24px 36px', overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', flex: 1 }}>
+              <div data-lenis-prevent="true" style={{ padding: '24px 36px', overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', flex: 1 }}>
                 {getPopupContent(activePopup)}
               </div>
             </motion.div>
