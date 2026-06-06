@@ -3085,10 +3085,8 @@ const Dashboard = () => {
             <div data-lenis-prevent style={{ 
               padding: '20px', 
               flex: 1, 
-              overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              minHeight: 0
             }}>
               
               {/* Group: Vault Ops */}
@@ -3144,7 +3142,7 @@ const Dashboard = () => {
                     <Plus size={14} />
                   </button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '4px' }}>
                   {stats.plan === 'free' ? (
                     <div style={{ padding: '12px', textAlign: 'center', background: 'rgba(222, 106, 57, 0.02)', borderRadius: '8px', border: '1px dashed rgba(222, 106, 57, 0.12)' }}>
                       <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', margin: 0 }}>

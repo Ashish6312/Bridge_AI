@@ -1301,15 +1301,14 @@ footer {
    ========================================= */
 
 body.dashboard-active {
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 .dashboard-container {
-  height: 100vh;
+  min-height: 100vh;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   padding: 100px 0 20px 0 !important;
 }
 
@@ -1317,21 +1316,17 @@ body.dashboard-active {
   display: flex;
   gap: 32px;
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
 }
 
 .dashboard-sidebar {
   width: 280px;
   flex-shrink: 0;
-  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .dashboard-main {
-  height: 100%;
-  overflow-y: auto;
+  flex: 1;
   padding-right: 8px;
 }
 
