@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, MessageSquare, CreditCard, Mail, Database, 
   TrendingUp, Search, Trash2, Key, LogOut, CheckCircle, 
@@ -88,6 +88,7 @@ const AdminPage = () => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [chatbotQueries, setChatbotQueries] = useState([]);
+  const replySectionRef = useRef(null);
   
   // Search & Filter states
   const [userSearch, setUserSearch] = useState('');
@@ -888,7 +889,12 @@ const AdminPage = () => {
                     return (
                       <div 
                         key={fb.id} 
-                        onClick={() => setSelectedFeedbackId(fb.id)}
+                        onClick={() => {
+                          setSelectedFeedbackId(fb.id);
+                          setTimeout(() => {
+                            replySectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+                          }, 50);
+                        }}
                         style={{
                           padding: '16px', 
                           background: isSelected ? 'rgba(222, 106, 57, 0.08)' : 'rgba(13, 13, 13, 0.4)',
@@ -932,7 +938,7 @@ const AdminPage = () => {
             </div>
 
             {/* Detail Pane */}
-            <div className="glass-card" style={{
+            <div ref={replySectionRef} className="glass-card" style={{
               background: 'rgba(13, 13, 13, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)',
               borderRadius: '24px', padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px'
             }}>
