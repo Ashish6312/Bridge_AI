@@ -1554,36 +1554,39 @@ const ProjectWorkspace = ({
   return (
     <div>
       {/* Project Header Banner */}
-      <div style={{ position: 'relative', overflow: 'hidden', padding: '28px 32px', borderRadius: '24px', background: 'rgba(13, 13, 13, 0.45)', border: '1px solid rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', marginBottom: '24px' }}>
+      <div style={{ marginBottom: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 280px', minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <button 
                 onClick={() => setActiveProject(null)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700', padding: 0 }}
+                style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '6px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '600', padding: '4px 10px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
               >
-                {"\u2190"} Back to Sectors
+                {"\u2190"} Sectors
               </button>
-              <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
-              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600', letterSpacing: '1px' }}>PROJECT VAULT</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase', background: 'rgba(255, 107, 44, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>Project Vault</span>
             </div>
-            <h1 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#FFFFFF', margin: 0, maxWidth: '100%', wordBreak: 'normal', overflowWrap: 'break-word' }}>
+            <h1 style={{ fontSize: '2.4rem', fontWeight: '800', letterSpacing: '-0.03em', color: '#FFFFFF', margin: 0, maxWidth: '100%', wordBreak: 'normal', overflowWrap: 'break-word', display: 'flex', alignItems: 'center', gap: '12px' }}>
               {projects.find(p => p.id === projectId)?.name || projectId}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '4px', margin: '4px 0 0 0', wordBreak: 'normal', overflowWrap: 'break-word', lineHeight: '1.4' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '8px', margin: '8px 0 0 0', wordBreak: 'normal', overflowWrap: 'break-word', lineHeight: '1.5', maxWidth: '600px' }}>
               Aggregate and scale organizational context for Humans, AIs, and agents.
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '12px', flexShrink: 0, alignSelf: 'flex-end' }}>
             <button 
               onClick={compileMemory}
               disabled={isCompiling}
               className="btn-primary" 
-              style={{ padding: '12px 20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #DE6A39, #7C3AED)', border: 'none' }}
+              style={{ padding: '10px 18px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '10px', fontWeight: '600', transition: 'all 0.2s' }}
+              onMouseEnter={e => { if(!isCompiling){ e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = '#fff'; } }}
+              onMouseLeave={e => { if(!isCompiling){ e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--primary)'; } }}
             >
               <RefreshCw size={14} className={isCompiling ? 'ldBlink' : ''} />
-              {isCompiling ? 'AI Synthesizing...' : '✨ Compile Memory with AI'}
+              {isCompiling ? 'AI Synthesizing...' : 'Compile Memory with AI'}
             </button>
           </div>
         </div>
@@ -1656,22 +1659,22 @@ const ProjectWorkspace = ({
               <div 
                 onClick={() => setProjectTab('memory')}
                 style={{
-                  background: 'rgba(13, 13, 13, 0.45)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.04)',
                   borderRadius: '16px',
-                  padding: '24px',
+                  padding: '20px',
                   cursor: 'pointer',
                   transition: 'all 0.25s ease',
                   position: 'relative',
                   overflow: 'hidden'
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.3)';
-                  e.currentTarget.style.background = 'rgba(222, 106, 57, 0.02)';
+                  e.currentTarget.style.borderColor = 'rgba(222, 106, 57, 0.2)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.background = 'rgba(13, 13, 13, 0.45)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.04)';
+                  e.currentTarget.style.background = 'transparent';
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
@@ -1697,22 +1700,22 @@ const ProjectWorkspace = ({
               <div 
                 onClick={() => setProjectTab('decisions')}
                 style={{
-                  background: 'rgba(13, 13, 13, 0.45)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.04)',
                   borderRadius: '16px',
-                  padding: '24px',
+                  padding: '20px',
                   cursor: 'pointer',
                   transition: 'all 0.25s ease',
                   position: 'relative',
                   overflow: 'hidden'
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.3)';
-                  e.currentTarget.style.background = 'rgba(124, 58, 237, 0.02)';
+                  e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.2)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.background = 'rgba(13, 13, 13, 0.45)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.04)';
+                  e.currentTarget.style.background = 'transparent';
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
@@ -1738,22 +1741,22 @@ const ProjectWorkspace = ({
               <div 
                 onClick={() => setProjectTab('chat')}
                 style={{
-                  background: 'rgba(13, 13, 13, 0.45)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.04)',
                   borderRadius: '16px',
-                  padding: '24px',
+                  padding: '20px',
                   cursor: 'pointer',
                   transition: 'all 0.25s ease',
                   position: 'relative',
                   overflow: 'hidden'
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'rgba(6, 182, 212, 0.3)';
-                  e.currentTarget.style.background = 'rgba(6, 182, 212, 0.02)';
+                  e.currentTarget.style.borderColor = 'rgba(6, 182, 212, 0.2)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.background = 'rgba(13, 13, 13, 0.45)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.04)';
+                  e.currentTarget.style.background = 'transparent';
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
