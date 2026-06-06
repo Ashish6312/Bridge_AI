@@ -668,13 +668,20 @@ app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
 
     if (status === 'resolved' && oldStatus !== 'resolved' && user_email && user_email !== 'guest' && user_email !== 'anonymous') {
       const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
+      const finalAdminResponse = admin_response !== undefined ? admin_response : feedbackRow.rows[0].admin_response;
+      
+      let notificationMessage = `Your support ticket "${truncatedTitle}" has been resolved by the administrator.`;
+      if (finalAdminResponse && finalAdminResponse.trim() !== '') {
+        notificationMessage += `\n\nAdmin Note: ${finalAdminResponse}`;
+      }
+
       await pool.query(
         `INSERT INTO notifications (user_email, title, message, type)
          VALUES ($1, $2, $3, 'issue_resolved')`,
         [
           user_email,
           'Support Ticket Resolved',
-          `Your support ticket "${truncatedTitle}" has been resolved by the administrator.`,
+          notificationMessage,
           'issue_resolved'
         ]
       );

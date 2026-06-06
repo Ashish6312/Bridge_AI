@@ -968,7 +968,10 @@ const AdminPage = () => {
 
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          Submitted {new Date(selectedFeedback.created_at).toLocaleString()}
+                          By: <strong style={{ color: 'var(--text-main)', fontWeight: 600 }}>{selectedFeedback.user_email || 'Anonymous'}</strong>
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          • Submitted {new Date(selectedFeedback.created_at).toLocaleString()}
                         </span>
                         <button 
                           onClick={() => handleDeleteFeedback(selectedFeedback.id)}
