@@ -535,11 +535,11 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
                   <div style={{ fontWeight: 'bold', color: '#10b981', marginBottom: '6px' }}>
                     Sovereign Privacy Shield
                   </div>
-                  <ul style={{ margin: 0, paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '4px', listStyleType: 'disc' }}>
-                    <li><strong>Zero Password Logging:</strong> We never capture passwords.</li>
-                    <li><strong>Local Storage:</strong> Encrypted locally in your browser context.</li>
-                    <li><strong>On-Demand Sync:</strong> Synchronization triggers only upon your explicit action.</li>
-                    <li><strong>TLS 1.3 Transmission:</strong> Fully encrypted channel.</li>
+                  <ul style={{ margin: 0, paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '6px', listStyleType: 'disc' }}>
+                    <li><strong>Zero-Knowledge Architecture:</strong> Passwords are never logged or transmitted.</li>
+                    <li><strong>AES-256 Encryption:</strong> All data is encrypted locally within your browser context.</li>
+                    <li><strong>Explicit Authorization:</strong> Syncing requires explicit, on-demand user consent.</li>
+                    <li><strong>TLS 1.3 Transit:</strong> End-to-end encrypted tunnels for all communication.</li>
                   </ul>
                 </div>
               )}
