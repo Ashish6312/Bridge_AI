@@ -3318,7 +3318,7 @@ const Dashboard = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  style={{ position: 'relative', zIndex: 1 }}
+                  style={{ position: 'relative', zIndex: 10 }}
                 >
                   <div style={{ 
                     padding: '6px 12px', borderRadius: '100px', fontSize: '0.65rem', fontWeight: '800', 
