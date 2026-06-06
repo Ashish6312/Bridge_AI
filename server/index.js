@@ -454,14 +454,14 @@ app.get('/api/notifications', async (req, res) => {
       result = await pool.query(
         `SELECT * FROM notifications 
          WHERE user_email IS NULL OR user_email = $1 
-         ORDER BY created_at DESC`,
+         ORDER BY created_at DESC LIMIT 50`,
         [email]
       );
     } else {
       result = await pool.query(
         `SELECT * FROM notifications 
          WHERE user_email IS NULL 
-         ORDER BY created_at DESC`
+         ORDER BY created_at DESC LIMIT 50`
       );
     }
     res.json({ success: true, notifications: result.rows });

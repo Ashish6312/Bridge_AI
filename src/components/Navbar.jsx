@@ -238,6 +238,7 @@ const Navbar = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
+              onMouseDown={(e) => e.stopPropagation()}
               style={{
                 position: isMobile ? 'fixed' : 'absolute',
                 top: isMobile ? '76px' : '50px',
