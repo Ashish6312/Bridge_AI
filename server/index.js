@@ -666,23 +666,25 @@ app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
       await pool.query('UPDATE feedbacks SET admin_response = $1 WHERE id = $2', [admin_response, req.params.id]);
     }
 
-    if (status === 'resolved' && oldStatus !== 'resolved' && user_email && user_email !== 'guest' && user_email !== 'anonymous') {
+    if ((status === 'resolved' || status === 'in_progress') && oldStatus !== status && user_email && user_email !== 'guest' && user_email !== 'anonymous') {
       const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
       const finalAdminResponse = admin_response !== undefined ? admin_response : feedbackRow.rows[0].admin_response;
       
-      let notificationMessage = `Your support ticket "${truncatedTitle}" has been resolved by the administrator.`;
+      const isResolved = status === 'resolved';
+      const notifTitle = isResolved ? 'Support Ticket Resolved' : 'Support Ticket In Progress';
+      let notificationMessage = `Your support ticket "${truncatedTitle}" has been ${isResolved ? 'resolved' : 'marked as in progress'} by the administrator.`;
       if (finalAdminResponse && finalAdminResponse.trim() !== '') {
         notificationMessage += `\n\nAdmin Note: ${finalAdminResponse}`;
       }
 
       await pool.query(
         `INSERT INTO notifications (user_email, title, message, type)
-         VALUES ($1, $2, $3, 'issue_resolved')`,
+         VALUES ($1, $2, $3, $4)`,
         [
           user_email,
-          'Support Ticket Resolved',
+          notifTitle,
           notificationMessage,
-          'issue_resolved'
+          isResolved ? 'issue_resolved' : 'system_update'
         ]
       );
 
