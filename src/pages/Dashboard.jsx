@@ -3105,8 +3105,17 @@ const Dashboard = () => {
 
               {/* Group: Project Folders */}
               <div style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingLeft: '4px' }}>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '1px' }}>PROJECT WORKSPACES</div>
+                <div style={{ 
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                  marginBottom: '12px', padding: '8px 12px', 
+                  background: 'rgba(255, 107, 44, 0.05)', 
+                  border: '1px solid rgba(255, 107, 44, 0.1)', 
+                  borderRadius: '8px' 
+                }}>
+                  <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.8)', fontWeight: '800', letterSpacing: '1.2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Folder size={12} color="#FF6B2C" />
+                    PROJECT WORKSPACES
+                  </div>
                   <button 
                     onClick={() => {
                       if (stats.plan === 'free') {
@@ -3115,7 +3124,7 @@ const Dashboard = () => {
                       }
                       setPromptModal({ isOpen: true });
                     }} 
-                    style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                    style={{ background: 'rgba(255, 107, 44, 0.15)', border: 'none', color: '#FF6B2C', cursor: 'pointer', padding: '4px', borderRadius: '4px', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
                   >
                     <Plus size={14} />
                   </button>
@@ -3138,7 +3147,7 @@ const Dashboard = () => {
                         <NavItem 
                           key={p.id}
                           active={activeProject === p.id} 
-                          icon={<div style={{ width: '6px', height: '6px', borderRadius: '50%', background: activeProject === p.id ? 'var(--primary)' : 'rgba(255,255,255,0.2)' }} />} 
+                          icon={<Folder size={14} color={activeProject === p.id ? '#FF6B2C' : 'rgba(255,255,255,0.4)'} />} 
                           label={p.name} 
                           count={bridges.filter(b => String(b.project_id) === String(p.id)).length}
                           onClick={() => { setActiveTab('saved'); setActiveProject(p.id); }} 
