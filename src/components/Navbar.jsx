@@ -264,7 +264,11 @@ const Navbar = () => {
                 <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--nav-logo-text)' }}>Notifications</span>
                 {unreadCount > 0 && (
                   <button 
-                    onClick={markAllAsRead}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      markAllAsRead();
+                    }}
                     style={{
                       background: 'transparent',
                       border: 'none',
@@ -306,7 +310,11 @@ const Navbar = () => {
                     return (
                       <div 
                         key={n.id}
-                        onClick={() => markAsRead(n)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          markAsRead(n);
+                        }}
                         style={{
                           padding: '12px 16px',
                           borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
