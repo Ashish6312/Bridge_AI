@@ -2360,7 +2360,7 @@ const ProjectWorkspace = ({
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'transparent' }}>
                 {chatHistory.length <= 1 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, padding: '20px 40px', textAlign: 'center', overflowY: 'auto' }}>
-                    <div style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '20px 0' }}>
+                    <div style={{ margin: '40px 0 auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '20px 0' }}>
                       <div style={{ position: 'relative', marginBottom: '32px', marginTop: '20px' }}>
                         {/* Glowing rotating backdrop */}
                         <motion.div 
