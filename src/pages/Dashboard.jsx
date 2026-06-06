@@ -3300,7 +3300,7 @@ const Dashboard = () => {
                 </motion.div>
               )}
               
-              <div style={{ position: 'relative', overflow: 'hidden', padding: '28px 32px', borderRadius: '24px', background: 'rgba(13, 13, 13, 0.45)', border: '1px solid rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', marginBottom: '32px' }}>
+              <div style={{ position: 'relative', overflow: 'hidden', padding: '36px 40px', borderRadius: '24px', background: 'linear-gradient(135deg, rgba(10, 10, 10, 0.85) 0%, rgba(20, 20, 20, 0.6) 100%)', border: '1px solid rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(16px)', marginBottom: '32px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
                 <IntelligenceBridge />
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
@@ -3309,20 +3309,21 @@ const Dashboard = () => {
                   style={{ position: 'relative', zIndex: 1 }}
                 >
                   <div style={{ 
-                    padding: '4px 10px', borderRadius: '100px', fontSize: '0.6rem', fontWeight: '700', 
-                    background: hubStatus === 'online' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(244, 63, 94, 0.08)',
+                    padding: '6px 12px', borderRadius: '100px', fontSize: '0.65rem', fontWeight: '800', 
+                    background: hubStatus === 'online' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(244, 63, 94, 0.1)',
                     color: hubStatus === 'online' ? '#22c55e' : '#f43f5e',
-                    border: `1px solid ${hubStatus === 'online' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(244, 63, 94, 0.15)'}`,
-                    display: 'inline-flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.5px',
-                    marginBottom: '16px'
+                    border: `1px solid ${hubStatus === 'online' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(244, 63, 94, 0.2)'}`,
+                    display: 'inline-flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px',
+                    marginBottom: '20px',
+                    boxShadow: hubStatus === 'online' ? '0 0 12px rgba(34, 197, 94, 0.1)' : 'none'
                   }}>
-                    <div className={hubStatus === 'online' ? 'pulse' : ''} style={{ width: '5px', height: '5px', borderRadius: '50%', background: hubStatus === 'online' ? '#22c55e' : '#f43f5e' }} />
-                    Hub {hubStatus}
+                    <div className={hubStatus === 'online' ? 'pulse' : ''} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hubStatus === 'online' ? '#4ade80' : '#f43f5e' }} />
+                    {hubStatus === 'online' ? 'SYSTEM ONLINE' : 'SYSTEM OFFLINE'}
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: '280px' }}>
-                      <h1 style={{ fontSize: '2.2rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '8px', lineHeight: '1.2', color: '#FFFFFF' }}>
+                      <h1 style={{ fontSize: '2.4rem', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '10px', lineHeight: '1.1', background: 'linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
                         {(() => {
                           const hour = new Date().getHours();
                           const user = JSON.parse(localStorage.getItem('bridge_user') || '{}');
@@ -3332,31 +3333,32 @@ const Dashboard = () => {
                           return `Good Evening, ${name}`;
                         })()}
                       </h1>
-                      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.95rem', fontWeight: '400', lineHeight: '1.4' }}>
-                        Vault is hosting <strong>{filteredBridges.length}</strong> active intelligence bridges in the {activeProject ? `"${projects.find(p => p.id === activeProject)?.name}"` : 'Universal'} sector.
+                      <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', fontWeight: '500', lineHeight: '1.5', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                        Vault is hosting <strong style={{ color: '#fff' }}>{filteredBridges.length}</strong> active intelligence bridges in the <strong style={{ color: '#fff' }}>{activeProject ? projects.find(p => p.id === activeProject)?.name : 'Universal'}</strong> sector.
                       </p>
                     </div>
                     
-                    <div style={{ position: 'relative', width: '280px' }}>
-                      <Search size={16} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', zIndex: 2 }} />
+                    <div style={{ position: 'relative', width: '300px' }}>
+                      <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', zIndex: 2 }} />
                       <input 
                         type="text" 
-                        placeholder="Search bridges..." 
+                        placeholder="Search your bridges..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ 
                           width: '100%',
-                          padding: '12px 16px 12px 42px', 
-                          fontSize: '0.875rem', 
-                          background: 'rgba(255,255,255,0.02)', 
-                          border: '1px solid rgba(255,255,255,0.06)',
+                          padding: '14px 16px 14px 44px', 
+                          fontSize: '0.9rem', 
+                          background: 'rgba(0, 0, 0, 0.4)', 
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
                           color: '#FFFFFF',
-                          borderRadius: '10px', 
+                          borderRadius: '12px', 
                           outline: 'none',
-                          transition: 'all 0.2s ease'
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
                         }}
-                        onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.background = 'rgba(0,0,0,0.2)'; }}
-                        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.06)'; e.target.style.background = 'rgba(255,255,255,0.02)'; }}
+                        onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.background = 'rgba(0,0,0,0.6)'; e.target.style.boxShadow = '0 0 0 2px rgba(222, 106, 57, 0.2)'; }}
+                        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(0,0,0,0.4)'; e.target.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)'; }}
                       />
                     </div>
                   </div>
