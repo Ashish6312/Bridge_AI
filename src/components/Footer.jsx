@@ -73,15 +73,21 @@ const Footer = () => {
             style={{ position: 'fixed', inset: 0, background: 'rgba(5,5,5,0.85)', backdropFilter: 'blur(16px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
             <motion.div initial={{ scale: 0.94, y: 24 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.94, y: 24 }}
               onClick={(e) => e.stopPropagation()}
-              style={{ background: 'rgba(13,13,13,0.98)', border: '1px solid rgba(255,107,44,0.25)', borderRadius: 20, maxWidth: 620, width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: 36, position: 'relative', boxShadow: '0 0 60px rgba(255,107,44,0.15), 0 40px 80px rgba(0,0,0,0.6)' }}>
-              <button onClick={() => setActivePopup(null)}
-                style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,107,44,0.12)', border: '1px solid rgba(255,107,44,0.2)', borderRadius: 8, color: '#A1A1AA', cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,107,44,0.25)'; e.currentTarget.style.color = '#F5F5F5'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,107,44,0.12)'; e.currentTarget.style.color = '#A1A1AA'; }}>
-                <X size={16} />
-              </button>
-              <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#F5F5F5', marginBottom: 8, letterSpacing: '-0.02em', textTransform: 'capitalize' }}>{activePopup}</h3>
-              {getPopupContent(activePopup)}
+              style={{ background: 'rgba(13,13,13,0.98)', border: '1px solid rgba(255,107,44,0.25)', borderRadius: 20, maxWidth: 620, width: '100%', maxHeight: '80vh', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 0 60px rgba(255,107,44,0.15), 0 40px 80px rgba(0,0,0,0.6)' }}>
+              
+              <div style={{ padding: '24px 36px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#F5F5F5', margin: 0, letterSpacing: '-0.02em', textTransform: 'capitalize' }}>{activePopup}</h3>
+                <button onClick={() => setActivePopup(null)}
+                  style={{ background: 'rgba(255,107,44,0.12)', border: '1px solid rgba(255,107,44,0.2)', borderRadius: 8, color: '#A1A1AA', cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,107,44,0.25)'; e.currentTarget.style.color = '#F5F5F5'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,107,44,0.12)'; e.currentTarget.style.color = '#A1A1AA'; }}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div style={{ padding: '24px 36px', overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', flex: 1 }}>
+                {getPopupContent(activePopup)}
+              </div>
             </motion.div>
           </motion.div>
         )}

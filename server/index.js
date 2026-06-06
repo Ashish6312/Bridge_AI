@@ -615,6 +615,33 @@ app.get('/api/admin/feedbacks', verifyAdmin, async (req, res) => {
   }
 });
 
+// Helper to check if all issues are resolved for a user and send a notification
+const checkAndSendAllResolvedNotification = async (user_email) => {
+  if (!user_email || user_email === 'guest' || user_email === 'anonymous') return;
+  try {
+    const feedbackRes = await pool.query("SELECT COUNT(*) FROM feedbacks WHERE user_email = $1 AND status != 'resolved'", [user_email]);
+    const chatbotRes = await pool.query("SELECT COUNT(*) FROM chatbot_queries WHERE user_email = $1 AND status != 'resolved'", [user_email]);
+    
+    const unresolvedFeedbacks = parseInt(feedbackRes.rows[0].count, 10);
+    const unresolvedChatbots = parseInt(chatbotRes.rows[0].count, 10);
+    
+    if (unresolvedFeedbacks === 0 && unresolvedChatbots === 0) {
+      await pool.query(
+        `INSERT INTO notifications (user_email, title, message, type)
+         VALUES ($1, $2, $3, 'issue_resolved')`,
+        [
+          user_email,
+          'All Issues Resolved',
+          'All your reported support tickets and chatbot issues have been successfully resolved by the administrator.',
+          'issue_resolved'
+        ]
+      );
+    }
+  } catch (err) {
+    console.error('[Admin] Error checking all resolved status:', err);
+  }
+};
+
 app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
   try {
     const { status, admin_response } = req.body;
@@ -657,6 +684,9 @@ app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
       sendFeedbackTicketResolvedEmail(user_email, title, description, resolvedAdminResponse).catch(err => {
         console.error('[Mail] Failed to send feedback resolution email:', err);
       });
+
+      // Check if all issues are resolved
+      await checkAndSendAllResolvedNotification(user_email);
     }
 
     res.json({ success: true, message: 'Feedback updated successfully.' });
@@ -801,6 +831,9 @@ app.patch('/api/admin/chatbot-queries/:id', verifyAdmin, async (req, res) => {
       sendChatbotIssueResolvedEmail(user_email, query).catch(err => {
         console.error('[Mail] Failed to send chatbot resolution email:', err);
       });
+
+      // Check if all issues are resolved
+      await checkAndSendAllResolvedNotification(user_email);
     }
 
     res.json({ success: true, message: 'Chatbot query status updated.' });
