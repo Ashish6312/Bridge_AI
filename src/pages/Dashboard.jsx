@@ -1572,7 +1572,7 @@ const ProjectWorkspace = ({
               {projects.find(p => p.id === projectId)?.name || projectId}
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '8px', margin: '8px 0 0 0', wordBreak: 'normal', overflowWrap: 'break-word', lineHeight: '1.5', maxWidth: '600px' }}>
-              Aggregate and scale organizational context for Humans, AIs, and agents.
+              Organize and easily share your project knowledge with humans and AI.
             </p>
           </div>
 
@@ -1692,7 +1692,7 @@ const ProjectWorkspace = ({
                 </div>
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: '800', color: '#fff' }}>Problem &amp; Rules</h4>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                  Keep track of code guidelines, constraints, and technologies. Inject context layers dynamically.
+                  Save your coding rules, tech stack, and goals to get better AI answers.
                 </p>
               </div>
 
@@ -1733,7 +1733,7 @@ const ProjectWorkspace = ({
                 </div>
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: '800', color: '#fff' }}>Decision Ledger</h4>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                  Document architectural and tech choices. Elaborate rationale into actionable checklists.
+                  Track important technical decisions and keep a record of why choices were made.
                 </p>
               </div>
 
@@ -1774,7 +1774,7 @@ const ProjectWorkspace = ({
                 </div>
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: '800', color: '#fff' }}>Memory AI Assistant</h4>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                  Query your consolidated project contexts, decisions, and history dynamically.
+                  Chat with an AI that knows your project's rules, history, and decisions.
                 </p>
               </div>
 
