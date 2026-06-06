@@ -666,13 +666,26 @@ app.patch('/api/admin/feedbacks/:id', verifyAdmin, async (req, res) => {
       await pool.query('UPDATE feedbacks SET admin_response = $1 WHERE id = $2', [admin_response, req.params.id]);
     }
 
-    if ((status === 'resolved' || status === 'in_progress') && oldStatus !== status && user_email && user_email !== 'guest' && user_email !== 'anonymous') {
+    const oldAdminResponse = feedbackRow.rows[0].admin_response;
+    const statusChanged = status && oldStatus !== status && (status === 'resolved' || status === 'in_progress');
+    const responseChanged = admin_response !== undefined && admin_response !== oldAdminResponse && admin_response.trim() !== '';
+
+    if ((statusChanged || responseChanged) && user_email && user_email !== 'guest' && user_email !== 'anonymous') {
       const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
-      const finalAdminResponse = admin_response !== undefined ? admin_response : feedbackRow.rows[0].admin_response;
+      const finalAdminResponse = admin_response !== undefined ? admin_response : oldAdminResponse;
       
-      const isResolved = status === 'resolved';
-      const notifTitle = isResolved ? 'Support Ticket Resolved' : 'Support Ticket In Progress';
-      let notificationMessage = `Your support ticket "${truncatedTitle}" has been ${isResolved ? 'resolved' : 'marked as in progress'} by the administrator.`;
+      const currentStatus = status || oldStatus;
+      const isResolved = currentStatus === 'resolved';
+      
+      let notifTitle = isResolved ? 'Support Ticket Resolved' : 'Support Ticket Update';
+      let notificationMessage = '';
+
+      if (statusChanged) {
+        notificationMessage = `Your support ticket "${truncatedTitle}" has been ${isResolved ? 'resolved' : 'marked as in progress'} by the administrator.`;
+      } else {
+        notificationMessage = `The administrator has added a note to your support ticket "${truncatedTitle}".`;
+      }
+
       if (finalAdminResponse && finalAdminResponse.trim() !== '') {
         notificationMessage += `\n\nAdmin Note: ${finalAdminResponse}`;
       }
