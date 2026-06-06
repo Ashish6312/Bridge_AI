@@ -267,7 +267,7 @@ const LandingPage = () => {
             Now in v2.0 · Enterprise Edition
           </motion.div>
 
-          <h1 style={{ fontSize:'clamp(32px,5vw,72px)', fontWeight:800, lineHeight:1.25, letterSpacing:'-0.04em', marginBottom:'1rem', color:TEXT }}>
+          <h1 style={{ fontSize:'clamp(32px,5vw,64px)', fontWeight:800, lineHeight:1.2, letterSpacing:'-0.03em', marginBottom:'1rem', color:TEXT }}>
             Stop Scattering<br />
             <span style={{ 
               background:`linear-gradient(135deg,#FF6B2C 0%,#FF5C5C 50%,#7C3AED 100%)`, 
@@ -276,12 +276,11 @@ const LandingPage = () => {
               backgroundClip:'text',
               WebkitBoxDecorationBreak: 'clone',
               boxDecorationBreak: 'clone'
-            }}>Your Project Details</span><br />
-            Across AI Chats.
+            }}>Your Project Data</span>
           </h1>
 
-          <p style={{ fontSize:15, color:MUTED, lineHeight:1.85, fontWeight:500, opacity:0.85, maxWidth:450, marginBottom:'1.5rem' }}>
-            Don't lose your work when switching between ChatGPT, Claude, and Gemini. BridgeAI saves your project details, chats, and decisions in one shared space for you and your team.
+          <p style={{ fontSize:16, color:MUTED, lineHeight:1.6, fontWeight:500, opacity:0.9, maxWidth:450, marginBottom:'1.5rem' }}>
+            BridgeAI saves your project details and chats in one shared space, so you never lose context when switching between AI models.
           </p>
 
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:'1.5rem' }}>
@@ -298,6 +297,17 @@ const LandingPage = () => {
               View Documentation
             </Link>
           </div>
+
+          <div style={{ padding: '12px 20px', background: 'rgba(255,107,44,0.08)', borderRadius: '12px', marginBottom: '2rem', border: '1px solid rgba(255,107,44,0.2)', maxWidth: '450px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ fontSize: '16px' }}>📱</span>
+              <strong style={{ color: '#FF6B2C', fontSize: '14px' }}>New: APK Update v2.0 Available</strong>
+            </div>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Take your project memory on the go. The new Android APK brings zero-latency sync and offline access to all your AI decision logs.
+            </p>
+          </div>
+
 
           <div>
             <div style={{ fontSize:11, letterSpacing:'0.1em', textTransform:'uppercase', color:MUTED, fontWeight:600, marginBottom:'0.75rem', fontFamily:"'Space Mono',monospace" }}>Works with</div>

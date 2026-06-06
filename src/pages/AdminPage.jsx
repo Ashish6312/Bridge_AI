@@ -2146,11 +2146,50 @@ const AdminPage = () => {
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                             <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--primary)' }}>Query:</span>
-                            <span style={{
-                              color: q.status === 'resolved' ? '#34d399' : q.status === 'issue_faced' ? '#f87171' : 'var(--text-muted)',
-                              background: q.status === 'resolved' ? 'rgba(16,185,129,0.08)' : q.status === 'issue_faced' ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.03)',
-                              padding: '2px 8px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: '700', textTransform: 'uppercase'
-                            }}>{q.status ? q.status.replace('_', ' ') : 'N/A'}</span>
+                            <button
+                              onClick={async () => {
+                                const newStatus = q.status === 'issue_faced' ? 'resolved' : 'issue_faced';
+                                try {
+                                  // Update status on backend
+                                  const res = await adminFetch(`/api/admin/chatbot-queries/${q.id}`, {
+                                    method: 'PATCH',
+                                    body: JSON.stringify({ status: newStatus })
+                                  });
+                                  if (res.ok) {
+                                    showToast(`Chatbot query marked as ${newStatus}.`, 'success');
+                                    // Quietly refresh user details in modal
+                                    const refreshRes = await adminFetch(`/api/admin/users/${selectedUserDetails.email}/details`);
+                                    const refreshData = await refreshRes.json();
+                                    if (refreshRes.ok && refreshData.success) {
+                                      setSelectedUserDetails(refreshData.details);
+                                    }
+                                    // Also refresh main chatbot query list in background
+                                    fetchTabContent('chatbot');
+                                  } else {
+                                    showToast('Failed to update chatbot query status.', 'error');
+                                  }
+                                } catch (err) {
+                                  console.error(err);
+                                  showToast('Error updating chatbot query status.', 'error');
+                                }
+                              }}
+                              style={{
+                                color: q.status === 'resolved' ? '#34d399' : q.status === 'issue_faced' ? '#f87171' : 'var(--text-muted)',
+                                background: q.status === 'resolved' ? 'rgba(16,185,129,0.08)' : q.status === 'issue_faced' ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.03)',
+                                border: q.status === 'resolved' ? '1px solid rgba(16,185,129,0.2)' : q.status === 'issue_faced' ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(255,255,255,0.05)',
+                                padding: '3px 10px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: '700', textTransform: 'uppercase',
+                                cursor: 'pointer', transition: 'all 0.2s', outline: 'none'
+                              }}
+                              onMouseEnter={e => {
+                                e.currentTarget.style.background = q.status === 'resolved' ? 'rgba(16,185,129,0.16)' : 'rgba(239,68,68,0.16)';
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.background = q.status === 'resolved' ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)';
+                              }}
+                              title="Click to toggle status"
+                            >
+                              {q.status ? q.status.replace('_', ' ') : 'N/A'}
+                            </button>
                           </div>
                           <p style={{ fontSize: '0.8rem', color: 'white', margin: '0 0 10px', lineHeight: '1.4', fontWeight: 600 }}>{q.query}</p>
                           

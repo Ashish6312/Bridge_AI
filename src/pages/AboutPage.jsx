@@ -51,15 +51,17 @@ const AboutPage = () => {
                 <Globe size={14} color="var(--primary)" />
                 <span style={{ fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)' }}>About BridgeAI</span>
               </div>
-              <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.2rem)', fontWeight: '900', color: 'var(--text-main)', letterSpacing: '-0.05em', marginBottom: '32px', lineHeight: 1.3 }}>
+              <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: '900', color: 'var(--text-main)', letterSpacing: '-0.04em', marginBottom: '24px', lineHeight: 1.2 }}>
                 Preserving Project <br /> <span style={{ color: 'var(--primary)' }}>Memory.</span>
               </h1>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', lineHeight: '1.7', marginBottom: '48px', maxWidth: '650px' }}>
-                We started BridgeAI with a simple observation: people were using multiple AI models—like ChatGPT, Claude, and Gemini—on the same project, and losing context every time they switched tools.
-                <br /><br />
-                However, through deep customer validation with AI engineers, architects, and CTOs, we discovered a much larger problem: <strong>Knowledge Fragmentation</strong>. Critical business logic, constraints, and technical reasoning are scattered across fleeting AI chats, Slack messages, Notion docs, and code comments.
-                <br /><br />
-                Today, BridgeAI is the <strong>Shared Knowledge Layer & Organizational Memory System</strong> that aggregates project context and captures technical decision histories for humans, AI tools, and autonomous coding agents.
+              <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '20px', maxWidth: '600px' }}>
+                We built BridgeAI because developers lose context every time they switch between ChatGPT, Claude, and Gemini.
+              </p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '20px', maxWidth: '600px' }}>
+                The real problem is <strong>Knowledge Fragmentation</strong>. Technical reasoning gets lost in scattered chats and docs.
+              </p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '40px', maxWidth: '600px' }}>
+                BridgeAI solves this by acting as a <strong>Shared Knowledge Layer</strong> to capture project context for both humans and AI agents.
               </p>
               
               <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
