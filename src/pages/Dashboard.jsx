@@ -836,15 +836,39 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
           </div>
 
           <button 
+            onClick={() => handleOptimize()}
+            disabled={isOptimizing}
+            style={{ 
+              fontSize: '0.75rem', padding: '6px 14px', borderRadius: '8px', 
+              border: '1px solid rgba(124, 58, 237, 0.3)', background: 'rgba(124, 58, 237, 0.05)',
+              color: '#c4b5fd', cursor: 'pointer', transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600'
+            }}
+            onMouseEnter={e => { 
+              e.currentTarget.style.background = 'rgba(124, 58, 237, 0.15)'; 
+              e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.6)'; 
+              e.currentTarget.style.color = '#ddd6fe'; 
+            }}
+            onMouseLeave={e => { 
+              e.currentTarget.style.background = 'rgba(124, 58, 237, 0.05)'; 
+              e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.3)'; 
+              e.currentTarget.style.color = '#c4b5fd'; 
+            }}
+          >
+            <Wand2 size={12} className={isOptimizing ? 'animate-spin' : ''} />
+            {isOptimizing ? 'Optimizing...' : 'Optimize Context'}
+          </button>
+
+          <button 
             onClick={() => setShowRaw(!showRaw)}
             style={{ 
               fontSize: '0.75rem', padding: '6px 14px', borderRadius: '8px', 
-              border: '1px solid rgba(255,255,255,0.06)', background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)',
               color: 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: '0.2s',
               display: 'flex', alignItems: 'center', gap: '6px'
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'white'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}
           >
             {showRaw ? <EyeOff size={12} /> : <Eye size={12} />} 
             {showRaw ? 'Hide Log' : 'View Log'}
