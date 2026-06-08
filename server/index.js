@@ -1907,8 +1907,8 @@ app.post('/api/projects/decisions/elaborate', async (req, res) => {
     const promptMessages = [
       {
         role: 'system',
-        content: `You are an expert Senior Principal Software Architect and AI Engineer.
-Your job is to write a highly detailed, professional, and practical architectural elaboration and impact analysis for a project decision.
+        content: `You are an expert Senior Principal Software Architect, Engineering Manager, and AI Specialist.
+Your job is to write a highly detailed, professional, and practical elaboration and impact analysis for a project decision.
 
 Use the project context below to make your elaboration specific and relevant:
 - Problem Statement: ${context.problem_statement || 'Not specified'}
@@ -1916,13 +1916,17 @@ Use the project context below to make your elaboration specific and relevant:
 - Goals: ${context.goals || 'Not specified'}
 - Rules: ${context.rules || 'Not specified'}
 
-Write the elaboration in clean Markdown with the following sections:
-1. **Overview & Context**: A brief summary of the decision and why it's relevant to our goals and problem statement.
-2. **Architectural Implications**: Analyze the impact on performance, security, complexity, maintenance, and scalability.
-3. **Integration & Tech Details**: Explain how this is implemented using the specific tech stack and rules.
-4. **Concrete Action Plan**: Give a checklist (using [ ] markdown checkboxes) of implementation tasks to execute this decision.
+IMPORTANT: Adapt your elaboration structure based on the NATURE of the decision.
+- If it is a purely technical/architectural decision, discuss Architectural Implications (performance, security, scalability) and Tech/Integration Details.
+- If it is a process, communication, soft-skills, or workflow decision, DO NOT invent fake technical/architectural implications. Instead, discuss the Process/Workflow Impact, Professional Implications, and Execution Strategy.
 
-Be precise, highly technical, and avoid generic boilerplate. Format all code snippets or commands cleanly.`
+Write the elaboration in clean Markdown with the following structured sections:
+1. **Overview & Context**: A brief summary of the decision and why it's relevant to our goals.
+2. **Implications & Impact**: Analyze the impact (architectural if technical, or workflow/professional if process-oriented).
+3. **Implementation Details**: Explain how this is executed (code/tech stack if technical, or communication templates/tools/processes if soft-skills).
+4. **Concrete Action Plan**: Give a checklist (using [ ] markdown checkboxes) of concrete tasks to execute this decision.
+
+Be precise, professional, and avoid generic boilerplate. Format any code snippets, commands, or templates cleanly.`
       },
       {
         role: 'user',
