@@ -1921,10 +1921,16 @@ const ProjectWorkspace = ({
       {/* 📋 DECISION LEDGER */}
       {projectTab === 'decisions' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
-              Log decisions made, options you looked at, and questions still open.
-            </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1.5px', color: 'var(--primary)', textTransform: 'uppercase' }}>Architecture Decision Records</span>
+                <span style={{ background: 'rgba(222, 106, 57, 0.1)', border: '1px solid rgba(222, 106, 57, 0.2)', color: 'var(--primary)', fontSize: '0.6rem', padding: '3px 8px', borderRadius: '4px', fontWeight: '800', letterSpacing: '0.5px' }}>ADR LEDGER</span>
+              </div>
+              <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', maxWidth: '650px', lineHeight: '1.6' }}>
+                Maintain an immutable ledger of technical choices, rejected architectural paths, and pending engineering queries. This ensures absolute alignment across your team and provides crucial context for AI agents working on your codebase.
+              </span>
+            </div>
             <button
               onClick={() => setShowDecModal(true)}
               className="btn-primary"
