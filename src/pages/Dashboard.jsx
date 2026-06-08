@@ -2202,7 +2202,7 @@ const ProjectWorkspace = ({
 
       {projectTab === 'chat' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '600px', height: 'calc(100vh - 250px)', borderRadius: '16px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '85vh', borderRadius: '16px', background: 'rgba(13,13,13,0.45)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', position: 'relative' }}>
             {/* Header Bar */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.15)', zIndex: 11 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
