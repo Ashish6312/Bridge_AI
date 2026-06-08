@@ -2160,7 +2160,10 @@ const ProjectWorkspace = ({
           )}
 
           {elaboratingDecision && (
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(6px)' }}>
+            <div 
+              onClick={(e) => { if (e.target === e.currentTarget) setElaboratingDecision(null); }}
+              style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(6px)' }}
+            >
               <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} style={{ width: '90%', maxWidth: '640px', background: 'rgba(13,13,13,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '28px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 24px 50px rgba(0,0,0,0.6)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
