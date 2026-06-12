@@ -82,7 +82,7 @@ const AboutPage = () => {
 
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} style={{ position: 'relative' }}>
               <div style={{ width: '100%', aspectRatio: '4/5', background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '40px', overflow: 'hidden', position: 'relative', zIndex: 1, boxShadow: 'var(--shadow)' }}>
-                <img src="/about_hq.webp" alt="BridgeAI Headquarters" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="BridgeAI Headquarters" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <div style={{ position: 'absolute', bottom: '32px', left: '32px', right: '32px', padding: '24px', background: 'var(--card)', backdropFilter: 'blur(20px)', borderRadius: '20px', border: '1px solid var(--border-subtle)' }}>
                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                       <Award color="var(--primary)" size={20} />
