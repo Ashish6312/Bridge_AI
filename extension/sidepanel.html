@@ -532,7 +532,7 @@
             </div>
         </div>
         <div class="status-pill">
-            <span style="opacity:0.5; font-size:0.55rem;">v1.0.6</span>
+            <span style="opacity:0.5; font-size:0.55rem;">v1.0.7</span>
             <div id="hub-dot" class="pulse-dot"></div>
             <span id="hub-status-text">Hub Active</span>
         </div>
@@ -607,6 +607,14 @@
                 <div class="section-label">Captured Context</div>
                 <div id="data-container"></div>
 
+                <div id="optimized-container" style="display:none; margin-top: 15px; border: 1px solid rgba(16,185,129,0.4); border-radius: 12px; padding: 12px; background: rgba(10,10,10,0.4); position: relative; box-shadow: 0 0 15px rgba(16,185,129,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 0.05em;">OPTIMIZED PROMPT</span>
+                        <span id="copy-optimized-btn" style="font-size: 9px; font-weight: 700; color: #10b981; cursor: pointer; text-transform: uppercase;">CLICK TO COPY ↓</span>
+                    </div>
+                    <textarea id="optimized-text" readonly style="width: 100%; height: 120px; background: #0f0f0f; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: #d4d4d4; font-family: 'Consolas', 'Courier New', monospace; font-size: 11px; padding: 10px; resize: none;"></textarea>
+                </div>
+
                 <div style="display:flex; flex-direction:column; gap:10px; margin-top:18px;">
                     <button id="optimize-btn" class="sec-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
@@ -621,7 +629,7 @@
                         <div class="section-label" style="justify-content: center; margin-bottom: 8px;">
                             <span style="background: var(--card); padding: 0 8px; position: relative; z-index: 1;">Or Direct Transfer To</span>
                         </div>
-                        <div style="display: flex; gap: 8px; justify-content: space-between;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
                             <button class="llm-share-btn" data-target="chatgpt">
                                 <svg width="16" height="16" viewBox="0 0 41 41" fill="none"><path d="M37.532 16.87a9.963 9.963 0 00-.856-8.184 10.078 10.078 0 00-10.855-4.835 9.964 9.964 0 00-7.505-3.360 10.079 10.079 0 00-9.612 6.977 9.967 9.967 0 00-6.664 4.834 10.08 10.08 0 001.24 11.817 9.965 9.965 0 00.856 8.185 10.079 10.079 0 0010.855 4.835 9.965 9.965 0 007.504 3.36 10.079 10.079 0 009.617-6.981 9.967 9.967 0 006.663-4.834 10.079 10.079 0 00-1.243-11.814zM22.498 37.886a7.474 7.474 0 01-4.799-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 00.655-1.134V19.054l3.366 1.944a.12.12 0 01.066.092v9.299a7.505 7.505 0 01-7.49 7.496z" fill="#74aa9c"/></svg>
                                 ChatGPT
@@ -633,6 +641,18 @@
                             <button class="llm-share-btn" data-target="gemini">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 24A14.232 14.232 0 019.86 12 14.232 14.232 0 0112 0a14.232 14.232 0 012.14 12A14.232 14.232 0 0112 24z" fill="url(#ga)"/><path d="M24 12c-3.53.35-8.765 2.14-12 2.14C8.765 14.14 3.53 12.35 0 12c3.53-.35 8.765-2.14 12-2.14C15.235 9.86 20.47 11.65 24 12z" fill="url(#gb)"/><defs><linearGradient id="ga" x1="12" y1="0" x2="12" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#1C7DFF"/><stop offset="1" stop-color="#1C69FF"/></linearGradient><linearGradient id="gb" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse"><stop stop-color="#1C7DFF"/><stop offset="1" stop-color="#1C69FF"/></linearGradient></defs></svg>
                                 Gemini
+                            </button>
+                            <button class="llm-share-btn" data-target="perplexity">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 2v20M2 12h20M5.636 5.636l12.728 12.728M18.364 5.636L5.636 18.364"/></svg>
+                                Perplexity
+                            </button>
+                            <button class="llm-share-btn" data-target="deepseek">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                                DeepSeek
+                            </button>
+                            <button class="llm-share-btn" data-target="poe">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                                Poe
                             </button>
                         </div>
                     </div>

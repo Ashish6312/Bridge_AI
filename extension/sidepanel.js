@@ -542,28 +542,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         const div = document.createElement('div');
                         div.className = 'data-point fade-in optimized-datapoint';
-                        div.style.cssText = 'border-left: 3px solid #10b981; position: relative;';
+                        div.style.cssText = 'border: 1px solid rgba(16, 185, 129, 0.5); box-shadow: 0 0 15px rgba(16, 185, 129, 0.15); border-radius: 12px; padding: 14px; background: rgba(16, 185, 129, 0.03); margin-top: 15px; position: relative;';
                         div.innerHTML = `
-                            <label style="color: #10b981; display:flex; align-items:center; justify-content:space-between;">
-                                <span>Optimized Prompt</span>
-                                <span id="copy-hint" style="font-size:0.6rem; color:#10b981; opacity:0.7; cursor:pointer;">Click to copy ↓</span>
-                            </label>
-                            <pre id="opt-pre" style="white-space: pre-wrap; font-family: 'Space Mono', monospace; font-size: 0.72rem; color: #e4e4e7; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 8px; margin-top: 6px; max-height: 180px; overflow-y: auto; cursor: pointer; user-select: all; text-align: left; line-height: 1.45;"></pre>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 11px; font-weight: 800; color: #fff; letter-spacing: 0.05em; font-family: 'Inter', sans-serif;">OPTIMIZED PROMPT</span>
+                                <span id="copy-hint" style="font-size: 10px; font-weight: 700; color: #10b981; cursor: pointer; text-transform: uppercase; transition: all 0.2s;">CLICK TO COPY ↓</span>
+                            </div>
+                            <textarea id="opt-pre" readonly style="width: 100%; height: 140px; background: #0f0f0f; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: #e4e4e7; font-family: 'Consolas', 'Courier New', monospace; font-size: 11.5px; padding: 12px; resize: none; line-height: 1.5; cursor: pointer;"></textarea>
                         `;
                         const pre = div.querySelector('#opt-pre');
                         const copyHint = div.querySelector('#copy-hint');
-                        pre.textContent = result.optimized;
+                        pre.value = result.optimized;
 
                         const doCopy = () => {
                             navigator.clipboard.writeText(result.optimized);
                             const orig = copyHint.textContent;
-                            copyHint.textContent = 'Copied ✓';
-                            copyHint.style.opacity = '1';
+                            copyHint.textContent = 'COPIED ✓';
+                            copyHint.style.color = '#fff';
                             pre.style.borderColor = '#10b981';
-                            pre.style.boxShadow = '0 0 8px rgba(16,185,129,0.25)';
+                            pre.style.boxShadow = '0 0 10px rgba(16,185,129,0.2)';
                             setTimeout(() => {
                                 copyHint.textContent = orig;
-                                copyHint.style.opacity = '0.7';
+                                copyHint.style.color = '#10b981';
+                                pre.style.borderColor = 'rgba(255,255,255,0.05)';
                                 pre.style.boxShadow = 'none';
                             }, 2000);
                         };
@@ -575,13 +576,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // Flash-highlight and scroll the new block into view
                         setTimeout(() => {
                             div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                            div.style.outline = '1.5px solid rgba(16,185,129,0.6)';
-                            div.style.boxShadow = '0 0 16px rgba(16,185,129,0.2)';
-                            setTimeout(() => {
-                                div.style.outline = 'none';
-                                div.style.boxShadow = 'none';
-                                div.style.transition = 'all 0.6s ease';
-                            }, 1400);
                         }, 80);
                     }
                 } else {
@@ -660,6 +654,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'chatgpt') url = 'https://chatgpt.com/';
             else if (target === 'claude') url = 'https://claude.ai/new';
             else if (target === 'gemini') url = 'https://gemini.google.com/';
+            else if (target === 'perplexity') url = 'https://www.perplexity.ai/';
+            else if (target === 'deepseek') url = 'https://chat.deepseek.com/';
+            else if (target === 'poe') url = 'https://poe.com/';
 
             chrome.tabs.create({ url });
         });

@@ -278,6 +278,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'chatgpt') url = 'https://chatgpt.com/';
             else if (target === 'claude') url = 'https://claude.ai/new';
             else if (target === 'gemini') url = 'https://gemini.google.com/';
+            else if (target === 'perplexity') url = 'https://www.perplexity.ai/';
+            else if (target === 'deepseek') url = 'https://chat.deepseek.com/';
+            else if (target === 'poe') url = 'https://poe.com/';
 
             chrome.tabs.create({ url });
         });
