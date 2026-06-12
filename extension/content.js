@@ -517,6 +517,8 @@ const TARGET_SELECTORS = {
  */
 async function handleAutoPaste() {
   const platform = getPlatform();
+  if (platform === 'dashboard' || platform === 'universal') return;
+
   const { pending_bridge } = await chrome.storage.local.get('pending_bridge');
   if (!pending_bridge) return;
 
@@ -527,7 +529,6 @@ async function handleAutoPaste() {
   if (!document.getElementById(styleId)) {
     const styleEl = document.createElement('style');
     styleEl.id = styleId;
-                const styleEl = document.createElement('style');
     styleEl.innerHTML = `
       @keyframes bridge-fade-in {
         from { opacity: 0; transform: translateY(20px) scale(0.95); }
