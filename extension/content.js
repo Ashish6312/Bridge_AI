@@ -772,14 +772,31 @@ function handleDashboardEvents() {
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'EXTRACT_CHAT') {
-    extractChat()
-      .then(data => {
-        sendResponse({ data });
-      })
-      .catch(e => {
-        console.error('BridgeAI Extraction Error:', e);
-        sendResponse({ data: null, error: e.message || 'Unknown extraction error' });
-      });
+    
+    // Auto-scroll to top to trigger lazy-loading of older messages
+    const scrollContainers = [
+      document.querySelector('main [class*="overflow"]'),
+      document.querySelector('main [class*="Scroll"]'),
+      document.querySelector('[class*="react-scroll"]'),
+      document.querySelector('[class*="scroll-y"]'),
+      document.documentElement,
+      document.body
+    ].filter(el => el);
+
+    if (scrollContainers.length > 0) {
+      scrollContainers[0].scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Wait for the UI to load older messages, then extract
+    setTimeout(() => {
+      extractChat()
+        .then(data => sendResponse({ data }))
+        .catch(e => {
+          console.error('BridgeAI Extraction Error:', e);
+          sendResponse({ data: null, error: e.message || 'Unknown extraction error' });
+        });
+    }, 1500);
     return true; // Keep message channel open for async response!
   }
   if (request.action === 'VAULT_UPDATED') {
