@@ -7,6 +7,14 @@ let userSession = null;
 let capturedData = null;
 let currentMode = 'quick';
 
+const MODE_PROMPTS = {
+    quick:     'Give a brief TL;DR summary (3-5 bullet points) of the following conversation:\n\nCONVERSATION:\n',
+    developer: 'Summarize the following chat as Developer Context:\n1. Goal / Feature\n2. Tech Stack\n3. Current Bugs / Issues\n4. Next Steps\n\nCONVERSATION:\n',
+    research:  'Summarize the following chat into Research Notes:\n1. Core Concepts\n2. Key Insights\n3. Open Questions\n4. Sources mentioned\n\nCONVERSATION:\n',
+    study:     'Summarize the following chat into Study Notes:\n1. Topic\n2. Key Concepts\n3. Important Points\n4. Questions to Review\n\nCONVERSATION:\n',
+    project:   'Summarize the following chat as a Project Overview:\n1. Project Status\n2. Completed Tasks\n3. Current Blockers\n4. Immediate Next Steps\n\nCONVERSATION:\n',
+};
+
 const PLATFORM_LOGOS = {
     chatgpt: `<svg width="24" height="24" viewBox="0 0 41 41" fill="none"><path d="M37.532 16.87a9.963 9.963 0 00-.856-8.184 10.078 10.078 0 00-10.855-4.835 9.964 9.964 0 00-7.505-3.360 10.079 10.079 0 00-9.612 6.977 9.967 9.967 0 00-6.664 4.834 10.08 10.08 0 001.24 11.817 9.965 9.965 0 00.856 8.185 10.079 10.079 0 0010.855 4.835 9.965 9.965 0 007.504 3.36 10.079 10.079 0 009.617-6.981 9.967 9.967 0 006.663-4.834 10.079 10.079 0 00-1.243-11.814zM22.498 37.886a7.474 7.474 0 01-4.799-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 00.655-1.134V19.054l3.366 1.944a.12.12 0 01.066.092v9.299a7.505 7.505 0 01-7.49 7.496zM6.392 31.006a7.471 7.471 0 01-.894-5.023c.06.036.162.099.237.141l7.964 4.6a1.297 1.297 0 001.308 0l9.724-5.614v3.888a.12.12 0 01-.048.103l-8.051 4.648a7.504 7.504 0 01-10.24-2.743zM4.297 13.62A7.469 7.469 0 018.2 10.333c0 .068-.004.19-.004.274v9.201a1.294 1.294 0 00.654 1.132l9.723 5.614-3.366 1.944a.12.12 0 01-.114.012L7.044 23.86a7.504 7.504 0 01-2.747-10.24zm27.658 6.437l-9.724-5.615 3.367-1.943a.121.121 0 01.114-.012l8.048 4.648a7.498 7.498 0 01-1.158 13.528v-9.476a1.293 1.293 0 00-.647-1.13zm3.35-5.043c-.059-.037-.162-.099-.236-.141l-7.965-4.6a1.298 1.298 0 00-1.308 0l-9.723 5.614v-3.888a.12.12 0 01.048-.103l8.05-4.645a7.497 7.497 0 0111.135 7.763zm-21.063 6.929l-3.367-1.944a.12.12 0 01-.065-.092v-9.299a7.497 7.497 0 0112.293-5.756 6.94 6.94 0 00-.236.134l-7.965 4.6a1.294 1.294 0 00-.654 1.132l-.006 11.225zm1.829-3.943l4.33-2.501 4.332 2.499v4.993l-4.330 2.5-4.332-2.5V18z" fill="#74aa9c"/></svg>`,
     claude:  `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-1.227-.072L2 12.66l.097-.791.766-.072 1.156.025 2.29.097 2.507.122 1.194.048-.048-.178L9.61 11.2 8.978 9.485 8.008 6.876l-.571-1.784-.388-1.316.534-.766h.938l.433.388.388 1.123.655 2.036.875 2.616.534 1.614.194.607.146-.097.972-2.616.729-1.93.777-1.735.534-.97.729-.389h.801l.656.583-.146.85-.534.923-.875 1.832-.826 1.98-.631 1.784.157.048 1.39-.157 2.786-.146 1.784-.024h1.026l.8.754-.146.68-.607.51-1.784.122-2.362.17-1.978.17-.986.097.048.146.729.777 1.784 2.12.996 1.297.55 1.03-.194.85-.777.388-.534-.146-.68-.63-1.49-1.784-1.784-1.954-.84-.996-.097.048-.048 1.16v1.736l-.073 1.49-.17 1.3-.413.729-.729.194-.68-.437-.17-.68.073-.948.17-1.832.048-1.783v-2.12l-.048-1.33-.146.072-1.27 3.005-.923 2.169-.826 1.59-.656.923-.85.122-.607-.437.097-.85.34-.607.777-1.42.875-2.023.972-2.41z" fill="#D97757"/></svg>`,
@@ -632,6 +640,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+
+    /* ── DIRECT SHARE ────────────────────────────────────────── */
+    document.querySelectorAll('.llm-share-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const target = e.currentTarget.dataset.target;
+            const promptStr = MODE_PROMPTS[currentMode];
+            
+            let contextText = capturedData.messages.map(m => `${(m.role || 'user').toUpperCase()}: ${m.text}`).join('\n\n');
+            let finalPayload = `[BridgeAI Context Transfer]\n\n${promptStr}\n\n${contextText}`;
+
+            await chrome.storage.local.set({ pending_bridge: finalPayload });
+
+            let url = '';
+            if (target === 'chatgpt') url = 'https://chatgpt.com/';
+            else if (target === 'claude') url = 'https://claude.ai/new';
+            else if (target === 'gemini') url = 'https://gemini.google.com/';
+
+            chrome.tabs.create({ url });
+        });
+    });
 
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
