@@ -96,7 +96,7 @@ function buildZip() {
   // Create zip using powershell (Windows) or zip (Unix)
   if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
   if (process.platform === 'win32') {
-    execSync(`powershell Compress-Archive -Path "${staging}\\*" -DestinationPath "${zipPath}"`, { stdio: 'inherit' });
+    execSync(`powershell -Command "Compress-Archive -Path '${staging}\\*' -DestinationPath '${zipPath}' -Force"`, { stdio: 'inherit' });
   } else {
     execSync(`cd "${staging}" && zip -r "${zipPath}" .`, { stdio: 'inherit' });
   }
