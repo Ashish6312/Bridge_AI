@@ -527,61 +527,54 @@ async function handleAutoPaste() {
   if (!document.getElementById(styleId)) {
     const styleEl = document.createElement('style');
     styleEl.id = styleId;
-    styleEl.textContent = `
+                const styleEl = document.createElement('style');
+    styleEl.innerHTML = `
+      @keyframes bridge-fade-in {
+        from { opacity: 0; transform: translateY(20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
       @keyframes bridge-spin {
         to { transform: rotate(360deg); }
       }
-      @keyframes bridge-fade-in {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+      @keyframes bridge-pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 44, 0.4), inset 0 0 10px rgba(255, 107, 44, 0.2); }
+        50% { box-shadow: 0 0 40px rgba(255, 107, 44, 0.8), inset 0 0 20px rgba(255, 107, 44, 0.4); }
       }
-      .bridge-spinner {
-        width: 18px;
-        height: 18px;
-        border: 2px solid rgba(255, 107, 44, 0.2);
-        border-top-color: #FF6B2C;
+      .bridge-timer-ring {
+        position: relative;
+        width: 80px; height: 80px;
         border-radius: 50%;
-        animation: bridge-spin 0.8s linear infinite;
-        display: inline-block;
-        flex-shrink: 0;
+        background: rgba(20,20,20,0.8);
+        border: 2px solid rgba(255,107,44,0.3);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 16px;
+      }
+      .bridge-timer-ring.active {
+        border-color: #FF6B2C;
+        animation: bridge-pulse-glow 1.5s ease-in-out infinite;
+      }
+      .bridge-timer-ring svg {
+        position: absolute; top: -2px; left: -2px;
+        width: 84px; height: 84px; transform: rotate(-90deg);
+      }
+      .bridge-timer-ring circle {
+        fill: none; stroke: #FF6B2C; stroke-width: 3;
+        stroke-dasharray: 251; stroke-dashoffset: 251;
+        transition: stroke-dashoffset 1s linear;
+        stroke-linecap: round;
+      }
+      .bridge-timer-num {
+        font-size: 2rem; font-weight: 900; color: #fff;
+        font-family: "Space Grotesk", "Inter", sans-serif;
+        text-shadow: 0 0 10px rgba(255,107,44,0.5);
       }
       .bridge-success-checkmark {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 18px;
-        height: 18px;
-        background: #10b981;
-        color: white;
-        border-radius: 50%;
-        font-size: 11px;
-        font-weight: bold;
-        flex-shrink: 0;
-      }
-      .bridge-timer-container {
-        width: 100%;
-        height: 6px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 3px;
-        margin-top: 10px;
-        overflow: hidden;
-        display: none;
-      }
-      .bridge-timer-bar {
-        height: 100%;
-        width: 0%;
-        background: linear-gradient(90deg, #FF6B2C, #FFA07A);
-        border-radius: 3px;
-        transition: width 1s linear;
-      }
-      .bridge-timer-text {
-        position: absolute;
-        right: 20px;
-        top: 16px;
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #FF6B2C;
-        opacity: 0.8;
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 80px; height: 80px;
+        background: #10b981; color: white; border-radius: 50%;
+        font-size: 2.5rem; font-weight: bold;
+        box-shadow: 0 0 30px rgba(16,185,129,0.5);
+        animation: bridge-fade-in 0.3s ease-out forwards;
       }
     `;
     document.head.appendChild(styleEl);
@@ -592,38 +585,38 @@ async function handleAutoPaste() {
   overlay.id = 'bridgeai-sync-overlay';
   overlay.style.cssText = `
     position: fixed;
-    bottom: 24px;
-    right: 24px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 999999;
-    background: rgba(13, 13, 13, 0.95);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 107, 44, 0.25);
-    border-radius: 16px;
-    padding: 16px 20px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.65), 0 0 20px rgba(255, 107, 44, 0.08);
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 107, 44, 0.3);
+    border-radius: 24px;
+    padding: 30px 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(255, 107, 44, 0.15);
     color: #ffffff;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    width: 330px;
-    animation: bridge-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    align-items: center;
+    text-align: center;
+    width: 360px;
+    animation: bridge-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   `;
 
   // Render Initial state content
   const platformLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
   overlay.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 10px; position: relative;">
-      <div class="bridge-spinner" id="bridge-status-indicator"></div>
-      <span style="font-weight: 700; font-size: 0.95rem; color: #f5f5f5;" id="bridge-status-title">Connecting to ${platformLabel}...</span>
-      <div class="bridge-timer-text" id="bridge-timer-text" style="display: none;">3</div>
+    <div id="bridge-visual-container">
+      <div class="bridge-timer-ring" id="bridge-timer-ring">
+        <svg><circle cx="42" cy="42" r="40" id="bridge-svg-circle"></circle></svg>
+        <span class="bridge-timer-num" id="bridge-timer-text">3</span>
+      </div>
     </div>
-    <p style="margin: 0; font-size: 0.82rem; color: #a3a3a3; line-height: 1.4;" id="bridge-status-desc">
-      Waiting for target chat input field to load completely.
+    <span style="font-weight: 800; font-size: 1.2rem; color: #f5f5f5; margin-bottom: 8px; letter-spacing: -0.02em;" id="bridge-status-title">Initializing ${platformLabel}...</span>
+    <p style="margin: 0; font-size: 0.9rem; color: #a3a3a3; line-height: 1.5;" id="bridge-status-desc">
+      Acquiring target text field for context transfer.
     </p>
-    <div class="bridge-timer-container" id="bridge-timer-container">
-      <div class="bridge-timer-bar" id="bridge-timer-bar"></div>
-    </div>
   `;
   document.body.appendChild(overlay);
 
@@ -640,32 +633,34 @@ async function handleAutoPaste() {
       let countdown = 3;
       const titleEl = document.getElementById('bridge-status-title');
       const descEl = document.getElementById('bridge-status-desc');
-      const timerContainer = document.getElementById('bridge-timer-container');
-      const timerBar = document.getElementById('bridge-timer-bar');
+      const timerRing = document.getElementById('bridge-timer-ring');
       const timerText = document.getElementById('bridge-timer-text');
+      const svgCircle = document.getElementById('bridge-svg-circle');
       
-      if (timerContainer) timerContainer.style.display = 'block';
-      if (timerText) timerText.style.display = 'block';
+      if (timerRing) timerRing.classList.add('active');
       
       // Initial state
-      if (titleEl) titleEl.innerText = `Syncing context...`;
-      if (descEl) descEl.innerText = "Please wait, preparing chat input editor handlers.";
-      if (timerBar) timerBar.style.width = '33%';
+      if (titleEl) titleEl.innerText = `Preparing Injection`;
+      if (descEl) descEl.innerText = "Do not type or close this tab while transfer is in progress.";
+      if (svgCircle) svgCircle.style.strokeDashoffset = '167'; // 33% (251 - 251/3)
 
       const countdownInterval = setInterval(() => {
         countdown--;
         if (countdown > 0) {
           if (timerText) timerText.innerText = countdown;
-          if (timerBar) {
-            const percent = ((3 - countdown + 1) / 3) * 100;
-            timerBar.style.width = `${percent}%`;
+          if (svgCircle) {
+            const percent = ((3 - countdown + 1) / 3);
+            svgCircle.style.strokeDashoffset = 251 - (251 * percent);
           }
         } else {
           clearInterval(countdownInterval);
 
           // Perform insertion
-          if (titleEl) titleEl.innerText = "Transferring context...";
-          if (descEl) descEl.innerText = "Injecting intelligence module. Do not type or close this tab.";
+          if (titleEl) {
+              titleEl.innerText = "Transferring Context...";
+              titleEl.style.color = "#FF6B2C";
+          }
+          if (svgCircle) svgCircle.style.strokeDashoffset = '0';
 
           setTimeout(() => {
             const intro = "System: Continuing from BridgeAI extracted context.\n\n";
@@ -693,23 +688,22 @@ async function handleAutoPaste() {
               chrome.storage.local.remove('pending_bridge');
               
               // Success visual state
-              const indicatorEl = document.getElementById('bridge-status-indicator');
-              if (indicatorEl) {
-                indicatorEl.className = 'bridge-success-checkmark';
-                indicatorEl.innerHTML = '✓';
+              const visCont = document.getElementById('bridge-visual-container');
+              if (visCont) {
+                visCont.innerHTML = `<div class="bridge-success-checkmark">✓</div>`;
               }
               if (titleEl) {
-                titleEl.innerText = "Intelligence Transferred!";
+                titleEl.innerText = "Context Injected!";
                 titleEl.style.color = "#10b981";
               }
-              if (descEl) descEl.innerText = `Context synced successfully. Ready to prompt ${platformLabel}!`;
+              if (descEl) descEl.innerText = `BridgeAI successfully synced context to ${platformLabel}.`;
 
               // Fade out and remove
               setTimeout(() => {
-                overlay.style.transition = "all 0.5s ease";
+                overlay.style.transition = "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)";
                 overlay.style.opacity = "0";
-                overlay.style.transform = "translateY(20px)";
-                setTimeout(() => overlay.remove(), 500);
+                overlay.style.transform = "translate(-50%, -40%) scale(0.95)";
+                setTimeout(() => overlay.remove(), 600);
               }, 2500);
             }
           }, 100);

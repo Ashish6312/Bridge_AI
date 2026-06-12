@@ -1828,11 +1828,14 @@ const ProjectWorkspace = ({
             {selectedBridges && selectedBridges.size > 0 && (
               <button 
                 onClick={() => {
-                  const selectedContexts = filteredBridges.filter(b => selectedBridges.has(b.id)).map(b => b.chat_log || b.chatLog || b.summary).join('\n\n--- MERGED CONTEXT ---\n\n');
-                  const platLabel = "Multiple Contexts";
-                  const finalContext = `These are multiple contexts merged together:\n\n${selectedContexts}`;
-                  window.dispatchEvent(new CustomEvent('BRIDGE_SEND_TO_STORAGE', { detail: { context: finalContext } }));
-                  triggerToast(`${selectedBridges.size} Contexts Merged & Prepared for next LLM opening!`);
+                  const selectedContexts = filteredBridges.filter(b => selectedBridges.has(b.id)).map((b, i) => `[Context ${i + 1}: ${b.title}]\n${b.chat_log || b.chatLog || b.summary}`).join('\n\n--- MERGED CONTEXT ---\n\n');
+                  const highLevelPrompt = `[HIGH-LEVEL MERGE]\nI am providing you with ${selectedBridges.size} distinct contexts from my previous AI conversations. Please synthesize this information to build a high-level understanding of the architecture, goals, and history of my project.\n\n${selectedContexts}`;
+                  
+                  setForgeState({
+                    isOpen: true,
+                    context: { title: `Merged Intelligence (${selectedBridges.size} Contexts)` },
+                    bestContext: highLevelPrompt
+                  });
                   setSelectedBridges(new Set());
                 }}
                 className="btn-primary"
@@ -3484,10 +3487,14 @@ const Dashboard = () => {
                     </button>
                     <button 
                       onClick={() => {
-                        const selectedContexts = bridges.filter(b => selectedBridges.has(b.id)).map(b => b.chat_log || b.chatLog || b.summary).join('\n\n--- MERGED CONTEXT ---\n\n');
-                        const finalContext = `These are multiple contexts merged together:\n\n${selectedContexts}`;
-                        window.dispatchEvent(new CustomEvent('BRIDGE_SEND_TO_STORAGE', { detail: { context: finalContext } }));
-                        triggerToast(`${selectedBridges.size} Contexts Merged & Prepared for next LLM opening!`);
+                        const selectedContexts = bridges.filter(b => selectedBridges.has(b.id)).map((b, i) => `[Context ${i + 1}: ${b.title}]\n${b.chat_log || b.chatLog || b.summary}`).join('\n\n--- MERGED CONTEXT ---\n\n');
+                        const highLevelPrompt = `[HIGH-LEVEL MERGE]\nI am providing you with ${selectedBridges.size} distinct contexts from my previous AI conversations. Please synthesize this information to build a high-level understanding of the architecture, goals, and history of my project.\n\n${selectedContexts}`;
+                        
+                        setForgeState({
+                          isOpen: true,
+                          context: { title: `Merged Intelligence (${selectedBridges.size} Contexts)` },
+                          bestContext: highLevelPrompt
+                        });
                         setSelectedBridges(new Set());
                       }}
                       className="btn-primary"

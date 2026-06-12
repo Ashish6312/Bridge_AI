@@ -258,6 +258,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    /* ── DIRECT SHARE ────────────────────────────────────────── */
+    document.querySelectorAll('.llm-share-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const target = e.currentTarget.dataset.target;
+            const selectedMode = document.querySelector('input[name="summary-mode"]:checked')?.value || 'quick';
+            const promptStr = MODE_PROMPTS[selectedMode];
+            
+            let contextText = capturedData.messages.map(m => `${(m.role || 'user').toUpperCase()}: ${m.text}`).join('\n\n');
+            let finalPayload = `[BridgeAI Context Transfer]\n\n${promptStr}\n\n${contextText}`;
+
+            await chrome.storage.local.set({ pending_bridge: finalPayload });
+
+            let url = '';
+            if (target === 'chatgpt') url = 'https://chatgpt.com/';
+            else if (target === 'claude') url = 'https://claude.ai/new';
+            else if (target === 'gemini') url = 'https://gemini.google.com/';
+
+            chrome.tabs.create({ url });
+        });
+    });
+
     /* ── SAVE ────────────────────────────────────────────── */
     bridgeBtn.addEventListener('click', async () => {
         if (!userSession) await syncUserSession();

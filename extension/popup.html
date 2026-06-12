@@ -279,6 +279,23 @@
         .save-btn:hover:not(:disabled) { background: rgba(222,106,57,0.15); transform: translateY(-1px); }
         .save-btn:disabled { opacity: 0.5; cursor: wait; }
 
+        /* ── DIRECT SHARE BUTTONS ── */
+        .llm-share-btn {
+            flex: 1; padding: 10px 0;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text);
+            font-weight: 700; font-size: 11px;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;
+            transition: all 0.2s;
+        }
+        .llm-share-btn:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+        }
+        .llm-share-btn svg { width: 16px; height: 16px; }
+
         /* ── FOOTER ── */
         .footer {
             display: flex; justify-content: center; gap: 20px;
@@ -452,6 +469,26 @@
                 Save to BridgeAI
             </button>
             <p class="status-msg" id="status-text-result">Secure sync ready.</p>
+
+            <div style="margin-top: 15px;">
+                <div class="mode-label" style="justify-content: center; margin-bottom: 8px;">
+                    <span style="background: var(--bg); padding: 0 8px; position: relative; z-index: 1;">Or Direct Transfer To</span>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: space-between;">
+                    <button class="llm-share-btn" data-target="chatgpt">
+                        <svg width="16" height="16" viewBox="0 0 41 41" fill="none"><path d="M37.532 16.87a9.963 9.963 0 00-.856-8.184 10.078 10.078 0 00-10.855-4.835 9.964 9.964 0 00-7.505-3.360 10.079 10.079 0 00-9.612 6.977 9.967 9.967 0 00-6.664 4.834 10.08 10.08 0 001.24 11.817 9.965 9.965 0 00.856 8.185 10.079 10.079 0 0010.855 4.835 9.965 9.965 0 007.504 3.36 10.079 10.079 0 009.617-6.981 9.967 9.967 0 006.663-4.834 10.079 10.079 0 00-1.243-11.814zM22.498 37.886a7.474 7.474 0 01-4.799-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 00.655-1.134V19.054l3.366 1.944a.12.12 0 01.066.092v9.299a7.505 7.505 0 01-7.49 7.496z" fill="#74aa9c"/></svg>
+                        ChatGPT
+                    </button>
+                    <button class="llm-share-btn" data-target="claude">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-1.227-.072L2 12.66l.097-.791.766-.072 1.156.025 2.29.097 2.507.122 1.194.048-.048-.178L9.61 11.2 8.978 9.485 8.008 6.876l-.571-1.784-.388-1.316.534-.766h.938l.433.388.388 1.123.655 2.036.875 2.616.534 1.614.194.607.146-.097.972-2.616.729-1.93.777-1.735.534-.97.729-.389h.801l.656.583-.146.85-.534.923-.875 1.832-.826 1.98-.631 1.784.157.048 1.39-.157 2.786-.146 1.784-.024h1.026l.8.754-.146.68-.607.51-1.784.122-2.362.17-1.978.17-.986.097.048.146.729.777 1.784 2.12.996 1.297.55 1.03-.194.85-.777.388-.534-.146-.68-.63-1.49-1.784-1.784-1.954-.84-.996-.097.048-.048 1.16v1.736l-.073 1.49-.17 1.3-.413.729-.729.194-.68-.437-.17-.68.073-.948.17-1.832.048-1.783v-2.12l-.048-1.33-.146.072-1.27 3.005-.923 2.169-.826 1.59-.656.923-.85.122-.607-.437.097-.85.34-.607.777-1.42.875-2.023.972-2.41z" fill="#D97757"/></svg>
+                        Claude
+                    </button>
+                    <button class="llm-share-btn" data-target="gemini">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 24A14.232 14.232 0 019.86 12 14.232 14.232 0 0112 0a14.232 14.232 0 012.14 12A14.232 14.232 0 0112 24z" fill="url(#ga)"/><path d="M24 12c-3.53.35-8.765 2.14-12 2.14C8.765 14.14 3.53 12.35 0 12c3.53-.35 8.765-2.14 12-2.14C15.235 9.86 20.47 11.65 24 12z" fill="url(#gb)"/><defs><linearGradient id="ga" x1="12" y1="0" x2="12" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#1C7DFF"/><stop offset="1" stop-color="#1C69FF"/></linearGradient><linearGradient id="gb" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse"><stop stop-color="#1C7DFF"/><stop offset="1" stop-color="#1C69FF"/></linearGradient></defs></svg>
+                        Gemini
+                    </button>
+                </div>
+            </div>
 
             <button id="back-btn" style="
                 margin-top:10px; width:100%; padding:9px;
