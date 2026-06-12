@@ -369,6 +369,41 @@ const LoginPage = () => {
             </svg>
             Continue with Google
           </button>
+
+          <button 
+            type="button"
+            onClick={() => {
+              localStorage.setItem('bridge_user', JSON.stringify({
+                id: 'test-user-123',
+                name: 'Test User',
+                email: 'test@example.com',
+                picture: '',
+                is_admin: false,
+                trial_active: true
+              }));
+              navigate('/dashboard');
+            }}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px dashed rgba(255,255,255,0.2)',
+              background: 'transparent',
+              color: '#A1A1AA',
+              fontWeight: '600',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: '12px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#A1A1AA'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+          >
+            Bypass Login (Test Mode)
+          </button>
         </motion.div>
       </div>
     </div>

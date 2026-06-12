@@ -558,6 +558,31 @@ async function handleAutoPaste() {
         font-weight: bold;
         flex-shrink: 0;
       }
+      .bridge-timer-container {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        margin-top: 10px;
+        overflow: hidden;
+        display: none;
+      }
+      .bridge-timer-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #FF6B2C, #FFA07A);
+        border-radius: 3px;
+        transition: width 1s linear;
+      }
+      .bridge-timer-text {
+        position: absolute;
+        right: 20px;
+        top: 16px;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #FF6B2C;
+        opacity: 0.8;
+      }
     `;
     document.head.appendChild(styleEl);
   }
@@ -588,13 +613,17 @@ async function handleAutoPaste() {
   // Render Initial state content
   const platformLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
   overlay.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 10px; position: relative;">
       <div class="bridge-spinner" id="bridge-status-indicator"></div>
       <span style="font-weight: 700; font-size: 0.95rem; color: #f5f5f5;" id="bridge-status-title">Connecting to ${platformLabel}...</span>
+      <div class="bridge-timer-text" id="bridge-timer-text" style="display: none;">3</div>
     </div>
     <p style="margin: 0; font-size: 0.82rem; color: #a3a3a3; line-height: 1.4;" id="bridge-status-desc">
       Waiting for target chat input field to load completely.
     </p>
+    <div class="bridge-timer-container" id="bridge-timer-container">
+      <div class="bridge-timer-bar" id="bridge-timer-bar"></div>
+    </div>
   `;
   document.body.appendChild(overlay);
 
@@ -611,12 +640,26 @@ async function handleAutoPaste() {
       let countdown = 3;
       const titleEl = document.getElementById('bridge-status-title');
       const descEl = document.getElementById('bridge-status-desc');
+      const timerContainer = document.getElementById('bridge-timer-container');
+      const timerBar = document.getElementById('bridge-timer-bar');
+      const timerText = document.getElementById('bridge-timer-text');
+      
+      if (timerContainer) timerContainer.style.display = 'block';
+      if (timerText) timerText.style.display = 'block';
+      
+      // Initial state
+      if (titleEl) titleEl.innerText = `Syncing context...`;
+      if (descEl) descEl.innerText = "Please wait, preparing chat input editor handlers.";
+      if (timerBar) timerBar.style.width = '33%';
 
       const countdownInterval = setInterval(() => {
+        countdown--;
         if (countdown > 0) {
-          if (titleEl) titleEl.innerText = `Syncing context in ${countdown}s...`;
-          if (descEl) descEl.innerText = "Please wait, preparing chat input editor handlers.";
-          countdown--;
+          if (timerText) timerText.innerText = countdown;
+          if (timerBar) {
+            const percent = ((3 - countdown + 1) / 3) * 100;
+            timerBar.style.width = `${percent}%`;
+          }
         } else {
           clearInterval(countdownInterval);
 

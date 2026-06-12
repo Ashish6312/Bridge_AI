@@ -2,6 +2,50 @@ chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     chrome.tabs.create({ url: 'https://bridgeai-realworld-problem.vercel.app/dashboard?tab=extension' });
   }
+  
+  chrome.contextMenus.create({
+    id: "bridgeai-share",
+    title: "Share Context via Bridge AI",
+    contexts: ["selection"]
+  });
+
+  chrome.contextMenus.create({
+    id: "bridgeai-chatgpt",
+    parentId: "bridgeai-share",
+    title: "ChatGPT",
+    contexts: ["selection"]
+  });
+
+  chrome.contextMenus.create({
+    id: "bridgeai-gemini",
+    parentId: "bridgeai-share",
+    title: "Gemini",
+    contexts: ["selection"]
+  });
+
+  chrome.contextMenus.create({
+    id: "bridgeai-claude",
+    parentId: "bridgeai-share",
+    title: "Claude",
+    contexts: ["selection"]
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId.startsWith("bridgeai-")) {
+    const text = info.selectionText;
+    if (!text) return;
+
+    chrome.storage.local.set({ pending_bridge: text }, () => {
+      if (info.menuItemId === "bridgeai-chatgpt") {
+        chrome.tabs.create({ url: "https://chatgpt.com/" });
+      } else if (info.menuItemId === "bridgeai-gemini") {
+        chrome.tabs.create({ url: "https://gemini.google.com/" });
+      } else if (info.menuItemId === "bridgeai-claude") {
+        chrome.tabs.create({ url: "https://claude.ai/new" });
+      }
+    });
+  }
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

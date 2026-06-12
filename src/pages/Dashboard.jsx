@@ -204,7 +204,7 @@ const ForgeModal = ({ isOpen, onClose, context, onDispatch }) => {
   );
 };
 
-const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, projects }) => {
+const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, projects, selectable, selected, onSelect }) => {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizedPrompt, setOptimizedPrompt] = useState(null);
   const [showExport, setShowExport] = useState(false);
@@ -507,11 +507,24 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px', gap: '16px' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1px', textTransform: 'uppercase', background: 'rgba(222, 106, 57, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-              {(ctx.source || 'Manual')}
-            </span>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+          {selectable && (
+            <div style={{ marginTop: '4px' }}>
+              <input 
+                type="checkbox" 
+                checked={selected}
+                onChange={() => onSelect(ctx.id)}
+                style={{ 
+                  width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary)'
+                }}
+              />
+            </div>
+          )}
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1px', textTransform: 'uppercase', background: 'rgba(222, 106, 57, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+                {(ctx.source || 'Manual')}
+              </span>
             <div 
               onMouseEnter={() => setShowSecurityTooltip(true)}
               onMouseLeave={() => setShowSecurityTooltip(false)}
@@ -547,6 +560,7 @@ const BridgeCard = ({ ctx, onDelete, onForge, loadData, stats, triggerToast, pro
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '500' }}>{formatTime(ctx.created_at)}</span>
           </div>
           <h3 style={{ fontSize: '1.15rem', fontWeight: '600', color: 'var(--text-main)', letterSpacing: '-0.01em', wordBreak: 'break-word' }}>{ctx.title}</h3>
+          </div>
         </div>
 
         {/* Unified sleek Action Toolbar */}
@@ -1109,7 +1123,9 @@ const ProjectWorkspace = ({
   loadData, 
   setConfirmModal, 
   handleForge, 
-  setActiveProject 
+  setActiveProject,
+  selectedBridges,
+  setSelectedBridges
 }) => {
   const [projectTab, setProjectTab] = useState('logs'); // 'logs' | 'memory' | 'decisions' | 'chat'
   
@@ -1809,6 +1825,22 @@ const ProjectWorkspace = ({
             <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
               Showing <strong>{filteredBridges.length}</strong> conversation logs in this sector.
             </span>
+            {selectedBridges && selectedBridges.size > 0 && (
+              <button 
+                onClick={() => {
+                  const selectedContexts = filteredBridges.filter(b => selectedBridges.has(b.id)).map(b => b.chat_log || b.chatLog || b.summary).join('\n\n--- MERGED CONTEXT ---\n\n');
+                  const platLabel = "Multiple Contexts";
+                  const finalContext = `These are multiple contexts merged together:\n\n${selectedContexts}`;
+                  window.dispatchEvent(new CustomEvent('BRIDGE_SEND_TO_STORAGE', { detail: { context: finalContext } }));
+                  triggerToast(`${selectedBridges.size} Contexts Merged & Prepared for next LLM opening!`);
+                  setSelectedBridges(new Set());
+                }}
+                className="btn-primary"
+                style={{ padding: '8px 16px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', background: '#10b981', borderColor: '#059669' }}
+              >
+                <GitMerge size={14} /> Merge & Share ({selectedBridges.size})
+              </button>
+            )}
           </div>
 
           {filteredBridges.length > 0 ? (
@@ -1823,6 +1855,14 @@ const ProjectWorkspace = ({
                   stats={stats}
                   triggerToast={triggerToast}
                   projects={projects}
+                  selectable={true}
+                  selected={selectedBridges?.has(ctx.id)}
+                  onSelect={(id) => {
+                    const newSet = new Set(selectedBridges);
+                    if (newSet.has(id)) newSet.delete(id);
+                    else newSet.add(id);
+                    setSelectedBridges(newSet);
+                  }}
                 />
               ))}
               {olderBridges.map(ctx => (
@@ -1835,6 +1875,14 @@ const ProjectWorkspace = ({
                   stats={stats}
                   triggerToast={triggerToast}
                   projects={projects}
+                  selectable={true}
+                  selected={selectedBridges?.has(ctx.id)}
+                  onSelect={(id) => {
+                    const newSet = new Set(selectedBridges);
+                    if (newSet.has(id)) newSet.delete(id);
+                    else newSet.add(id);
+                    setSelectedBridges(newSet);
+                  }}
                 />
               ))}
             </div>
@@ -2704,6 +2752,7 @@ const Dashboard = () => {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
   const [promptModal, setPromptModal] = useState({ isOpen: false });
   const [localProjects, setLocalProjects] = useState([]);
+  const [selectedBridges, setSelectedBridges] = useState(new Set());
 
   // Load user-specific local projects whenever the current user changes
   useEffect(() => {
@@ -3325,6 +3374,8 @@ const Dashboard = () => {
                   setConfirmModal={setConfirmModal}
                   handleForge={handleForge}
                   setActiveProject={setActiveProject}
+                  selectedBridges={selectedBridges}
+                  setSelectedBridges={setSelectedBridges}
                 />
               ) : (
                 <>
@@ -3410,6 +3461,44 @@ const Dashboard = () => {
                 </motion.div>
               </div>
 
+              {selectedBridges.size > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)',
+                    padding: '16px 24px', borderRadius: '16px', marginBottom: '32px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#10b981',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: '600' }}>
+                    <GitMerge size={20} />
+                    <span>{selectedBridges.size} Context{selectedBridges.size > 1 ? 's' : ''} Selected for Merging</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button 
+                      onClick={() => setSelectedBridges(new Set())} 
+                      style={{ background: 'transparent', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
+                    >
+                      Clear
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const selectedContexts = bridges.filter(b => selectedBridges.has(b.id)).map(b => b.chat_log || b.chatLog || b.summary).join('\n\n--- MERGED CONTEXT ---\n\n');
+                        const finalContext = `These are multiple contexts merged together:\n\n${selectedContexts}`;
+                        window.dispatchEvent(new CustomEvent('BRIDGE_SEND_TO_STORAGE', { detail: { context: finalContext } }));
+                        triggerToast(`${selectedBridges.size} Contexts Merged & Prepared for next LLM opening!`);
+                        setSelectedBridges(new Set());
+                      }}
+                      className="btn-primary"
+                      style={{ background: '#10b981', borderColor: '#059669', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Zap size={14} /> Merge & Store in Bridge
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
               <div className="stats-grid grid-responsive-4" style={{ gap: '20px', marginBottom: '32px' }}>
                 {[
                   { label: 'Total Bridges', val: stats.totalBridges || 0, icon: <Layers size={16} />, color: '#8b5cf6' },
@@ -3489,6 +3578,14 @@ const Dashboard = () => {
                       stats={stats}
                       triggerToast={triggerToast}
                       projects={projects}
+                      selectable={true}
+                      selected={selectedBridges.has(ctx.id)}
+                      onSelect={(id) => {
+                        const newSet = new Set(selectedBridges);
+                        if (newSet.has(id)) newSet.delete(id);
+                        else newSet.add(id);
+                        setSelectedBridges(newSet);
+                      }}
                     />
                   ))}
                   {olderBridges.length > 0 && (
@@ -3506,6 +3603,14 @@ const Dashboard = () => {
                           stats={stats}
                           triggerToast={triggerToast}
                           projects={projects}
+                          selectable={true}
+                          selected={selectedBridges.has(ctx.id)}
+                          onSelect={(id) => {
+                            const newSet = new Set(selectedBridges);
+                            if (newSet.has(id)) newSet.delete(id);
+                            else newSet.add(id);
+                            setSelectedBridges(newSet);
+                          }}
                         />
                       ))}
                     </>

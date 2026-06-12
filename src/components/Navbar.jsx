@@ -623,6 +623,23 @@ const Navbar = () => {
                   {user.name?.charAt(0)?.toUpperCase()}
                 </div>
               </Link>
+              <button 
+                onClick={handleLogout} 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: 'var(--nav-text)', 
+                  fontWeight: '500', 
+                  fontSize: '13px', 
+                  cursor: 'pointer', 
+                  transition: 'color 0.25s',
+                  fontFamily: "'Outfit', 'Inter', sans-serif" 
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--nav-text)'; }}
+              >
+                Sign Out
+              </button>
             </div>
           ) : (
             <Link to="/login" style={{
