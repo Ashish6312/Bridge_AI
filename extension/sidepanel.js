@@ -645,10 +645,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.llm-share-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const target = e.currentTarget.dataset.target;
-            const promptStr = MODE_PROMPTS[currentMode];
-            
-            let contextText = capturedData.messages.map(m => `${(m.role || 'user').toUpperCase()}: ${m.text}`).join('\n\n');
-            let finalPayload = `[BridgeAI Context Transfer]\n\n${promptStr}\n\n${contextText}`;
+            let finalPayload = '';
+            if (capturedData.optimized && capturedData.optimizedPrompt) {
+                finalPayload = `[BridgeAI Optimized Context]\n\n${capturedData.optimizedPrompt}`;
+            } else {
+                const promptStr = MODE_PROMPTS[currentMode];
+                let contextText = capturedData.messages.map(m => `${(m.role || 'user').toUpperCase()}: ${m.text}`).join('\n\n');
+                finalPayload = `[BridgeAI Context Transfer]\n\n${promptStr}\n\n${contextText}`;
+            }
 
             await chrome.storage.local.set({ pending_bridge: finalPayload });
 
