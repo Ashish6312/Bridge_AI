@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bridge AI - Universal Chat & Prompt Sync",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Sync AI chat context across platforms without losing progress. Capture, summarize, and save conversations to your vault.",
   "permissions": ["activeTab", "scripting", "storage", "tabs", "sidePanel", "contextMenus"],
   "action": {
@@ -38,7 +38,8 @@
         "https://chat.mistral.ai/*",
         "https://mail.google.com/*",
         "https://bridgeai-realworld-problem.vercel.app/*",
-        "https://*.vercel.app/*"
+        "https://*.vercel.app/*",
+        "http://localhost:*/*"
       ],
       "js": ["content.js"]
     }
