@@ -531,51 +531,82 @@ async function handleAutoPaste() {
     styleEl.id = styleId;
     styleEl.innerHTML = `
       @keyframes bridge-fade-in {
-        from { opacity: 0; transform: translateY(20px) scale(0.95); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
+        from { opacity: 0; transform: translate(-50%, -45%) scale(0.96); }
+        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
       }
       @keyframes bridge-spin {
         to { transform: rotate(360deg); }
       }
-      @keyframes bridge-pulse-glow {
-        0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 44, 0.4), inset 0 0 10px rgba(255, 107, 44, 0.2); }
-        50% { box-shadow: 0 0 40px rgba(255, 107, 44, 0.8), inset 0 0 20px rgba(255, 107, 44, 0.4); }
+      #bridgeai-sync-overlay {
+        position: fixed !important;
+        top: 50% !important; left: 50% !important;
+        transform: translate(-50%, -50%); /* handled by animation */
+        z-index: 2147483647 !important;
+        background: rgba(12, 12, 12, 0.85) !important;
+        backdrop-filter: blur(24px) !important;
+        -webkit-backdrop-filter: blur(24px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 24px !important;
+        padding: 32px 40px !important;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+        color: #ffffff !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        width: 320px !important;
+        animation: bridge-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
       }
-      .bridge-timer-ring {
+      #bridgeai-sync-overlay * {
+        box-sizing: border-box !important;
+        font-family: "Inter", system-ui, -apple-system, sans-serif !important;
+      }
+      .bridge-timer-container {
         position: relative;
-        width: 80px; height: 80px;
+        width: 64px; height: 64px;
         border-radius: 50%;
-        background: rgba(20,20,20,0.8);
-        border: 2px solid rgba(255,107,44,0.3);
+        background: rgba(255,255,255,0.02);
         display: flex; align-items: center; justify-content: center;
-        margin: 0 auto 16px;
+        margin: 0 auto 20px;
+        box-shadow: inset 0 0 20px rgba(222,106,57,0.1);
       }
-      .bridge-timer-ring.active {
-        border-color: #FF6B2C;
-        animation: bridge-pulse-glow 1.5s ease-in-out infinite;
-      }
-      .bridge-timer-ring svg {
-        position: absolute; top: -2px; left: -2px;
-        width: 84px; height: 84px; transform: rotate(-90deg);
-      }
-      .bridge-timer-ring circle {
-        fill: none; stroke: #FF6B2C; stroke-width: 3;
-        stroke-dasharray: 251; stroke-dashoffset: 251;
-        transition: stroke-dashoffset 1s linear;
-        stroke-linecap: round;
+      .bridge-timer-container::before {
+        content: '';
+        position: absolute; inset: -2px;
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, transparent 0%, #DE6A39 40%, #7C3AED 80%, transparent 100%);
+        z-index: -1;
+        animation: bridge-spin 1.5s linear infinite;
+        mask: radial-gradient(transparent 30px, black 31px);
+        -webkit-mask: radial-gradient(transparent 30px, black 31px);
       }
       .bridge-timer-num {
-        font-size: 2rem; font-weight: 900; color: #fff;
-        font-family: "Space Grotesk", "Inter", sans-serif;
-        text-shadow: 0 0 10px rgba(255,107,44,0.5);
+        font-size: 1.4rem; font-weight: 600; color: #fff;
       }
-      .bridge-success-checkmark {
-        display: inline-flex; align-items: center; justify-content: center;
-        width: 80px; height: 80px;
-        background: #10b981; color: white; border-radius: 50%;
-        font-size: 2.5rem; font-weight: bold;
-        box-shadow: 0 0 30px rgba(16,185,129,0.5);
-        animation: bridge-fade-in 0.3s ease-out forwards;
+      .bridge-success-icon {
+        width: 64px; height: 64px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 10px 25px rgba(16,185,129,0.3);
+      }
+      .bridge-success-icon svg {
+        width: 32px; height: 32px; color: white;
+      }
+      #bridge-status-title {
+        font-weight: 600 !important;
+        font-size: 1.05rem !important;
+        color: #f8f8f8 !important;
+        margin: 0 0 8px 0 !important;
+        letter-spacing: -0.01em !important;
+      }
+      #bridge-status-desc {
+        margin: 0 !important;
+        font-size: 0.8rem !important;
+        color: #a1a1aa !important;
+        line-height: 1.5 !important;
+        font-weight: 400 !important;
       }
     `;
     document.head.appendChild(styleEl);
@@ -584,40 +615,19 @@ async function handleAutoPaste() {
   // 2. Create and Inject Overlay
   const overlay = document.createElement('div');
   overlay.id = 'bridgeai-sync-overlay';
-  overlay.style.cssText = `
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 999999;
-    background: rgba(10, 10, 10, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 107, 44, 0.3);
-    border-radius: 24px;
-    padding: 30px 40px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(255, 107, 44, 0.15);
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    width: 360px;
-    animation: bridge-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  `;
 
   // Render Initial state content
   const platformLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
   overlay.innerHTML = `
     <div id="bridge-visual-container">
-      <div class="bridge-timer-ring" id="bridge-timer-ring">
-        <svg><circle cx="42" cy="42" r="40" id="bridge-svg-circle"></circle></svg>
-        <span class="bridge-timer-num" id="bridge-timer-text">3</span>
+      <div class="bridge-timer-container" id="bridge-timer-ring">
+        <span class="bridge-timer-num" id="bridge-timer-text">...</span>
       </div>
     </div>
-    <span style="font-weight: 800; font-size: 1.2rem; color: #f5f5f5; margin-bottom: 8px; letter-spacing: -0.02em;" id="bridge-status-title">Initializing ${platformLabel}...</span>
-    <p style="margin: 0; font-size: 0.9rem; color: #a3a3a3; line-height: 1.5;" id="bridge-status-desc">
+    <div id="bridge-status-title">Initializing ${platformLabel}</div>
+    <div id="bridge-status-desc">
       Acquiring target text field for context transfer.
-    </p>
+    </div>
   `;
   document.body.appendChild(overlay);
 
@@ -634,34 +644,25 @@ async function handleAutoPaste() {
       let countdown = 3;
       const titleEl = document.getElementById('bridge-status-title');
       const descEl = document.getElementById('bridge-status-desc');
-      const timerRing = document.getElementById('bridge-timer-ring');
       const timerText = document.getElementById('bridge-timer-text');
-      const svgCircle = document.getElementById('bridge-svg-circle');
-      
-      if (timerRing) timerRing.classList.add('active');
       
       // Initial state
       if (titleEl) titleEl.innerText = `Preparing Injection`;
       if (descEl) descEl.innerText = "Do not type or close this tab while transfer is in progress.";
-      if (svgCircle) svgCircle.style.strokeDashoffset = '167'; // 33% (251 - 251/3)
+      if (timerText) timerText.innerText = countdown;
 
       const countdownInterval = setInterval(() => {
         countdown--;
         if (countdown > 0) {
           if (timerText) timerText.innerText = countdown;
-          if (svgCircle) {
-            const percent = ((3 - countdown + 1) / 3);
-            svgCircle.style.strokeDashoffset = 251 - (251 * percent);
-          }
         } else {
           clearInterval(countdownInterval);
 
           // Perform insertion
           if (titleEl) {
               titleEl.innerText = "Transferring Context...";
-              titleEl.style.color = "#FF6B2C";
+              titleEl.style.color = "#DE6A39";
           }
-          if (svgCircle) svgCircle.style.strokeDashoffset = '0';
 
           setTimeout(() => {
             const intro = "System: Continuing from BridgeAI extracted context.\n\n";
@@ -691,7 +692,12 @@ async function handleAutoPaste() {
               // Success visual state
               const visCont = document.getElementById('bridge-visual-container');
               if (visCont) {
-                visCont.innerHTML = `<div class="bridge-success-checkmark">✓</div>`;
+                visCont.innerHTML = `
+                <div class="bridge-success-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>`;
               }
               if (titleEl) {
                 titleEl.innerText = "Context Injected!";
